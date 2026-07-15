@@ -459,7 +459,14 @@ function filterMatches(v,el){
 
 function rMatches(){
   var grid=document.getElementById("mg");
-  var ml=DATA.matches.filter(function(m){return m.p1!==null||m.p2!==null;});
+  var retirados={};
+  for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].retirado)retirados[DATA.players[i].nombre]=true;}
+  var ml=DATA.matches.filter(function(m){
+    if(m.p1===null&&m.p2===null)return false;
+    if(m.p1&&retirados[m.p1])return false;
+    if(m.p2&&retirados[m.p2])return false;
+    return true;
+  });
   if(mF!=="all"){var f=[];for(var i=0;i<ml.length;i++){if(ml[i].status===mF)f.push(ml[i]);}ml=f;}
   if(onlyConfirmed){var f2=[];for(var i=0;i<ml.length;i++){if(ml[i].p1!==null&&ml[i].p2!==null)f2.push(ml[i]);}ml=f2;}
   var h="";
