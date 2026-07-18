@@ -111,6 +111,14 @@ section{padding:4rem 1.5rem}
 .psl{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-top:2px}
 .rm{padding:1.1rem;border-top:1px solid rgba(255,255,255,.05)}
 .rmt{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-bottom:.7rem}
+.rvg{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;padding:1.1rem;border-top:1px solid rgba(255,255,255,.05)}
+.rvc{background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem .7rem;text-align:center}
+.rvl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:.4rem}
+.rvc.fav .rvl{color:var(--v)}
+.rvc.dif .rvl{color:var(--ro)}
+.rvn{font-weight:700;font-size:.86rem;line-height:1.2}
+.rvn.empty{font-weight:400;font-style:italic;color:var(--gl);font-size:.78rem}
+.rvs2{font-size:.7rem;color:var(--gl);margin-top:.2rem}
 .rmr{display:flex;align-items:center;gap:.7rem;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.83rem}
 .rmres{font-family:'Bebas Neue',sans-serif;font-size:.92rem;width:20px;text-align:center}
 .rmres.W{color:var(--v)}.rmres.L{color:var(--ro)}
@@ -628,6 +636,27 @@ function filterPS(val){
   s.innerHTML=h;
 }
 
+function getRivalStats(nombre){
+  var stats={};
+  for(var i=0;i<DATA.results.length;i++){
+    var r=DATA.results[i];
+    if(r.ganador===nombre){
+      if(!stats[r.perdedor])stats[r.perdedor]={w:0,l:0};
+      stats[r.perdedor].w++;
+    } else if(r.perdedor===nombre){
+      if(!stats[r.ganador])stats[r.ganador]={w:0,l:0};
+      stats[r.ganador].l++;
+    }
+  }
+  var fav=null,dif=null;
+  for(var opp in stats){
+    var s=stats[opp],tot=s.w+s.l;
+    if(s.w>0&&(!fav||s.w>fav.w||(s.w===fav.w&&tot>(fav.w+fav.l))))fav={name:opp,w:s.w,l:s.l};
+    if(s.l>0&&(!dif||s.l>dif.l||(s.l===dif.l&&tot>(dif.w+dif.l))))dif={name:opp,w:s.w,l:s.l};
+  }
+  return {fav:fav,dif:dif};
+}
+
 function showProfile(nombre,scroll){
   document.getElementById("psr").style.display="none";
   document.getElementById("psi").value=nombre;
@@ -654,6 +683,9 @@ function showProfile(nombre,scroll){
     rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+opp+"</span><span class=\"rmsc\">"+r.score+"</span><span class=\"rmdt\">"+r.fecha+"</span></div>";
   }
   if(!rH)rH="<p style=\"color:var(--gl);font-size:.8rem;padding:.38rem 0\">Sin partidos registrados</p>";
+  var rv=getRivalStats(nombre);
+  var favH=rv.fav?("<div class=\"rvn\">"+rv.fav.name+"</div><div class=\"rvs2\">"+rv.fav.w+"V - "+rv.fav.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
+  var difH=rv.dif?("<div class=\"rvn\">"+rv.dif.name+"</div><div class=\"rvs2\">"+rv.dif.w+"V - "+rv.dif.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   document.getElementById("pcc").innerHTML=
     "<div class=\"ppc\"><div class=\"phero\"><div class=\"pav\">"+ini+"</div>"
     +"<div class=\"pin\"><h2>"+p.nombre+"</h2><p>Ranking #"+rp+" general - Serie "+p.serie+" #"+sp+"</p>"
@@ -662,6 +694,8 @@ function showProfile(nombre,scroll){
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pg+"</div><div class=\"psl\">Victorias</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pp+"</div><div class=\"psl\">Derrotas</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+wr+"%</div><div class=\"psl\">%Win</div></div></div>"
+    +"<div class=\"rvg\"><div class=\"rvc fav\"><div class=\"rvl\">Rival favorito</div>"+favH+"</div>"
+    +"<div class=\"rvc dif\"><div class=\"rvl\">Rival mas dificil</div>"+difH+"</div></div>"
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div></div>";
   if(scroll!==false)document.getElementById("perfil").scrollIntoView({behavior:"smooth"});
 }
