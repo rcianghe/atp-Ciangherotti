@@ -42,13 +42,14 @@ section{padding:4rem 1.5rem}
 .hsn{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--v);line-height:1}
 .hsl{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-top:2px}
 .hcta{display:flex;gap:.9rem;justify-content:center;margin-top:2.2rem;flex-wrap:wrap}
-.hjm{display:none;align-items:center;gap:.6rem;justify-content:center;margin-top:1.6rem;padding:.55rem 1.2rem;border:1px solid rgba(212,230,10,.35);border-radius:100px;background:rgba(212,230,10,.06)}
-.hjm.show{display:inline-flex}
-.hjmi{font-size:1.05rem}
-.hjmt{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
-.hjmn{font-weight:700;color:var(--am);margin-left:.3rem;cursor:pointer}
-.hjmd{font-size:.7rem;color:var(--v);margin-left:.4rem;font-weight:600}
-@media(max-width:520px){.hjm{padding:.5rem 1rem;gap:.4rem}.hjmt{font-size:.6rem}.hjmd{font-size:.64rem}}
+.hjm{display:none;flex-direction:column;align-items:center;gap:.35rem;margin:1.8rem auto 0;padding:.9rem 1.6rem;border:1px solid rgba(212,230,10,.35);border-radius:14px;background:rgba(212,230,10,.06);max-width:380px}
+.hjm.show{display:flex}
+.hjmtop{display:flex;align-items:center;gap:.4rem}
+.hjmi{font-size:1rem;line-height:1}
+.hjmt{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl)}
+.hjmn{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.5px;color:var(--am);line-height:1.1;cursor:pointer;text-align:center}
+.hjmd{font-size:.68rem;letter-spacing:.5px;color:var(--v);font-weight:600}
+@media(max-width:520px){.hjm{max-width:88%;padding:.8rem 1.2rem}.hjmn{font-size:1.3rem}.hjmt{font-size:.56rem;letter-spacing:1.5px}.hjmd{font-size:.62rem}}
 .bp{background:var(--v);color:var(--ng);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.75rem 1.7rem;border:none;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
 .bp:hover{background:var(--vl);transform:translateY(-2px)}
 .bo{border:1px solid rgba(245,245,240,.3);color:var(--bl);background:transparent;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:.75rem 1.7rem;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
@@ -294,7 +295,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       <div><div class="hsn" id="sr">148</div><div class="hsl">Jugados</div></div>
     </div>
     <div class="hjm" id="hjm" onclick="showProfile(document.getElementById('hjm').dataset.nombre,true)">
-      <span class="hjmi">🔥</span><span class="hjmt">Jugador del Mes<span class="hjmn" id="hjmNombre"></span></span><span class="hjmd" id="hjmDelta"></span>
+      <span class="hjmtop"><span class="hjmi">🔥</span><span class="hjmt">Jugador del Mes</span></span>
+      <span class="hjmn" id="hjmNombre"></span>
+      <span class="hjmd" id="hjmDelta"></span>
     </div>
     <div class="hcta">
       <a href="#ranking" class="bp">Ver Ranking</a>
