@@ -219,6 +219,14 @@ section{padding:4rem 1.5rem}
 .ftlbl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
 .ftval{font-size:.82rem;font-weight:600;color:var(--bl);margin-top:.15rem}
 .ftval.tbd{color:var(--gl);font-weight:400;font-style:italic}
+.ftselect{width:100%;background:var(--ng);border:1px solid var(--gm);border-radius:5px;padding:.4rem .5rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none;-webkit-appearance:none;appearance:none}
+.ftselect:focus{border-color:var(--v)}
+.ftactions{padding:0 1.1rem 1.1rem;display:flex;gap:.6rem}
+.ftbtn{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:.5rem 1rem;border-radius:4px;border:none;cursor:pointer}
+.ftbtn.edit{background:var(--g);color:var(--v);border:1px solid var(--v)}
+.ftbtn.save{background:var(--v);color:var(--ng)}
+.ftbtn.cancel{background:transparent;color:var(--gl);border:1px solid var(--gm)}
+.ftsync{padding:0 1.1rem 1.1rem;color:var(--gl);font-size:.72rem;font-style:italic}
 .insgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
 .insitem{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.6rem .35rem;text-align:center}
 .insitem.gold{border-color:rgba(212,230,10,.4);background:rgba(212,230,10,.06)}
@@ -737,6 +745,9 @@ function transformLiveData(json){
   var resultadosCrudos=json.resultados.filter(function(r){return r.ganador;}); // jugados
   var pendientesCrudos=json.resultados.filter(function(r){return !r.ganador;}); // sin ganador aun
 
+  // Fichas tecnicas sincronizadas desde la hoja FichaTecnica (si existe).
+  SERVER_FICHAS=json.fichas||{};
+
   var ranking=calcularRanking(jugadores,json.resultados,json.fixtureSize);
   var porNombre={};
   ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
@@ -1141,6 +1152,122 @@ var FICHA_TECNICA={
   "Ricardo Ciangherotti":{nivel:"Intermedio Alto",mano:"Derecha",superficie:"Cancha dura",golpe:"Reves a dos manos"}
 };
 
+// --- Ficha tecnica editable ---------------------------------------------
+// Cada jugador puede completar su propia ficha desde el celular. Hoy no
+// existe login, asi que cualquiera puede editar cualquier ficha (igual
+// que hoy cualquiera puede ver todo). Cuando entren cuentas de jugador
+// (Fase 1) esto se restringe a "solo tu propio perfil".
+// Guardado: se sincroniza a la hoja "FichaTecnica" del Sheet via doPost
+// (requiere Code.gs actualizado con soporte accion:'ficha'). Si falla la
+// red, se guarda en localStorage del dispositivo como respaldo temporal
+// y se reintenta en el proximo guardado exitoso.
+var FICHA_OPCIONES={
+  nivel:["Principiante","Intermedio Bajo","Intermedio","Intermedio Alto","Avanzado","Competitivo"],
+  mano:["Derecha","Izquierda","Ambidiestro"],
+  superficie:["Cancha dura","Polvo de ladrillo","Cesped","Sintetica rapida","Sin preferencia"],
+  golpe:["Drive","Reves a una mano","Reves a dos manos","Saque","Volea","Globo"]
+};
+// Mismo token que TOKEN en Code.gs (doPost). Cambiar en ambos lados a la vez.
+// Nota: al vivir en el frontend, cualquiera puede verlo en el codigo fuente;
+// solo frena escrituras casuales, no reemplaza login real (Fase 1).
+var FICHA_TOKEN='CTQ2026-CAMBIAR-ESTA-CLAVE';
+var SERVER_FICHAS={}; // se llena en transformLiveData() con lo que devuelve doGet
+var fichaEditando=null; // nombre del jugador cuya ficha esta en modo edicion
+var fichaGuardando=false;
+
+function getFichaLocal(nombre){
+  try{
+    var raw=localStorage.getItem("ficha_"+nombre);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null;}
+}
+function getFicha(nombre){
+  var base=FICHA_TECNICA[nombre]||{};
+  var local=getFichaLocal(nombre)||{};
+  var server=SERVER_FICHAS[nombre]||{};
+  var out={};
+  for(var k in base){out[k]=base[k];}
+  for(var k1 in local){if(local[k1])out[k1]=local[k1];} // respaldo offline
+  for(var k2 in server){if(server[k2])out[k2]=server[k2];} // la Sheet manda si hay dato
+  return out;
+}
+function toggleFichaEdit(nombre){
+  fichaEditando=(fichaEditando===nombre)?null:nombre;
+  showProfile(nombre,false);
+}
+function saveFichaTecnica(nombre){
+  if(fichaGuardando)return;
+  var data={
+    nivel:document.getElementById("ftsel-nivel").value,
+    mano:document.getElementById("ftsel-mano").value,
+    superficie:document.getElementById("ftsel-superficie").value,
+    golpe:document.getElementById("ftsel-golpe").value
+  };
+
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
+    // Sin backend desplegado: se guarda solo local, como antes.
+    try{localStorage.setItem("ficha_"+nombre,JSON.stringify(data));}catch(e){}
+    fichaEditando=null;
+    showProfile(nombre,false);
+    return;
+  }
+
+  fichaGuardando=true;
+  showProfile(nombre,false); // re-render para mostrar "Guardando..."
+
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe})
+  }).then(function(res){return res.json();}).then(function(json){
+    if(json&&json.ok){
+      SERVER_FICHAS[nombre]=data; // reflejo optimista, sin esperar el proximo refresco
+      try{localStorage.removeItem("ficha_"+nombre);}catch(e){} // ya no hace falta el respaldo local
+    }else{
+      console.warn('No se pudo guardar la ficha en la Sheet, se guarda solo local.',json);
+      try{localStorage.setItem("ficha_"+nombre,JSON.stringify(data));}catch(e){}
+    }
+  }).catch(function(err){
+    console.warn('Sin conexion al guardar ficha, se guarda solo local.',err);
+    try{localStorage.setItem("ficha_"+nombre,JSON.stringify(data));}catch(e){}
+  }).then(function(){
+    fichaGuardando=false;
+    fichaEditando=null;
+    showProfile(nombre,false);
+  });
+}
+function renderFichaTecnica(nombre){
+  var ft=getFicha(nombre);
+  if(fichaEditando===nombre){
+    function sel(campo,label){
+      var opts="<option value=\"\">Por definir</option>";
+      var opciones=FICHA_OPCIONES[campo];
+      for(var i=0;i<opciones.length;i++){
+        var v=opciones[i];
+        opts+="<option value=\""+v+"\""+(ft[campo]===v?" selected":"")+">"+v+"</option>";
+      }
+      return "<div class=\"ftitem\"><div class=\"ftlbl\">"+label+"</div><select class=\"ftselect\" id=\"ftsel-"+campo+"\""+(fichaGuardando?" disabled":"")+">"+opts+"</select></div>";
+    }
+    var syncOn=APPS_SCRIPT_URL&&APPS_SCRIPT_URL.indexOf('PEGA_AQUI')!==0;
+    return "<div class=\"ftgrid\">"
+      +sel("nivel","Nivel")+sel("mano","Mano dominante")
+      +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
+      +"</div>"
+      +"<div class=\"ftactions\">"
+      +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+nombre.replace(/'/g,"\\'")+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
+      +"<button class=\"ftbtn cancel\""+(fichaGuardando?" disabled":"")+" onclick=\"toggleFichaEdit('"+nombre.replace(/'/g,"\\'")+"')\">Cancelar</button>"
+      +"</div>"
+      +"<div class=\"ftsync\">"+(syncOn?"Se sincroniza para todos los jugadores.":"Se guarda en este dispositivo por ahora.")+"</div>";
+  }
+  function val(v){return v?("<div class=\"ftval\">"+v+"</div>"):"<div class=\"ftval tbd\">Por definir</div>";}
+  return "<div class=\"ftgrid\">"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Nivel</div>"+val(ft.nivel)+"</div>"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
+    +"</div>"
+    +"<div class=\"ftactions\"><button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+nombre.replace(/'/g,"\\'")+"')\">\u270f\ufe0f Editar ficha</button></div>";
+}
+
 function challengeSoon(){
   alert("El sistema de desafios en linea esta en construccion (Fase 3). Por ahora, coordina el partido directamente con el jugador.");
 }
@@ -1176,17 +1303,7 @@ function showProfile(nombre,scroll){
   var favH=rv.fav?("<div class=\"rvn\">"+rv.fav.name+"</div><div class=\"rvs2\">"+rv.fav.w+"V - "+rv.fav.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   var difH=rv.dif?("<div class=\"rvn\">"+rv.dif.name+"</div><div class=\"rvs2\">"+rv.dif.w+"V - "+rv.dif.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   var tits=getTitulos(nombre);
-  // Ficha tecnica: nivel / mano dominante / superficie / golpe favorito.
-  // Si el jugador aun no la completo, se muestra "Por definir" en vez de
-  // inventar el dato.
-  var ft=FICHA_TECNICA[nombre]||{};
-  function ftVal(v){return v?("<div class=\"ftval\">"+v+"</div>"):"<div class=\"ftval tbd\">Por definir</div>";}
-  var ftH="<div class=\"ftgrid\">"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Nivel</div>"+ftVal(ft.nivel)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+ftVal(ft.mano)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+ftVal(ft.superficie)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+ftVal(ft.golpe)+"</div>"
-    +"</div>";
+  var ftH=renderFichaTecnica(nombre);
   // Rachas y tendencias
   var tend=tendenciasJugador(nombre);
   var rachaH="";
