@@ -213,6 +213,9 @@ section{padding:4rem 1.5rem}
 .pchal{margin-top:.6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .pchal .dot{width:8px;height:8px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
 .pchal .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--v)}
+.dispToggle{background:transparent;border:none;padding:0;display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.dispToggle .dot.off{background:var(--gl);box-shadow:none}
+.dispToggle .lbl.off{color:var(--gl)}
 .chalbtn{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:.4rem .8rem;background:var(--am);color:var(--ng);border:none;border-radius:3px;cursor:pointer}
 .ftgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;padding:1.1rem;border-top:1px solid rgba(255,255,255,.05)}
 .ftitem{background:rgba(0,0,0,.18);border-radius:8px;padding:.55rem .7rem}
@@ -1191,6 +1194,38 @@ function getFicha(nombre){
   for(var k2 in server){if(server[k2])out[k2]=server[k2];} // la Sheet manda si hay dato
   return out;
 }
+function toggleDisponibilidad(nombre){
+  var actual=getFicha(nombre).disponible;
+  var nuevo=(actual==='No')?'Si':'No';
+
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
+    var localPrev=getFichaLocal(nombre)||{};
+    localPrev.disponible=nuevo;
+    try{localStorage.setItem("ficha_"+nombre,JSON.stringify(localPrev));}catch(e){}
+    showProfile(nombre,false);
+    return;
+  }
+
+  // Optimista: se refleja al toque, y si falla el POST se revierte.
+  SERVER_FICHAS[nombre]=SERVER_FICHAS[nombre]||{};
+  SERVER_FICHAS[nombre].disponible=nuevo;
+  showProfile(nombre,false);
+
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({accion:'disponible',token:FICHA_TOKEN,nombre:nombre,disponible:nuevo})
+  }).then(function(res){return res.json();}).then(function(json){
+    if(!json||!json.ok){
+      console.warn('No se pudo guardar disponibilidad en la Sheet.',json);
+      SERVER_FICHAS[nombre].disponible=actual;
+      showProfile(nombre,false);
+    }
+  }).catch(function(err){
+    console.warn('Sin conexion al guardar disponibilidad, se revierte.',err);
+    SERVER_FICHAS[nombre].disponible=actual;
+    showProfile(nombre,false);
+  });
+}
 function toggleFichaEdit(nombre){
   fichaEditando=(fichaEditando===nombre)?null:nombre;
   showProfile(nombre,false);
@@ -1370,6 +1405,11 @@ function showProfile(nombre,scroll){
       ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\">"
       :"");
   var tieneFigura=esRicardo||(fotoJugador&&fotoJugador.cuerpo);
+  var dispFicha=getFicha(p.nombre).disponible;
+  var isDisp=dispFicha!=='No'; // por defecto disponible salvo que el jugador diga lo contrario
+  var dispToggleH="<button class=\"dispToggle\" onclick=\"toggleDisponibilidad('"+p.nombre.replace(/'/g,"\\'")+"')\">"
+    +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
+    +"<span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span></button>";
   document.getElementById("pcc").innerHTML=
     "<div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><h2>"+p.nombre+"</h2><p>Ranking #"+rp+" general - Serie "+p.serie+" #"+sp+"</p>"
@@ -1377,7 +1417,7 @@ function showProfile(nombre,scroll){
     +"<div class=\"pclub\">Club actual: <b>"+CLUB_JUGADOR+"</b></div>"
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
-      :"<div class=\"pchal\"><span class=\"dot\"></span><span class=\"lbl\">Disponible</span><button class=\"chalbtn\" onclick=\"challengeSoon()\">\u26a1 Desafiar</button></div>")
+      :"<div class=\"pchal\">"+dispToggleH+(isDisp?"<button class=\"chalbtn\" onclick=\"challengeSoon()\">\u26a1 Desafiar</button>":"")+"</div>")
     +"</div></div>"
     +"<div class=\"pst\"><div class=\"psi2\"><div class=\"psn\">"+p.pj+"</div><div class=\"psl\">Partidos</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pg+"</div><div class=\"psl\">Victorias</div></div>"
