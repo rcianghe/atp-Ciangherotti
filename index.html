@@ -416,7 +416,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="sh fi2"><div class="se">Temporada 2026</div><h2 class="st">Ranking por Series</h2><div class="sl"></div></div>
     <div class="gs" id="gs">Datos reales - Escalerilla 2026 - 37 jugadores activos - 148 partidos jugados</div>
     <div class="tabs">
-      <button class="tb active" onclick="showTab('ranking','all',this)">Todos</button>
+      <button class="tb active" onclick="showTab('ranking','all',this)">General</button>
       <button class="tb" onclick="showTab('ranking','A',this)">Serie A</button>
       <button class="tb" onclick="showTab('ranking','B',this)">Serie B</button>
       <button class="tb" onclick="showTab('ranking','C',this)">Serie C</button>
@@ -1890,6 +1890,15 @@ window.addEventListener("scroll",function(){
 });
 
 init();
+
+if(elHm){
+  elHm.src="jugadores/big-3.png";
+  elHm.style.display="block";
+  elHm.style.width="75%";
+  elHm.style.maxWidth="300px";
+  elHm.style.height="auto";
+  elHm.style.margin="15px auto";
+  }
 </script>
 </body>
 </html>
