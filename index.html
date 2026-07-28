@@ -1394,15 +1394,14 @@ function showProfile(nombre,scroll){
   var esRicardo=(nombre==="Ricardo Ciangherotti");
   var fotoJugador=FOTOS_JUGADORES[nombre];
   var avatarH=esRicardo
-    ?"<div class=\"pav foto\"><img src=\"data:image/jpeg;base64,"+RICARDO_AVATAR_B64+"\" alt=\"Ricardo Ciangherotti\"></div>"
-    :(fotoJugador&&fotoJugador.cara
-      ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+nombre+"\"></div>"
-      :"<div class=\"pav\">"+ini+"</div>");
+  ?"<div class=\"pav foto\"><img src=\"jugadores/ricardo_ciangherotti.PNG\" alt=\"Ricardo Ciangherotti\"></div>")
+  :(fotoJugador&&fotoJugador.cara 
+  ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+nombre+"\"></div>"
+  :"<div class=\"pav\">"+ini+"</div>");
   var heroFigH=esRicardo
-    ?"<img class=\"herofig\" src=\"jugadores/big-3.PNG\" alt=\"\">"
-    :(fotoJugador&&fotoJugador.cuerpo
-      ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\">"
-      :"");
+  ?"<img> class=\"herofig\" src=\"jugadores/big-3.PNG\" alt=\"\">"
+  :(fotoJugador&&fotoJugador.cuerpo
+  ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\">":"");
   var tieneFigura=esRicardo||(fotoJugador&&fotoJugador.cuerpo);
   var dispFicha=getFicha(p.nombre).disponible;
   var isDisp=dispFicha!=='No'; // por defecto disponible salvo que el jugador diga lo contrario
