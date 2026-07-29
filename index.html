@@ -151,7 +151,10 @@ section{padding:4rem 1.5rem}
 .mh{background:var(--ng);padding:.48rem .9rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05)}
 .md{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:1px;color:var(--gl);text-transform:uppercase}
 .ms{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.11rem .42rem;border-radius:2px}
-.sp{background:rgba(212,230,10,.2);color:var(--am)}.sl2{background:rgba(192,57,43,.3);color:#ff6b5b}.sd{background:rgba(91,191,42,.2);color:var(--v)}
+.sp{background:rgba(212,230,10,.2);color:var(--am)}.sl2{background:rgba(192,57,43,.3);color:#ff6b5b}.sd{background:rgba(91,191,42,.2);color:var(--v)}.so{background:rgba(192,57,43,.22);color:#ff8a65}
+.mc.overdue{border-color:rgba(192,57,43,.35)}
+.mwin{color:var(--v);font-weight:700}
+.mnote{margin-top:.7rem;padding:.55rem .85rem;background:rgba(192,57,43,.06);border-left:2px solid #ff8a65;border-radius:0 6px 6px 0;font-size:.74rem;line-height:1.4;color:var(--gl)}
 .mb{padding:.9rem}
 .mp{display:flex;align-items:center;gap:.4rem}
 .mpl{flex:1}.mpn{font-weight:600;font-size:.88rem}.mpn.tbd{font-weight:400;font-style:italic;color:var(--gl)}
@@ -948,34 +951,133 @@ function filterMatches(v,el){
   rMatches();
 }
 
-function rMatches(){
-  var grid=document.getElementById("mg");
+// --- Utilidades para cruzar el calendario de partidos (DATA.matches) con
+// los resultados ya registrados (DATA.results), y asi poder derivar el
+// estado real de cada partido (jugado / atrasado / pendiente) en vez de
+// depender de un campo "status" que nunca se actualiza a mano.
+function parseFechaDDMMYYYY(str){
+  if(!str)return null;
+  var p=str.split("-");
+  if(p.length!==3)return null;
+  var d=new Date(parseInt(p[2],10),parseInt(p[1],10)-1,parseInt(p[0],10));
+  return isNaN(d.getTime())?null:d;
+}
+function normNombre(s){
+  if(!s)return "";
+  return s.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ");
+}
+function construirIndiceResultados(){
+  var idx={};
+  for(var i=0;i<DATA.results.length;i++){
+    var r=DATA.results[i];
+    var key=[normNombre(r.ganador),normNombre(r.perdedor)].sort().join("||");
+    if(!idx[key])idx[key]=[];
+    idx[key].push({res:r,usado:false});
+  }
+  return idx;
+}
+// Busca, para un partido con ambos jugadores confirmados, el resultado mas
+// cercano en fecha dentro de la misma serie. Marca el resultado como
+// "usado" para no asignarlo dos veces si el mismo par jugo varias rondas.
+function buscarResultadoDeMatch(m,idx,fechaMatch){
+  if(!m.p1||!m.p2)return null;
+  var key=[normNombre(m.p1),normNombre(m.p2)].sort().join("||");
+  var cands=idx[key];
+  if(!cands||!cands.length)return null;
+  var mejor=null,mejorDiff=Infinity;
+  for(var i=0;i<cands.length;i++){
+    var c=cands[i];
+    if(c.usado)continue;
+    if(c.res.serie!==m.serie)continue;
+    var rDate=parseFechaDDMMYYYY(c.res.fecha);
+    var diff=(fechaMatch&&rDate)?Math.abs(fechaMatch-rDate):0;
+    if(diff<mejorDiff){mejorDiff=diff;mejor=c;}
+  }
+  var VENTANA=1000*60*60*24*60; // 60 dias de tolerancia entre la fecha agendada y la fecha real del resultado
+  if(mejor&&mejorDiff<=VENTANA){mejor.usado=true;return mejor.res;}
+  return null;
+}
+// Construye la lista de partidos con su estado derivado:
+//  - "done": encontramos el resultado real ya jugado
+//  - "overdue": ambos jugadores confirmados, la fecha ya paso y no hay resultado registrado
+//  - "pending": aun no se juega (fecha futura, o sin resultado todavia)
+// Los slots de cancha sin ningun jugador asignado (p1 y p2 ambos null) se
+// descartan siempre: no son partidos reales, son horarios libres.
+// Los slots con un solo jugador confirmado cuya fecha ya paso tambien se
+// descartan: el rival nunca se confirmo a tiempo, ese cupo quedo vencido.
+function construirVistaPartidos(){
   var retirados={};
   for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].retirado)retirados[DATA.players[i].nombre]=true;}
-  var ml=DATA.matches.filter(function(m){
-    if(m.p1===null&&m.p2===null)return false;
-    if(m.p1&&retirados[m.p1])return false;
-    if(m.p2&&retirados[m.p2])return false;
-    return true;
-  });
-  if(mF!=="all"){var f=[];for(var i=0;i<ml.length;i++){if(ml[i].status===mF)f.push(ml[i]);}ml=f;}
-  if(onlyConfirmed){var f2=[];for(var i=0;i<ml.length;i++){if(ml[i].p1!==null&&ml[i].p2!==null)f2.push(ml[i]);}ml=f2;}
+  var idx=construirIndiceResultados();
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var out=[];
+  for(var i=0;i<DATA.matches.length;i++){
+    var m=DATA.matches[i];
+    if(m.p1&&retirados[m.p1])continue;
+    if(m.p2&&retirados[m.p2])continue;
+    if(m.p1===null&&m.p2===null)continue;
+    var fechaDate=parseFechaDDMMYYYY(m.fecha);
+    var d={};for(var k in m)d[k]=m[k];
+    var res=buscarResultadoDeMatch(m,idx,fechaDate);
+    if(res){
+      d.status="done";
+      d.score=res.score;
+      d.ganador=res.ganador;
+      d.perdedor=res.perdedor;
+    }else if(fechaDate&&fechaDate<hoy){
+      if(m.p1&&m.p2){d.status="overdue";}
+      else{continue;}
+    }else{
+      d.status="pending";
+    }
+    d._fechaOrden=fechaDate?fechaDate.getTime():0;
+    out.push(d);
+  }
+  return out;
+}
+
+function rMatches(){
+  var grid=document.getElementById("mg");
+  var ml=construirVistaPartidos();
+  if(mF==="done"){
+    ml=ml.filter(function(m){return m.status==="done";});
+    ml.sort(function(a,b){return b._fechaOrden-a._fechaOrden;}); // mas reciente primero
+  }else if(mF==="pending"){
+    ml=ml.filter(function(m){return m.status==="pending"||m.status==="overdue";});
+    ml.sort(function(a,b){return a._fechaOrden-b._fechaOrden;}); // atrasados primero, luego los mas proximos
+  }else{
+    ml.sort(function(a,b){
+      if(a.status==="done"&&b.status!=="done")return 1;
+      if(b.status==="done"&&a.status!=="done")return -1;
+      return a._fechaOrden-b._fechaOrden;
+    });
+  }
+  if(onlyConfirmed){ml=ml.filter(function(m){return m.p1!==null&&m.p2!==null;});}
   var h="";
   for(var i=0;i<ml.length;i++){
     var m=ml[i];
-    var sL={pending:"Pendiente",live:"En Vivo",done:"Finalizado"};
-    var sH=m.score?"<div class=\"msc\">"+esc(m.score)+"</div>":"<div class=\"msc p\">Por jugar</div>";
-    var p1H=m.p1?("<div class=\"mpn\">"+esc(m.p1)+"</div>"):"<div class=\"mpn tbd\">Rival por confirmar</div>";
-    var p2H=m.p2?("<div class=\"mpn\">"+esc(m.p2)+"</div>"):"<div class=\"mpn tbd\">Rival por confirmar</div>";
-    h+="<div class=\"mc\">";
-    h+="<div class=\"mh\"><span class=\"md\">"+esc(m.fecha)+(m.hora&&m.hora!="nan"?" "+esc(m.hora):"")+"</span><span class=\"ms s"+m.status+"\">"+sL[m.status]+"</span></div>";
+    var sL={pending:"Pendiente",live:"En Vivo",done:"Finalizado",overdue:"Atrasado"};
+    var sC={pending:"sp",live:"sl2",done:"sd",overdue:"so"};
+    var p1Win=m.status==="done"&&m.ganador&&normNombre(m.ganador)===normNombre(m.p1);
+    var p2Win=m.status==="done"&&m.ganador&&normNombre(m.ganador)===normNombre(m.p2);
+    var sH;
+    if(m.status==="done"){sH="<div class=\"msc\">"+esc(m.score)+"</div>";}
+    else if(m.status==="overdue"){sH="<div class=\"msc p\">Resultado pendiente</div>";}
+    else{sH="<div class=\"msc p\">Por jugar</div>";}
+    var p1H=m.p1?("<div class=\"mpn"+(p1Win?" mwin":"")+"\">"+esc(m.p1)+(p1Win?" \ud83c\udfc6":"")+"</div>"):"<div class=\"mpn tbd\">Rival por confirmar</div>";
+    var p2H=m.p2?("<div class=\"mpn"+(p2Win?" mwin":"")+"\">"+esc(m.p2)+(p2Win?" \ud83c\udfc6":"")+"</div>"):"<div class=\"mpn tbd\">Rival por confirmar</div>";
+    h+="<div class=\"mc"+(m.status==="overdue"?" overdue":"")+"\">";
+    h+="<div class=\"mh\"><span class=\"md\">"+esc(m.fecha)+(m.hora&&m.hora!="nan"?" "+esc(m.hora):"")+"</span><span class=\"ms "+sC[m.status]+"\">"+sL[m.status]+"</span></div>";
     h+="<div class=\"mb\"><div class=\"mp\"><div class=\"mpl\">"+p1H+"</div><div class=\"mv\">VS</div><div class=\"mpl\" style=\"text-align:right\">"+p2H+"</div></div>"+sH+"</div>";
     if(m.status==='pending'&&m.p1&&m.p2){
       h+="<div class=\"mprevia\">"+esc(generarPrevia(m.p1,m.p2,m.serie))+"</div>";
+    }else if(m.status==='overdue'){
+      h+="<div class=\"mnote\">Este partido ya deberia haberse jugado y aun no tiene resultado registrado.</div>";
     }
     h+="<div class=\"mf\"><span class=\"mst\">Serie "+esc(m.serie)+(m.cancha?" \u00b7 Cancha "+esc(m.cancha):"")+"</span><span class=\"mr\">2026</span></div></div>";
   }
-  grid.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;grid-column:1/-1;padding:2rem\">Sin partidos.</p>";
+  var vacioMsg={all:"Sin partidos.",pending:"No hay partidos pendientes por jugar.",done:"Todavia no hay partidos finalizados registrados."};
+  grid.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;grid-column:1/-1;padding:2rem\">"+(vacioMsg[mF]||"Sin partidos.")+"</p>";
 }
 
 function rResults(){
