@@ -1382,13 +1382,13 @@ function toggleDesafioForm(nombre){
 function enviarDesafio(paraNombre){
   if(desafioEnviando)return;
   var deEl=document.getElementById("dfDe");
-  var de=deEl?deEl.value:"";
+  var de=(deEl?deEl.value:"").trim();
   var dia=(document.getElementById("dfDia")||{}).value||"";
   var hora=(document.getElementById("dfHora")||{}).value||"";
   var cancha=(document.getElementById("dfCancha")||{}).value||"";
   var mensaje=(document.getElementById("dfMensaje")||{}).value||"";
   dia=dia.trim();hora=hora.trim();cancha=cancha.trim();mensaje=mensaje.trim();
-  if(!de){alert("Selecciona tu nombre para enviar el desafio.");return;}
+  if(!de){alert("Escribe tu nombre para enviar el desafio.");return;}
   if(de===paraNombre){alert("No puedes desafiarte a ti mismo.");return;}
 
   desafioEnviando=true;
@@ -1443,11 +1443,8 @@ function rDesafiarBtn(nombre){
 // Panel del formulario (solo visible si desafioFormAbierto === nombre).
 function rDesafioFormPanel(nombre){
   if(desafioFormAbierto!==nombre)return "";
-  var activos=DATA.players.filter(function(pl){return !pl.retirado;}).slice().sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
-  var opts="<option value=\"\">Tu nombre...</option>";
-  for(var i=0;i<activos.length;i++)opts+="<option value=\""+esc(activos[i].nombre)+"\">"+esc(activos[i].nombre)+"</option>";
   return "<div class=\"dfform\">"
-    +"<select class=\"fsel\" id=\"dfDe\""+(desafioEnviando?" disabled":"")+">"+opts+"</select>"
+    +"<input class=\"fi\" id=\"dfDe\" type=\"text\" placeholder=\"Tu nombre\""+(desafioEnviando?" disabled":"")+">"
     +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"text\" placeholder=\"Dia (ej: Sabado 14)\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"text\" placeholder=\"Hora (ej: 10:00)\""+(desafioEnviando?" disabled":"")+"></div>"
     +"<input class=\"fi\" id=\"dfCancha\" type=\"text\" placeholder=\"Cancha (opcional)\""+(desafioEnviando?" disabled":"")+">"
     +"<input class=\"fi\" id=\"dfMensaje\" type=\"text\" placeholder=\"Mensaje (opcional)\""+(desafioEnviando?" disabled":"")+">"
