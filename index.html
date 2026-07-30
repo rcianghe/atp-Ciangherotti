@@ -147,7 +147,19 @@ section{padding:4rem 1.5rem}
 .wt{flex:1;height:3px;background:var(--gm);border-radius:2px;overflow:hidden}
 .wf{height:100%;background:var(--v);border-radius:2px}
 .wl{font-size:.72rem;color:var(--gl);min-width:30px;text-align:right}
-#partidos{background:var(--ng)}
+#afiches{background:var(--ng)}
+.afgrid{display:grid;grid-template-columns:1fr 1.35fr;gap:1.2rem}
+.afcol{display:flex;flex-direction:column;gap:.6rem}
+.afcolh{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center}
+.afbox{position:relative;width:100%;aspect-ratio:9/16;max-height:640px;background:var(--g);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;transition:all .25s}
+.afbox:hover{border-color:var(--v);box-shadow:0 10px 26px rgba(0,0,0,.4)}
+.afmed{width:100%;height:100%;object-fit:cover;display:block;background:var(--gd)}
+.afcap{position:absolute;left:0;right:0;bottom:0;padding:.7rem .85rem;background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);display:flex;flex-direction:column;gap:2px}
+.afcapn{font-weight:700;font-size:.9rem;color:var(--bl)}
+.afcaps{font-size:.72rem;color:var(--am)}
+.afsnd{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);color:var(--bl);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;z-index:2}
+.afsnd:hover{background:var(--v);color:var(--ng)}
+@media(max-width:760px){.afgrid{grid-template-columns:1fr}.afbox{max-height:480px}}
 .mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem}
 .mc{background:var(--g);border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden;transition:all .2s}
 .mc:hover{border-color:var(--v);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
@@ -425,7 +437,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <a href="#perfil">Jugadores</a>
     <a href="#estadisticas">H2H</a>
     <a href="#galeria">Galeria</a>
-    <a href="#partidos">Partidos</a>
+    <a href="#afiches">Afiches</a>
     <a href="#tienda" class="nt">Tienda</a>
   </nav>
 </header>
@@ -450,7 +462,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     </div>
     <div class="hcta">
       <a href="#ranking" class="bp">Ver Ranking</a>
-      <a href="#partidos" class="bo">Proximos Partidos</a>
+      <a href="#afiches" class="bo">Ver Afiches</a>
     </div>
   </div>
 </section>
@@ -471,18 +483,19 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   </div>
 </section>
 
-<section id="partidos">
+<section id="afiches">
   <div class="container">
-    <div class="sh fi2"><div class="se">Semana actual</div><h2 class="st">Proximos Partidos</h2><div class="sl"></div></div>
-    <div class="tabs">
-      <button class="tb active" onclick="filterMatches('all',this)">Todos</button>
-      <button class="tb" onclick="filterMatches('pending',this)">Pendientes</button>
-      <button class="tb" onclick="filterMatches('done',this)">Jugados</button>
+    <div class="sh fi2"><div class="se">Se actualiza cada 10 minutos</div><h2 class="st">Afiches y Resultados</h2><div class="sl"></div></div>
+    <div class="afgrid">
+      <div class="afcol afcol-res">
+        <div class="afcolh">🏆 Resultados</div>
+        <div class="afbox" id="resGrande"></div>
+      </div>
+      <div class="afcol afcol-af">
+        <div class="afcolh">📣 Afiches</div>
+        <div class="afbox" id="afGrande"></div>
+      </div>
     </div>
-    <label style="display:flex;align-items:center;gap:.4rem;margin:.6rem 0 1rem;font-size:.85rem;color:var(--gl);cursor:pointer">
-      <input type="checkbox" id="onlyConfirmedChk" onchange="toggleConfirmed(this)"> Solo partidos con ambos jugadores confirmados
-    </label>
-    <div class="mg" id="mg"></div>
   </div>
 </section>
 
@@ -553,7 +566,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="fs">Escalerilla por Series 2026</div>
   <div class="fls">
     <a href="#ranking">Ranking</a><a href="#resultados">Resultados</a>
-    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#galeria">Galeria</a><a href="#partidos">Partidos</a><a href="#tienda">Tienda</a>
+    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#galeria">Galeria</a><a href="#afiches">Afiches</a><a href="#tienda">Tienda</a>
   </div>
   <div class="fc">Club de Tenis Estadio Quilicura 2026 v3.0</div>
   <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
@@ -565,7 +578,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <a class="mni" href="#perfil"><span class="mnio">👤</span><span class="mnil">Jugador</span></a>
   <a class="mni" href="#estadisticas"><span class="mnio">⚔️</span><span class="mnil">H2H</span></a>
   <a class="mni" href="#galeria"><span class="mnio">📸</span><span class="mnil">Galeria</span></a>
-  <a class="mni" href="#partidos"><span class="mnio">📅</span><span class="mnil">Partidos</span></a>
+  <a class="mni" href="#afiches"><span class="mnio">📣</span><span class="mnil">Afiches</span></a>
   <a class="mni" href="#tienda"><span class="mnio">🛒</span><span class="mnil">Tienda</span></a>
 </nav>
 
@@ -1132,7 +1145,7 @@ function rHeroStats(){
 
 function rAll(){
   rHeroStats();
-  rRanking();rMatches();rResults();rStore();populateH2H();rTopMatagigantes();
+  rRanking();rMatches();rResults();rStore();populateH2H();rTopMatagigantes();rAfichesGrandes();
   var nombreAMostrar=null;
   if(currentProfileName){
     // ya hay un jugador seleccionado (por el usuario o por una carga previa): lo mantenemos
@@ -1191,6 +1204,7 @@ function filterMatches(v,el){
 
 function rMatches(){
   var grid=document.getElementById("mg");
+  if(!grid)return; // la pestana "Partidos" fue reemplazada por "Afiches y Resultados"
   var retirados={};
   for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].retirado)retirados[DATA.players[i].nombre]=true;}
   var ml=DATA.matches.filter(function(m){
@@ -1217,6 +1231,62 @@ function rMatches(){
     h+="<div class=\"mf\"><span class=\"mst\">Serie "+esc(m.serie)+(m.cancha?" \u00b7 Cancha "+esc(m.cancha):"")+"</span><span class=\"mr\">2026</span></div></div>";
   }
   grid.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;grid-column:1/-1;padding:2rem\">Sin partidos.</p>";
+}
+
+// ===== Afiches y Resultados (reemplaza la pestana Partidos) =====
+// Cada afiche/resultado es una URL pegada a mano en la hoja "Desafios"
+// (columnas AficheURL / AficheResultadoURL), venga de donde venga: Google Fotos,
+// Drive, o cualquier hosting. Si es video (mp4/mov/webm) se reproduce con su
+// propio audio/musica incluido (como un export de TikTok); si es imagen, se
+// muestra fija. Rotan solas cada 10 minutos.
+var AFICHE_ROT_MS=600000;
+var aficheIdx=0,resultadoIdx=0,aficheRotTimerSet=false;
+
+function esVideoUrl(u){
+  return /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test((u||'').split('?')[0]) || /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(u||'');
+}
+function poolAfiches(){
+  return (DATA.desafios||[]).filter(function(d){return d.afiche;}).map(function(d){
+    return {url:d.afiche,titulo:d.de+' vs '+d.para,sub:[fmtDesafioDia?fmtDesafioDia(d.dia):d.dia,d.cancha?('Cancha '+d.cancha):''].filter(Boolean).join(' · ')};
+  });
+}
+function poolResultados(){
+  return (DATA.desafios||[]).filter(function(d){return d.afiche_resultado;}).map(function(d){
+    return {url:d.afiche_resultado,titulo:d.de+' vs '+d.para,sub:'Resultado'+(d.cancha?(' · Cancha '+d.cancha):'')};
+  });
+}
+function pintarMediaBox(contId,item,vacioTexto){
+  var el=document.getElementById(contId);
+  if(!el)return;
+  if(!item){el.innerHTML='<div class="ec"><div class="eci">🖼️</div><div class="ect">'+vacioTexto+'</div></div>';return;}
+  var esVideo=esVideoUrl(item.url);
+  var mediaHtml=esVideo
+    ? '<video class="afmed" src="'+esc(item.url)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
+    : '<img class="afmed" src="'+esc(item.url)+'" alt="Afiche" loading="lazy">';
+  el.innerHTML=mediaHtml
+    +'<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
+}
+function toggleSonidoAf(btn){
+  var v=btn.previousElementSibling;
+  if(!v)return;
+  v.muted=!v.muted;
+  btn.textContent=v.muted?'🔇':'🔊';
+}
+function rAfichesGrandes(){
+  var pa=poolAfiches(),pr=poolResultados();
+  if(aficheIdx>=pa.length)aficheIdx=0;
+  if(resultadoIdx>=pr.length)resultadoIdx=0;
+  pintarMediaBox('afGrande',pa.length?pa[aficheIdx]:null,'Aun no hay afiches publicados.');
+  pintarMediaBox('resGrande',pr.length?pr[resultadoIdx]:null,'Aun no hay resultados publicados.');
+  if(!aficheRotTimerSet){
+    aficheRotTimerSet=true;
+    setInterval(function(){
+      var pa2=poolAfiches(),pr2=poolResultados();
+      if(pa2.length)aficheIdx=(aficheIdx+1)%pa2.length;
+      if(pr2.length)resultadoIdx=(resultadoIdx+1)%pr2.length;
+      rAfichesGrandes();
+    },AFICHE_ROT_MS);
+  }
 }
 
 function rResults(){
@@ -2341,7 +2411,7 @@ function sendWA(){
   window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
-var SECS=["hero","ranking","partidos","resultados","perfil","estadisticas","galeria","tienda"];
+var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","galeria","tienda"];
 window.addEventListener("scroll",function(){
   var sy=window.scrollY||window.pageYOffset;
   for(var i=0;i<SECS.length;i++){
