@@ -243,6 +243,8 @@ section{padding:4rem 1.5rem}
 .chatbtn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:.68rem;padding:.35rem .8rem;border:1px solid var(--az);border-radius:4px;cursor:pointer;background:transparent;color:var(--az)}
 .chatpanel{margin-top:.7rem;border-top:1px dashed rgba(255,255,255,.15);padding-top:.7rem}
 .chattitle{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--az);margin-bottom:.5rem}
+.chatquien{font-size:.72rem;color:var(--gl);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.chatquiensel{background:rgba(0,0,0,.3);border:1px solid var(--gm);border-radius:5px;color:var(--bl);padding:.25rem .5rem;font-family:'Barlow',sans-serif;font-size:.75rem}
 .chatmsgs{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:.35rem;padding:.4rem;background:rgba(0,0,0,.25);border-radius:6px;margin-bottom:.5rem}
 .chatmsg{max-width:80%;padding:.4rem .6rem;border-radius:8px;font-size:.8rem;line-height:1.25}
 .chatmsg .chatde{display:block;font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.7;margin-bottom:.1rem}
@@ -573,9 +575,9 @@ var METRO=["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baqu
    ============================================================
    Se activa solo dentro de un desafio con estado "Aceptado". Cada
    desafio aceptado tiene su propia sala de chat, identificada por
-   su id (d.id). No hay login por jugador todavia (misma logica de
-   confianza que Aceptar/Rechazar desafios): "yo" es el nombre del
-   perfil donde se abrio el chat. */
+   su id (d.id). No hay login por jugador todavia, asi que "quien
+   eres" se elige a mano con un selector dentro del propio chat
+   (mismo criterio de confianza que el resto del sitio). */
 var firebaseConfig={
   apiKey:"AIzaSyA237FUvmXmEXDuhs7Mz2cO1TV6kmEsqo0",
   authDomain:"chat-app-accc3.firebaseapp.com",
@@ -592,43 +594,66 @@ try{
   }
 }catch(e){console.warn('No se pudo iniciar el chat.',e);}
 
-var chatUnsub={}; // desafioId(raw) -> funcion para cancelar el listener activo
-var chatYo={};    // desafioId(raw) -> nombre de quien tiene el panel abierto
+var chatUnsub={};    // desafioId(raw) -> funcion para cancelar el listener activo
+var chatYo={};       // desafioId(raw) -> nombre elegido manualmente como remitente
+var chatLastMsgs={}; // desafioId(raw) -> ultima lista de mensajes recibida (para repintar sin refetch)
+var chatAbierto=null;     // desafioId(raw) del chat que el usuario dejo abierto (o null)
+var chatAbiertoSugerido=null; // nombre de perfil sugerido para ese chat (por si no ha elegido aun)
 
 // Los ids de desafio pueden traer espacios u otros caracteres; para usarlos
 // como id de elemento HTML los limpiamos, pero el id real (con jsAttr) es
 // el que se usa para guardar/leer en Firestore.
 function domSafe(s){return String(s==null?"":s).replace(/[^a-zA-Z0-9_-]/g,'_');}
 
-function toggleChatPanel(desafioId,yo){
+function toggleChatPanel(desafioId,de,para,sugerido){
   var elId=domSafe(desafioId);
   var panel=document.getElementById('chatpanel-'+elId);
   if(!panel)return;
   var abrir=(panel.style.display==='none'||!panel.style.display);
-  if(!abrir){
-    panel.style.display='none';
-    if(chatUnsub[desafioId]){chatUnsub[desafioId]();delete chatUnsub[desafioId];}
-    return;
-  }
+  if(!abrir){cerrarChatPanel(desafioId);return;}
+  chatAbierto=desafioId;
+  chatAbiertoSugerido=sugerido;
+  abrirChatPanelInterno(desafioId,de,para,sugerido);
+}
+
+function cerrarChatPanel(desafioId){
+  var elId=domSafe(desafioId);
+  var panel=document.getElementById('chatpanel-'+elId);
+  if(panel)panel.style.display='none';
+  if(chatUnsub[desafioId]){chatUnsub[desafioId]();delete chatUnsub[desafioId];}
+  if(chatAbierto===desafioId){chatAbierto=null;chatAbiertoSugerido=null;}
+}
+
+// Reconstruye el panel (selector de nombre + mensajes + input) y (re)suscribe
+// el listener de Firestore. Se usa tanto al abrir el chat como al restaurarlo
+// despues de que el refresco automatico haya vuelto a dibujar el perfil.
+function abrirChatPanelInterno(desafioId,de,para,sugerido){
+  var elId=domSafe(desafioId);
+  var panel=document.getElementById('chatpanel-'+elId);
+  if(!panel)return;
   panel.style.display='block';
-  chatYo[desafioId]=yo;
   if(!chatDb){
     panel.innerHTML='<div class="chattitle">Chat para comunicarse de forma directa entre contrincantes</div>'
       +'<div class="chatoff">El chat no esta disponible por ahora.</div>';
     return;
   }
+  var actual=chatYo[desafioId]||sugerido||de;
+  chatYo[desafioId]=actual;
   panel.innerHTML='<div class="chattitle">Chat para comunicarse de forma directa entre contrincantes</div>'
+    +'<div class="chatquien">Enviando como '
+    +'<select class="chatquiensel" id="chatquien-'+elId+'" onchange="cambiarChatYo(\''+jsAttr(desafioId)+'\',this.value)">'
+    +'<option value="'+jsAttr(de)+'"'+(actual===de?' selected':'')+'>'+esc(de)+'</option>'
+    +'<option value="'+jsAttr(para)+'"'+(actual===para?' selected':'')+'>'+esc(para)+'</option>'
+    +'</select></div>'
     +'<div class="chatmsgs" id="chatmsgs-'+elId+'"><div class="chatoff">Cargando...</div></div>'
     +'<div class="chatinputrow">'
     +'<input class="chatinput" id="chatinput-'+elId+'" type="text" maxlength="500" placeholder="Escribe un mensaje..." onkeydown="if(event.key===\'Enter\')enviarChatMsg(\''+jsAttr(desafioId)+'\')">'
     +'<button class="chatsend" onclick="enviarChatMsg(\''+jsAttr(desafioId)+'\')">Enviar</button>'
     +'</div>';
+  if(chatLastMsgs[desafioId])renderChatMessages(desafioId);
   if(chatUnsub[desafioId])chatUnsub[desafioId]();
   chatUnsub[desafioId]=chatDb.collection('chats').where('chatId','==',desafioId)
     .onSnapshot(function(snap){
-      var cont=document.getElementById('chatmsgs-'+elId);
-      if(!cont)return;
-      if(snap.empty){cont.innerHTML='<div class="chatoff">Aun no hay mensajes. Escribe el primero.</div>';return;}
       var msgs=[];
       snap.forEach(function(doc){msgs.push(doc.data());});
       msgs.sort(function(a,b){
@@ -636,18 +661,53 @@ function toggleChatPanel(desafioId,yo){
         var tb=(b.ts&&b.ts.toMillis)?b.ts.toMillis():0;
         return ta-tb;
       });
-      var h='';
-      msgs.forEach(function(m){
-        var mio=(m.de===yo);
-        h+='<div class="chatmsg '+(mio?'mio':'otro')+'"><span class="chatde">'+esc(m.de)+'</span><span class="chattxt">'+esc(m.texto)+'</span></div>';
-      });
-      cont.innerHTML=h;
-      cont.scrollTop=cont.scrollHeight;
+      chatLastMsgs[desafioId]=msgs;
+      renderChatMessages(desafioId);
     },function(err){
       console.warn('Error escuchando el chat.',err);
       var cont=document.getElementById('chatmsgs-'+elId);
       if(cont)cont.innerHTML='<div class="chatoff">No se pudo cargar el chat ('+(err&&err.code?err.code:'error desconocido')+').</div>';
     });
+}
+
+// Cambia manualmente quien esta "hablando" en este chat (selector propio,
+// no se infiere solo del perfil que este abierto) y repinta con los mensajes
+// ya recibidos, sin necesidad de volver a consultar Firestore.
+function cambiarChatYo(desafioId,valor){
+  chatYo[desafioId]=valor;
+  if(chatAbierto===desafioId)chatAbiertoSugerido=valor;
+  renderChatMessages(desafioId);
+}
+
+function renderChatMessages(desafioId){
+  var elId=domSafe(desafioId);
+  var cont=document.getElementById('chatmsgs-'+elId);
+  if(!cont)return;
+  var msgs=chatLastMsgs[desafioId]||[];
+  if(!msgs.length){cont.innerHTML='<div class="chatoff">Aun no hay mensajes. Escribe el primero.</div>';return;}
+  var yo=chatYo[desafioId];
+  var h='';
+  msgs.forEach(function(m){
+    var mio=(m.de===yo);
+    h+='<div class="chatmsg '+(mio?'mio':'otro')+'"><span class="chatde">'+esc(m.de)+'</span><span class="chattxt">'+esc(m.texto)+'</span></div>';
+  });
+  cont.innerHTML=h;
+  cont.scrollTop=cont.scrollHeight;
+}
+
+// Se llama despues de cada re-render del perfil (el refresco automatico
+// reconstruye todo el HTML de los desafios), para que un chat que el
+// usuario dejo abierto no se vea cerrado por la actualizacion de datos.
+function restaurarChatAbiertoSiCorresponde(){
+  if(!chatAbierto)return;
+  var d=null;
+  for(var i=0;i<(DATA.desafios||[]).length;i++){if(DATA.desafios[i].id===chatAbierto){d=DATA.desafios[i];break;}}
+  var elId=domSafe(chatAbierto);
+  if(!d||d.estado!=='Aceptado'||!document.getElementById('chatpanel-'+elId)){
+    chatAbierto=null;chatAbiertoSugerido=null;
+    return;
+  }
+  abrirChatPanelInterno(chatAbierto,d.de,d.para,chatAbiertoSugerido);
 }
 
 function enviarChatMsg(desafioId){
@@ -670,6 +730,36 @@ function enviarChatMsg(desafioId){
     alert('No se pudo enviar el mensaje. Intenta de nuevo.');
   });
 }
+
+// ---- Fecha y hora del desafio: helpers de formato ----
+// Convierte el valor del <input type="date"> (YYYY-MM-DD) en un texto legible
+// tipo "Sabado 01-08" (dia de la semana + dia-mes), para que quede claro a
+// que numero del mes corresponde sin tener que adivinar.
+function diaLegibleDesdeFecha(v){
+  if(!v)return '';
+  var p=v.split('-');
+  if(p.length!==3)return v;
+  var dt=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+  if(isNaN(dt.getTime()))return v;
+  var dias=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+  function pad(n){return n<10?'0'+n:''+n;}
+  return dias[dt.getDay()]+' '+pad(dt.getDate())+'-'+pad(dt.getMonth()+1);
+}
+// Defensa ante el bug de Google Sheets que autoformatea un texto tipo "10:00"
+// como celda de Hora y luego lo devuelve como fecha ISO ancla en 1899-12-30:
+// si detectamos ese patron, mostramos un aviso en vez del texto crudo.
+function fmtDesafioHora(v){
+  if(!v)return '';
+  if(/^1899-12-(29|30|31)T/.test(v))return '(horario por confirmar)';
+  return v;
+}
+function fmtDesafioDia(v){
+  if(!v)return '';
+  var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+  if(m)return diaLegibleDesdeFecha(m[1]+'-'+m[2]+'-'+m[3]);
+  return v;
+}
+
 
 // ============================================================
 // SANITIZACION DE SALIDA (proteccion basica contra XSS)
@@ -967,7 +1057,7 @@ function loadLiveData(){
 
 // Refresco automatico: reconsulta Google Sheets cada 90s mientras la pestana este visible,
 // asi los cambios de resultados se reflejan solos sin necesidad de recargar (F5).
-var LIVE_REFRESH_MS=90000;
+var LIVE_REFRESH_MS=300000;
 function startLiveRefresh(){
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0)return;
   setInterval(function(){
@@ -1504,7 +1594,9 @@ function enviarDesafio(paraNombre){
   var hora=(document.getElementById("dfHora")||{}).value||"";
   var cancha=(document.getElementById("dfCancha")||{}).value||"";
   var mensaje=(document.getElementById("dfMensaje")||{}).value||"";
-  dia=dia.trim();hora=hora.trim();cancha=cancha.trim();mensaje=mensaje.trim();
+  dia=diaLegibleDesdeFecha(dia.trim());
+  hora=hora.trim()?hora.trim()+" hrs":""; // el sufijo evita que Google Sheets autoformatee esto como celda de Hora
+  cancha=cancha.trim();mensaje=mensaje.trim();
   if(!de){alert("Selecciona tu nombre para enviar el desafio.");return;}
   if(de===paraNombre){alert("No puedes desafiarte a ti mismo.");return;}
 
@@ -1565,7 +1657,7 @@ function rDesafioFormPanel(nombre){
   for(var i=0;i<activos.length;i++)opts+="<option value=\""+esc(activos[i].nombre)+"\">"+esc(activos[i].nombre)+"</option>";
   return "<div class=\"dfform\">"
     +"<select class=\"fsel\" id=\"dfDe\""+(desafioEnviando?" disabled":"")+">"+opts+"</select>"
-    +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"text\" placeholder=\"Dia (ej: Sabado 14)\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"text\" placeholder=\"Hora (ej: 10:00)\""+(desafioEnviando?" disabled":"")+"></div>"
+    +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"date\" aria-label=\"Dia del desafio\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"time\" aria-label=\"Hora del desafio\""+(desafioEnviando?" disabled":"")+"></div>"
     +"<input class=\"fi\" id=\"dfCancha\" type=\"text\" placeholder=\"Cancha (opcional)\""+(desafioEnviando?" disabled":"")+">"
     +"<input class=\"fi\" id=\"dfMensaje\" type=\"text\" placeholder=\"Mensaje (opcional)\""+(desafioEnviando?" disabled":"")+">"
     +"<div class=\"dfactions\">"
@@ -1586,7 +1678,7 @@ function rDesafiosLista(nombre){
 
   for(var i=0;i<recibidos.length;i++){
     var d=recibidos[i];
-    var detalle=[d.dia,d.hora,d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
+    var detalle=[fmtDesafioDia(d.dia),fmtDesafioHora(d.hora),d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
     h+="<div class=\"descard pend\"><div class=\"destit\">"+esc(d.de)+" te desafio</div>"
       +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"")
       +(d.mensaje?"<div class=\"desmsg\">\u201c"+esc(d.mensaje)+"\u201d</div>":"")
@@ -1601,10 +1693,10 @@ function rDesafiosLista(nombre){
   }
   for(var i=0;i<aceptados.length;i++){
     var d=aceptados[i],rival=d.de===nombre?d.para:d.de;
-    var detalle=[d.dia,d.hora,d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
+    var detalle=[fmtDesafioDia(d.dia),fmtDesafioHora(d.hora),d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
     h+="<div class=\"descard ok\"><div class=\"destit\">Duelo confirmado vs "+esc(rival)+"</div>"
       +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"")
-      +"<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
+      +"<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(d.de)+"','"+jsAttr(d.para)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
       +"<div id=\"chatpanel-"+domSafe(d.id)+"\" class=\"chatpanel\" style=\"display:none\"></div>"
       +"</div>";
   }
@@ -1737,6 +1829,7 @@ function showProfile(nombre,scroll){
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div>"
     +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>";
   if(scroll!==false)document.getElementById("perfil").scrollIntoView({behavior:"smooth"});
+  restaurarChatAbiertoSiCorresponde();
 }
 
 function populateH2H(){
