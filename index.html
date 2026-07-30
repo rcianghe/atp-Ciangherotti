@@ -382,8 +382,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .fls a{font-size:.75rem;color:var(--gl);text-decoration:none;transition:color .2s}
 .fls a:hover{color:var(--v)}
 .fc{margin-top:1.1rem;font-size:.62rem;color:rgba(255,255,255,.18)}
-.fvc{margin-top:.6rem;opacity:.6}
-.fvc img{height:18px;vertical-align:middle}
+.fvc{margin-top:.7rem}
+.viscount{display:inline-flex;align-items:center;gap:.55rem;background:rgba(0,0,0,.25);border:1px solid var(--gm);border-radius:999px;padding:.4rem 1rem .4rem .7rem}
+.visball{font-size:.95rem;line-height:1}
+.vislabel{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gl)}
+.visnum{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:1px;color:var(--v);min-width:1.4em;text-align:left}
 .fi2{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
 .fi2.visible{opacity:1;transform:translateY(0)}
 .mn{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(14,14,14,.97);border-top:1px solid var(--v);padding:.38rem .15rem;z-index:100;grid-template-columns:repeat(7,1fr);gap:.08rem}
@@ -550,7 +553,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#galeria">Galeria</a><a href="#partidos">Partidos</a><a href="#tienda">Tienda</a>
   </div>
   <div class="fc">Club de Tenis Estadio Quilicura 2026 v3.0</div>
-  <div class="fvc"><img src="https://hits.sh/rcianghe.github.io/atp-Ciangherotti.svg?label=visitas&color=5bbf2a&labelColor=1a1a1a&style=flat-square" alt="Contador de visitas" loading="lazy"></div>
+  <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
 </footer>
 
 <nav class="mn">
@@ -708,6 +711,32 @@ function restaurarChatAbiertoSiCorresponde(){
     return;
   }
   abrirChatPanelInterno(chatAbierto,d.de,d.para,chatAbiertoSugerido);
+}
+
+// ---- Contador de visitas del club ----
+// Reemplaza la insignia externa (hits.sh) por un conteo propio en la misma
+// base de Firestore que ya usa el chat. VISITAS_STARTING_OFFSET es el numero
+// que mostraba la insignia anterior al momento del cambio, para no perder el
+// historial acumulado.
+var VISITAS_STARTING_OFFSET=65;
+function initVisitas(){
+  if(!chatDb)return;
+  var ref=chatDb.collection('site').doc('visitas');
+  chatDb.runTransaction(function(t){
+    return t.get(ref).then(function(doc){
+      var nuevo=(doc.exists&&typeof doc.data().count==='number'?doc.data().count:VISITAS_STARTING_OFFSET)+1;
+      t.set(ref,{count:nuevo});
+      return nuevo;
+    });
+  }).then(function(nuevo){
+    var el=document.getElementById('visitasNum');
+    if(el)el.textContent=nuevo;
+  }).catch(function(err){console.warn('No se pudo actualizar el contador de visitas.',err);});
+  // Escucha en vivo por si otra persona entra al sitio mientras esta pestana sigue abierta.
+  ref.onSnapshot(function(s){
+    var el=document.getElementById('visitasNum');
+    if(el&&s.exists&&typeof s.data().count==='number')el.textContent=s.data().count;
+  });
 }
 
 function enviarChatMsg(desafioId){
@@ -1079,6 +1108,7 @@ function init(){
   window.scrollTo(0,0);
   loadLiveData();
   startLiveRefresh();
+  initVisitas();
 }
 
 function rHeroStats(){
