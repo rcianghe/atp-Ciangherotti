@@ -1249,13 +1249,17 @@ function esVideoUrl(u){
 // se pueden usar como src de <img>/<video>. Los links de album de Google Fotos
 // (photos.app.goo.gl o photos.google.com/share/...) NO se pueden convertir:
 // apuntan a una pagina, no a un archivo, por eso no sirven para esta columna.
-function normalizarMediaUrl(u){
-  if(!u)return u;
+function extraerDriveId(u){
+  if(!u)return null;
   var m=u.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
-  if(m)return 'https://drive.google.com/uc?export=view&id='+m[1];
+  if(m)return m[1];
   m=u.match(/[?&]id=([^&]+)/);
-  if(m&&/drive\.google\.com/.test(u))return 'https://drive.google.com/uc?export=view&id='+m[1];
-  return u;
+  if(m&&/drive\.google\.com/.test(u))return m[1];
+  return null;
+}
+function normalizarMediaUrl(u){
+  var id=extraerDriveId(u);
+  return id?('https://drive.google.com/uc?export=view&id='+id):u;
 }
 function poolAfiches(){
   return (DATA.desafios||[]).filter(function(d){return d.afiche;}).map(function(d){
@@ -1275,11 +1279,17 @@ function pintarMediaBox(contId,item,vacioTexto){
     el.innerHTML='<div class="ec"><div class="eci">⚠️</div><div class="ect">Ese link es de un album de Google Fotos y no se puede mostrar aqui.<br>Sube la foto a Google Drive y pega ese link.</div></div>';
     return;
   }
-  var urlFinal=normalizarMediaUrl(item.url);
-  var esVideo=esVideoUrl(urlFinal);
-  var mediaHtml=esVideo
-    ? '<video class="afmed" src="'+esc(urlFinal)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
-    : '<img class="afmed" src="'+esc(urlFinal)+'" alt="Afiche" loading="lazy">';
+  var driveId=extraerDriveId(item.url);
+  var mediaHtml;
+  if(driveId){
+    // El visor de Drive detecta solo si es foto o video y lo muestra bien en ambos casos.
+    mediaHtml='<iframe class="afmed" src="https://drive.google.com/file/d/'+driveId+'/preview" frameborder="0" allow="autoplay" allowfullscreen></iframe>';
+  }else{
+    var esVideo=esVideoUrl(item.url);
+    mediaHtml=esVideo
+      ? '<video class="afmed" src="'+esc(item.url)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
+      : '<img class="afmed" src="'+esc(item.url)+'" alt="Afiche" loading="lazy">';
+  }
   el.innerHTML=mediaHtml
     +'<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
 }
