@@ -1245,6 +1245,18 @@ var aficheIdx=0,resultadoIdx=0,aficheRotTimerSet=false;
 function esVideoUrl(u){
   return /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test((u||'').split('?')[0]) || /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(u||'');
 }
+// Convierte links de "compartir" comunes (Google Drive) en links directos que
+// se pueden usar como src de <img>/<video>. Los links de album de Google Fotos
+// (photos.app.goo.gl o photos.google.com/share/...) NO se pueden convertir:
+// apuntan a una pagina, no a un archivo, por eso no sirven para esta columna.
+function normalizarMediaUrl(u){
+  if(!u)return u;
+  var m=u.match(/drive\.google\.com\/file\/d\/([^\/]+)/);
+  if(m)return 'https://drive.google.com/uc?export=view&id='+m[1];
+  m=u.match(/[?&]id=([^&]+)/);
+  if(m&&/drive\.google\.com/.test(u))return 'https://drive.google.com/uc?export=view&id='+m[1];
+  return u;
+}
 function poolAfiches(){
   return (DATA.desafios||[]).filter(function(d){return d.afiche;}).map(function(d){
     return {url:d.afiche,titulo:d.de+' vs '+d.para,sub:[fmtDesafioDia?fmtDesafioDia(d.dia):d.dia,d.cancha?('Cancha '+d.cancha):''].filter(Boolean).join(' · ')};
@@ -1259,10 +1271,15 @@ function pintarMediaBox(contId,item,vacioTexto){
   var el=document.getElementById(contId);
   if(!el)return;
   if(!item){el.innerHTML='<div class="ec"><div class="eci">🖼️</div><div class="ect">'+vacioTexto+'</div></div>';return;}
-  var esVideo=esVideoUrl(item.url);
+  if(/photos\.app\.goo\.gl|photos\.google\.com\/share/i.test(item.url)){
+    el.innerHTML='<div class="ec"><div class="eci">⚠️</div><div class="ect">Ese link es de un album de Google Fotos y no se puede mostrar aqui.<br>Sube la foto a Google Drive y pega ese link.</div></div>';
+    return;
+  }
+  var urlFinal=normalizarMediaUrl(item.url);
+  var esVideo=esVideoUrl(urlFinal);
   var mediaHtml=esVideo
-    ? '<video class="afmed" src="'+esc(item.url)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
-    : '<img class="afmed" src="'+esc(item.url)+'" alt="Afiche" loading="lazy">';
+    ? '<video class="afmed" src="'+esc(urlFinal)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
+    : '<img class="afmed" src="'+esc(urlFinal)+'" alt="Afiche" loading="lazy">';
   el.innerHTML=mediaHtml
     +'<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
 }
