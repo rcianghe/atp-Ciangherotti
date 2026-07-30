@@ -624,14 +624,20 @@ function toggleChatPanel(desafioId,yo){
     +'<button class="chatsend" onclick="enviarChatMsg(\''+jsAttr(desafioId)+'\')">Enviar</button>'
     +'</div>';
   if(chatUnsub[desafioId])chatUnsub[desafioId]();
-  chatUnsub[desafioId]=chatDb.collection('chats').where('chatId','==',desafioId).orderBy('ts','asc')
+  chatUnsub[desafioId]=chatDb.collection('chats').where('chatId','==',desafioId)
     .onSnapshot(function(snap){
       var cont=document.getElementById('chatmsgs-'+elId);
       if(!cont)return;
       if(snap.empty){cont.innerHTML='<div class="chatoff">Aun no hay mensajes. Escribe el primero.</div>';return;}
+      var msgs=[];
+      snap.forEach(function(doc){msgs.push(doc.data());});
+      msgs.sort(function(a,b){
+        var ta=(a.ts&&a.ts.toMillis)?a.ts.toMillis():0;
+        var tb=(b.ts&&b.ts.toMillis)?b.ts.toMillis():0;
+        return ta-tb;
+      });
       var h='';
-      snap.forEach(function(doc){
-        var m=doc.data();
+      msgs.forEach(function(m){
         var mio=(m.de===yo);
         h+='<div class="chatmsg '+(mio?'mio':'otro')+'"><span class="chatde">'+esc(m.de)+'</span><span class="chattxt">'+esc(m.texto)+'</span></div>';
       });
@@ -640,7 +646,7 @@ function toggleChatPanel(desafioId,yo){
     },function(err){
       console.warn('Error escuchando el chat.',err);
       var cont=document.getElementById('chatmsgs-'+elId);
-      if(cont)cont.innerHTML='<div class="chatoff">No se pudo cargar el chat.</div>';
+      if(cont)cont.innerHTML='<div class="chatoff">No se pudo cargar el chat ('+(err&&err.code?err.code:'error desconocido')+').</div>';
     });
 }
 
