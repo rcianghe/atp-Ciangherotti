@@ -1659,7 +1659,8 @@ function saveFichaTecnica(nombre){
     nivel:document.getElementById("ftsel-nivel").value,
     mano:document.getElementById("ftsel-mano").value,
     superficie:document.getElementById("ftsel-superficie").value,
-    golpe:document.getElementById("ftsel-golpe").value
+    golpe:document.getElementById("ftsel-golpe").value,
+    liveUrl:document.getElementById("ftsel-liveurl").value.trim()
   };
 
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
@@ -1675,7 +1676,7 @@ function saveFichaTecnica(nombre){
 
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe})
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,liveUrl:data.liveUrl})
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
       SERVER_FICHAS[nombre]=data; // reflejo optimista, sin esperar el proximo refresco
@@ -1709,6 +1710,8 @@ function renderFichaTecnica(nombre){
     return "<div class=\"ftgrid\">"
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
+      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Link partido en vivo (YouTube)</div>"
+      +"<input type=\"url\" class=\"ftselect\" id=\"ftsel-liveurl\" placeholder=\"https://youtube.com/live/...\" value=\""+esc(ft.liveUrl||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+jsAttr(nombre)+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
@@ -1717,13 +1720,14 @@ function renderFichaTecnica(nombre){
       +"<div class=\"ftsync\">"+(syncOn?"Se sincroniza para todos los jugadores.":"Se guarda en este dispositivo por ahora.")+"</div>";
   }
   function val(v){return v?("<div class=\"ftval\">"+esc(v)+"</div>"):"<div class=\"ftval tbd\">Por definir</div>";}
+  var liveBtn=ft.liveUrl?("<a class=\"ftbtn\" style=\"display:inline-block;text-decoration:none;text-align:center\" href=\""+esc(ft.liveUrl)+"\" target=\"_blank\" rel=\"noopener\">▶️ Ver partido en vivo</a>"):"";
   return "<div class=\"ftgrid\">"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Nivel</div>"+val(ft.nivel)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
     +"</div>"
-    +"<div class=\"ftactions\"><button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
+    +"<div class=\"ftactions\">"+liveBtn+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
 }
 
 // ============================================================
