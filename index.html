@@ -1295,8 +1295,15 @@ function pintarMediaBox(contId,item,vacioTexto){
   if(ytId){
     mediaHtml='<iframe class="afmed" src="https://www.youtube.com/embed/'+ytId+'?autoplay=1&mute=1&loop=1&playlist='+ytId+'&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
   }else if(driveId){
-    // El visor de Drive detecta solo si es foto o video y lo muestra bien en ambos casos.
-    mediaHtml='<iframe class="afmed" src="https://drive.google.com/file/d/'+driveId+'/preview" frameborder="0" allow="autoplay" allowfullscreen></iframe>';
+    if(esVideoUrl(item.url)){
+      // Video: mantenemos el visor de Drive (trae reproductor con controles).
+      mediaHtml='<iframe class="afmed" src="https://drive.google.com/file/d/'+driveId+'/preview" frameborder="0" allow="autoplay" allowfullscreen></iframe>';
+    }else{
+      // Foto: link directo de imagen (mucho mas rapido que el iframe del visor).
+      // Si el archivo no esta compartido como "cualquiera con el link" y el link
+      // directo falla, cae de vuelta al visor de Drive automaticamente.
+      mediaHtml='<img class="afmed" src="https://drive.google.com/uc?export=view&id='+driveId+'" alt="Afiche" loading="lazy" onerror="driveImgFallback(this,\''+driveId+'\')">';
+    }
   }else{
     var esVideo=esVideoUrl(item.url);
     mediaHtml=esVideo
@@ -1305,6 +1312,15 @@ function pintarMediaBox(contId,item,vacioTexto){
   }
   el.innerHTML=mediaHtml
     +'<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
+}
+function driveImgFallback(img,driveId){
+  var ifr=document.createElement('iframe');
+  ifr.className='afmed';
+  ifr.frameBorder='0';
+  ifr.setAttribute('allow','autoplay');
+  ifr.allowFullscreen=true;
+  ifr.src='https://drive.google.com/file/d/'+driveId+'/preview';
+  img.replaceWith(ifr);
 }
 function toggleSonidoAf(btn){
   var v=btn.previousElementSibling;
