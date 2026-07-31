@@ -1257,6 +1257,16 @@ function extraerDriveId(u){
   if(m&&/drive\.google\.com/.test(u))return m[1];
   return null;
 }
+function extraerYoutubeId(u){
+  if(!u)return null;
+  var m=u.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
+  if(m)return m[1];
+  m=u.match(/[?&]v=([A-Za-z0-9_-]+)/);
+  if(m&&/youtube\.com/.test(u))return m[1];
+  m=u.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/);
+  if(m)return m[1];
+  return null;
+}
 function normalizarMediaUrl(u){
   var id=extraerDriveId(u);
   return id?('https://drive.google.com/uc?export=view&id='+id):u;
@@ -1279,9 +1289,12 @@ function pintarMediaBox(contId,item,vacioTexto){
     el.innerHTML='<div class="ec"><div class="eci">⚠️</div><div class="ect">Ese link es de un album de Google Fotos y no se puede mostrar aqui.<br>Sube la foto a Google Drive y pega ese link.</div></div>';
     return;
   }
+  var ytId=extraerYoutubeId(item.url);
   var driveId=extraerDriveId(item.url);
   var mediaHtml;
-  if(driveId){
+  if(ytId){
+    mediaHtml='<iframe class="afmed" src="https://www.youtube.com/embed/'+ytId+'?autoplay=1&mute=1&loop=1&playlist='+ytId+'&rel=0&modestbranding=1&playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  }else if(driveId){
     // El visor de Drive detecta solo si es foto o video y lo muestra bien en ambos casos.
     mediaHtml='<iframe class="afmed" src="https://drive.google.com/file/d/'+driveId+'/preview" frameborder="0" allow="autoplay" allowfullscreen></iframe>';
   }else{
