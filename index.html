@@ -1798,6 +1798,7 @@ function responderDesafioUI(id,nuevoEstado,nombrePerfil){
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
       for(var i=0;i<DATA.desafios.length;i++){if(DATA.desafios[i].id===id){DATA.desafios[i].estado=nuevoEstado;break;}}
+      if(nuevoEstado==='Aceptado')avisarDesafioAceptado(id);
     }else{
       console.warn('No se pudo actualizar el desafio.',json);
       alert("No se pudo guardar la respuesta. Intenta de nuevo.");
@@ -1808,6 +1809,19 @@ function responderDesafioUI(id,nuevoEstado,nombrePerfil){
   }).then(function(){
     showProfile(nombrePerfil,false);
   });
+}
+
+// Cuando un jugador Acepta un desafio (es decir, ambos jugadores ya
+// coincidieron: uno lo envio y el otro lo acepto), se avisa al club
+// por WhatsApp para que puedan crear el afiche y, luego del partido,
+// subir el resultado en la ficha de ambos jugadores.
+function avisarDesafioAceptado(id){
+  var d=null;
+  for(var i=0;i<DATA.desafios.length;i++){if(DATA.desafios[i].id===id){d=DATA.desafios[i];break;}}
+  if(!d)return;
+  var detalle=[d.dia?fmtDesafioDia(d.dia):"",d.hora?fmtDesafioHora(d.hora):"",d.cancha?("Cancha "+d.cancha):""].filter(Boolean).join(" - ");
+  var msg="\uD83C\uDFBE Desafio CONFIRMADO\n"+d.de+" vs "+d.para+(detalle?"\n"+detalle:"")+"\n\nRecuerda crear el afiche y, cuando terminen, subir el resultado en la ficha de ambos jugadores.";
+  window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
 // Boton "Desafiar" que abre/cierra el formulario (va en la fila de disponibilidad).
