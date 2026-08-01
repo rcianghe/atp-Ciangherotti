@@ -1600,6 +1600,53 @@ var FICHA_TOKEN='Tainted6-Cedar7-Spirited2-Unburned9-Nearness6-Repaying1-Snooze2
 var SERVER_FICHAS={}; // se llena en transformLiveData() con lo que devuelve doGet
 var fichaEditando=null; // nombre del jugador cuya ficha esta en modo edicion
 var fichaGuardando=false;
+var liveEditando=null; // id del desafio cuyo link en vivo se esta editando
+var liveGuardando=false;
+
+// Busca el desafio "vigente" de un jugador: Aceptado, y donde
+// participa como De o Para. Si tiene mas de uno (no deberia pasar en
+// uso normal), toma el mas reciente por fecha de creacion.
+function desafioVivoActivo(nombre){
+  var lista=(DATA.desafios||[]).filter(function(d){
+    return d.estado==='Aceptado'&&(d.de===nombre||d.para===nombre);
+  });
+  if(!lista.length)return null;
+  lista.sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  return lista[0];
+}
+function toggleLiveEdit(desafioId){
+  liveEditando=(liveEditando===desafioId)?null:desafioId;
+}
+function saveLiveDesafio(desafioId,nombre){
+  if(liveGuardando)return;
+  var input=document.getElementById("live-input-"+desafioId);
+  var url=input?input.value.trim():'';
+
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
+    console.warn('No hay backend desplegado, no se puede guardar el link en vivo.');
+    return;
+  }
+
+  liveGuardando=true;
+  showProfile(nombre,false);
+
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({accion:'liveDesafio',token:FICHA_TOKEN,id:desafioId,nombre:nombre,liveUrl:url})
+  }).then(function(res){return res.json();}).then(function(json){
+    if(json&&json.ok){
+      (DATA.desafios||[]).forEach(function(d){if(d.id===desafioId)d.liveUrl=url;});
+    }else{
+      console.warn('No se pudo guardar el link en vivo.',json);
+    }
+  }).catch(function(err){
+    console.warn('Sin conexion al guardar el link en vivo.',err);
+  }).then(function(){
+    liveGuardando=false;
+    liveEditando=null;
+    showProfile(nombre,false);
+  });
+}
 
 function getFichaLocal(nombre){
   try{
@@ -1659,8 +1706,7 @@ function saveFichaTecnica(nombre){
     nivel:document.getElementById("ftsel-nivel").value,
     mano:document.getElementById("ftsel-mano").value,
     superficie:document.getElementById("ftsel-superficie").value,
-    golpe:document.getElementById("ftsel-golpe").value,
-    liveUrl:document.getElementById("ftsel-liveurl").value.trim()
+    golpe:document.getElementById("ftsel-golpe").value
   };
 
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
@@ -1676,10 +1722,10 @@ function saveFichaTecnica(nombre){
 
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,liveUrl:data.liveUrl})
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe})
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
-      SERVER_FICHAS[nombre]=data; // reflejo optimista, sin esperar el proximo refresco
+      SERVER_FICHAS[nombre]=Object.assign({},SERVER_FICHAS[nombre],data); // reflejo optimista, sin pisar "disponible"
       try{localStorage.removeItem("ficha_"+nombre);}catch(e){} // ya no hace falta el respaldo local
     }else{
       console.warn('No se pudo guardar la ficha en la Sheet, se guarda solo local.',json);
@@ -1710,8 +1756,6 @@ function renderFichaTecnica(nombre){
     return "<div class=\"ftgrid\">"
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
-      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Link partido en vivo (YouTube)</div>"
-      +"<input type=\"url\" class=\"ftselect\" id=\"ftsel-liveurl\" placeholder=\"https://youtube.com/live/...\" value=\""+esc(ft.liveUrl||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+jsAttr(nombre)+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
@@ -1720,14 +1764,41 @@ function renderFichaTecnica(nombre){
       +"<div class=\"ftsync\">"+(syncOn?"Se sincroniza para todos los jugadores.":"Se guarda en este dispositivo por ahora.")+"</div>";
   }
   function val(v){return v?("<div class=\"ftval\">"+esc(v)+"</div>"):"<div class=\"ftval tbd\">Por definir</div>";}
-  var liveBtn=ft.liveUrl?("<a class=\"ftbtn\" style=\"display:inline-block;text-decoration:none;text-align:center\" href=\""+esc(ft.liveUrl)+"\" target=\"_blank\" rel=\"noopener\">▶️ Ver partido en vivo</a>"):"";
   return "<div class=\"ftgrid\">"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Nivel</div>"+val(ft.nivel)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
     +"</div>"
-    +"<div class=\"ftactions\">"+liveBtn+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
+    +renderLiveDesafio(nombre)
+    +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
+}
+
+// Widget del link en vivo, scoped a un desafio Aceptado del jugador
+// (no a su ficha permanente). No muestra nada si no tiene ningun
+// desafio vigente en ese estado.
+function renderLiveDesafio(nombre){
+  var d=desafioVivoActivo(nombre);
+  if(!d)return "";
+  var rival=(d.de===nombre)?d.para:d.de;
+
+  if(liveEditando===d.id){
+    return "<div class=\"ftitem\" style=\"grid-column:1/-1;margin-top:.6rem\">"
+      +"<div class=\"ftlbl\">Link en vivo del duelo vs "+esc(rival)+" (YouTube)</div>"
+      +"<input type=\"url\" class=\"ftselect\" id=\"live-input-"+esc(d.id)+"\" placeholder=\"https://youtube.com/live/...\" value=\""+esc(d.liveUrl||'')+"\""+(liveGuardando?" disabled":"")+">"
+      +"</div>"
+      +"<div class=\"ftactions\">"
+      +"<button class=\"ftbtn save\""+(liveGuardando?" disabled":"")+" onclick=\"saveLiveDesafio('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">"+(liveGuardando?"Guardando...":"Guardar")+"</button>"
+      +"<button class=\"ftbtn cancel\""+(liveGuardando?" disabled":"")+" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"')\">Cancelar</button>"
+      +"</div>";
+  }
+
+  var btnTxt=d.liveUrl?"\u270f\ufe0f Editar link en vivo":"\u25b6\ufe0f Agregar link en vivo";
+  var verBtn=d.liveUrl?("<a class=\"ftbtn\" style=\"display:inline-block;text-decoration:none;text-align:center\" href=\""+esc(d.liveUrl)+"\" target=\"_blank\" rel=\"noopener\">\u25b6\ufe0f Ver partido en vivo</a>"):"";
+  return "<div class=\"ftactions\" style=\"margin-top:.6rem\">"
+    +verBtn
+    +"<button class=\"ftbtn edit\" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"')\">"+btnTxt+"</button>"
+    +"</div>";
 }
 
 // ============================================================
