@@ -817,12 +817,16 @@ var DESAFIO_MARGEN_HORAS=4;
 function desafioVigente(d){
   if(!d||d.estado!=='Aceptado')return false;
   if(!d.dia)return true;
-  var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.dia);
-  if(!m)return true;
+  var y,mo,da;
+  var mIso=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.dia);
+  var mDmy=/^(\d{2})\/(\d{2})\/(\d{4})/.exec(d.dia);
+  if(mIso){y=Number(mIso[1]);mo=Number(mIso[2]);da=Number(mIso[3]);}
+  else if(mDmy){da=Number(mDmy[1]);mo=Number(mDmy[2]);y=Number(mDmy[3]);}
+  else return true;
   var horaM=/^(\d{1,2}):(\d{2})/.exec(d.hora||'');
   var h=horaM?parseInt(horaM[1],10):23;
   var mi=horaM?parseInt(horaM[2],10):59;
-  var cierre=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),h,mi,0,0);
+  var cierre=new Date(y,mo-1,da,h,mi,0,0);
   cierre=new Date(cierre.getTime()+DESAFIO_MARGEN_HORAS*3600000);
   return new Date()<cierre;
 }
