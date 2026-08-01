@@ -78,7 +78,7 @@ section{padding:4rem 1.5rem}
 .herofig{display:none}
 @media (min-width:680px){
   .pherowrap.hasfig{min-height:380px;padding-right:210px}
-  .herofig{display:block;position:absolute;right:-6px;bottom:-8px;height:360px;width:auto;pointer-events:auto;z-index:2;
+  .herofig{display:block;position:absolute;right:6px;bottom:-8px;width:220px;height:360px;object-fit:contain;object-position:bottom center;pointer-events:auto;z-index:2;
     animation:fxIn 1s cubic-bezier(.2,.9,.3,1) both, fxBreathe 4.5s ease-in-out 1s infinite, fxGlow 4.5s ease-in-out 1s infinite;
     transition:transform .35s ease}
   .herofig:hover{transform:rotate(-3deg) translateY(-10px) scale(1.05)}
@@ -272,6 +272,8 @@ section{padding:4rem 1.5rem}
 .chatoff{color:var(--gl);font-size:.78rem;padding:.3rem}
 .ftgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;padding:1.1rem;border-top:1px solid rgba(255,255,255,.05)}
 .ftitem{background:rgba(0,0,0,.18);border-radius:8px;padding:.55rem .7rem}
+.ftitem.datos{background:rgba(46,125,209,.1);border:1px solid rgba(46,125,209,.4)}
+.ftitem.datos .ftlbl{color:var(--az)}
 .ftitem.comuna{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.4)}
 .ftitem.comuna .ftlbl{color:var(--ro)}
 .ftlbl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
@@ -1867,7 +1869,7 @@ function renderFichaTecnica(nombre){
         var v=opciones[i];
         opts+="<option value=\""+esc(v)+"\""+(ft[campo]===v?" selected":"")+">"+esc(v)+"</option>";
       }
-      return "<div class=\"ftitem\"><div class=\"ftlbl\">"+esc(label)+"</div><select class=\"ftselect\" id=\"ftsel-"+campo+"\""+(fichaGuardando?" disabled":"")+">"+opts+"</select></div>";
+      return "<div class=\"ftitem datos\"><div class=\"ftlbl\">"+esc(label)+"</div><select class=\"ftselect\" id=\"ftsel-"+campo+"\""+(fichaGuardando?" disabled":"")+">"+opts+"</select></div>";
     }
     var syncOn=APPS_SCRIPT_URL&&APPS_SCRIPT_URL.indexOf('PEGA_AQUI')!==0;
     return "<div class=\"ftgrid\">"
@@ -1886,10 +1888,10 @@ function renderFichaTecnica(nombre){
   }
   function val(v){return v?("<div class=\"ftval\">"+esc(v)+"</div>"):"<div class=\"ftval tbd\">Por definir</div>";}
   return "<div class=\"ftgrid\">"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Nivel</div>"+val(ft.nivel)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
+    +"<div class=\"ftitem datos\"><div class=\"ftlbl\">Nivel</div>"+val(ft.nivel)+"</div>"
+    +"<div class=\"ftitem datos\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
+    +"<div class=\"ftitem datos\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
+    +"<div class=\"ftitem datos\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
     +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna laboral</div>"+val(ft.comunaLaboral)+"</div>"
     +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna particular</div>"+val(ft.comunaParticular)+"</div>"
     +"</div>"
