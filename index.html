@@ -722,7 +722,7 @@ function restaurarChatAbiertoSiCorresponde(){
   var d=null;
   for(var i=0;i<(DATA.desafios||[]).length;i++){if(DATA.desafios[i].id===chatAbierto){d=DATA.desafios[i];break;}}
   var elId=domSafe(chatAbierto);
-  if(!d||d.estado!=='Aceptado'||!document.getElementById('chatpanel-'+elId)){
+  if(!d||!desafioVigente(d)||!document.getElementById('chatpanel-'+elId)){
     chatAbierto=null;chatAbiertoSugerido=null;
     return;
   }
@@ -803,6 +803,28 @@ function fmtDesafioDia(v){
   var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v);
   if(m)return diaLegibleDesdeFecha(m[1]+'-'+m[2]+'-'+m[3]);
   return v;
+}
+
+// Determina si un desafio Aceptado sigue "vigente" (el duelo todavia
+// no paso), dandole un margen de horas despues del dia/hora pactado
+// para que el partido termine de jugarse. Se usa para ocultar solos
+// el chat privado y el link en vivo una vez jugado el duelo, sin que
+// haya que ir a cambiar el Estado a mano en la planilla.
+// Si no se puede leer una fecha valida en "dia" (texto libre, carga
+// manual rara, etc.), se lo trata como vigente por las dudas — mejor
+// dejar un chat de mas visible que hacer desaparecer uno valido.
+var DESAFIO_MARGEN_HORAS=4;
+function desafioVigente(d){
+  if(!d||d.estado!=='Aceptado')return false;
+  if(!d.dia)return true;
+  var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.dia);
+  if(!m)return true;
+  var horaM=/^(\d{1,2}):(\d{2})/.exec(d.hora||'');
+  var h=horaM?parseInt(horaM[1],10):23;
+  var mi=horaM?parseInt(horaM[2],10):59;
+  var cierre=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),h,mi,0,0);
+  cierre=new Date(cierre.getTime()+DESAFIO_MARGEN_HORAS*3600000);
+  return new Date()<cierre;
 }
 
 
@@ -1608,7 +1630,7 @@ var liveGuardando=false;
 // uso normal), toma el mas reciente por fecha de creacion.
 function desafioVivoActivo(nombre){
   var lista=(DATA.desafios||[]).filter(function(d){
-    return d.estado==='Aceptado'&&(d.de===nombre||d.para===nombre);
+    return desafioVigente(d)&&(d.de===nombre||d.para===nombre);
   });
   if(!lista.length)return null;
   lista.sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
@@ -1933,7 +1955,7 @@ function rDesafiosLista(nombre){
   if(!todos.length)return "";
   var recibidos=todos.filter(function(d){return d.para===nombre&&d.estado==='Pendiente';});
   var enviados=todos.filter(function(d){return d.de===nombre&&d.estado==='Pendiente';});
-  var aceptados=todos.filter(function(d){return d.estado==='Aceptado';});
+  var aceptados=todos.filter(function(d){return desafioVigente(d);});
   var h="<div class=\"desblk\"><div class=\"rmt\">Desafios</div>";
 
   for(var i=0;i<recibidos.length;i++){
