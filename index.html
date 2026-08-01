@@ -272,6 +272,8 @@ section{padding:4rem 1.5rem}
 .chatoff{color:var(--gl);font-size:.78rem;padding:.3rem}
 .ftgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;padding:1.1rem;border-top:1px solid rgba(255,255,255,.05)}
 .ftitem{background:rgba(0,0,0,.18);border-radius:8px;padding:.55rem .7rem}
+.ftitem.comuna{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.4)}
+.ftitem.comuna .ftlbl{color:var(--ro)}
 .ftlbl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
 .ftval{font-size:.82rem;font-weight:600;color:var(--bl);margin-top:.15rem}
 .ftval.tbd{color:var(--gl);font-weight:400;font-style:italic}
@@ -1871,9 +1873,9 @@ function renderFichaTecnica(nombre){
     return "<div class=\"ftgrid\">"
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
-      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna laboral</div>"
+      +"<div class=\"ftitem comuna\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna laboral</div>"
       +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-laboral\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaLaboral||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
-      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna particular</div>"
+      +"<div class=\"ftitem comuna\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna particular</div>"
       +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-particular\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaParticular||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"</div>"
       +"<div class=\"ftactions\">"
@@ -1888,8 +1890,8 @@ function renderFichaTecnica(nombre){
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Comuna laboral</div>"+val(ft.comunaLaboral)+"</div>"
-    +"<div class=\"ftitem\"><div class=\"ftlbl\">Comuna particular</div>"+val(ft.comunaParticular)+"</div>"
+    +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna laboral</div>"+val(ft.comunaLaboral)+"</div>"
+    +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna particular</div>"+val(ft.comunaParticular)+"</div>"
     +"</div>"
     +renderLiveDesafio(nombre)
     +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
