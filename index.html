@@ -485,7 +485,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
 <section id="afiches">
   <div class="container">
-    <div class="sh fi2"><div class="se">Se actualiza cada 10 minutos</div><h2 class="st">Afiches y Resultados</h2><div class="sl"></div></div>
+    <div class="sh fi2"><div class="se">Se actualiza cada 1 minuto</div><h2 class="st">Afiches y Resultados</h2><div class="sl"></div></div>
     <div class="afgrid">
       <div class="afcol afcol-res">
         <div class="afcolh">🏆 Resultados</div>
@@ -1291,7 +1291,88 @@ function extraerYoutubeId(u){
   if(m&&/youtube\.com/.test(u))return m[1];
   m=u.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/);
   if(m)return m[1];
+  m=u.match(/youtube\.com\/live\/([A-Za-z0-9_-]+)/);
+  if(m)return m[1];
   return null;
+}
+// Detecta si un link corresponde a un posteo publico de Instagram, TikTok,
+// X/Twitter o Telegram (canal publico), para embeberlo con el widget
+// oficial de cada red en vez de tratarlo como imagen/video suelto.
+// Requiere que el posteo sea publico (sin login) — si es privado, el
+// widget de la red social muestra su propio aviso de que no se puede ver.
+function detectarRedSocial(u){
+  if(!u)return null;
+  var m;
+  m=u.match(/instagram\.com\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/);
+  if(m)return {tipo:'instagram'};
+  m=u.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/);
+  if(m)return {tipo:'twitter'};
+  m=u.match(/tiktok\.com\/@[^\/]+\/video\/\d+/);
+  if(m)return {tipo:'tiktok'};
+  m=u.match(/t\.me\/(?:s\/)?([A-Za-z0-9_]+)\/(\d+)/);
+  if(m)return {tipo:'telegram',canal:m[1],post:m[2]};
+  return null;
+}
+// Carga un script externo una sola vez (aunque se llame varias veces, por
+// ej. cada vez que rota el carrusel de afiches) y avisa por callback
+// cuando ya esta listo para usarse.
+var SCRIPTS_EMBED_CARGADOS={};
+function cargarScriptEmbed(src,cb){
+  if(SCRIPTS_EMBED_CARGADOS[src]){cb();return;}
+  var s=document.createElement('script');
+  s.src=src;s.async=true;
+  s.onload=function(){SCRIPTS_EMBED_CARGADOS[src]=true;cb();};
+  s.onerror=function(){SCRIPTS_EMBED_CARGADOS[src]=false;};
+  document.head.appendChild(s);
+}
+// Fuerza a TikTok a re-escanear la pagina buscando blockquotes nuevos.
+// Su script no expone una funcion publica de "reprocesar" como si tienen
+// Instagram (instgrm.Embeds.process) o Twitter (twttr.widgets.load), asi
+// que el truco (usado asi por la propia comunidad de devs) es sacar el
+// script viejo y volver a insertarlo: al cargar de nuevo, escanea todo el
+// documento y arma el iframe de cualquier blockquote sin procesar.
+function recargarTiktokEmbed(){
+  var old=document.getElementById('tiktok-embed-script');
+  if(old)old.remove();
+  var s=document.createElement('script');
+  s.id='tiktok-embed-script';
+  s.async=true;
+  s.src='https://www.tiktok.com/embed.js';
+  document.body.appendChild(s);
+}
+// Arma el embed de una red social dentro de "el" (el contenedor del
+// afiche/resultado). A diferencia de YouTube/Drive/imagen directa, estos
+// widgets necesitan que su script corra DESPUES de que el blockquote ya
+// este en la pagina, por eso no alcanza con armar un string de HTML: hay
+// que insertar el marcado primero y despues avisarle a cada red que lo
+// procese (o, en el caso de Telegram, inyectar el <script> como elemento
+// real — un <script> pegado con innerHTML nunca se ejecuta solo).
+function pintarRedSocial(el,contId,info,item){
+  var capHtml='<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
+  if(info.tipo==='instagram'){
+    el.innerHTML='<blockquote class="instagram-media" data-instgrm-permalink="'+esc(item.url)+'" style="width:100%;margin:0"></blockquote>'+capHtml;
+    cargarScriptEmbed('https://www.instagram.com/embed.js',function(){
+      if(window.instgrm)window.instgrm.Embeds.process();
+    });
+  }else if(info.tipo==='twitter'){
+    el.innerHTML='<blockquote class="twitter-tweet"><a href="'+esc(item.url)+'"></a></blockquote>'+capHtml;
+    cargarScriptEmbed('https://platform.twitter.com/widgets.js',function(){
+      if(window.twttr)window.twttr.widgets.load(el);
+    });
+  }else if(info.tipo==='tiktok'){
+    el.innerHTML='<blockquote class="tiktok-embed" cite="'+esc(item.url)+'" style="max-width:100%;margin:0"><section></section></blockquote>'+capHtml;
+    recargarTiktokEmbed();
+  }else if(info.tipo==='telegram'){
+    var wrapId='tgwrap-'+contId;
+    el.innerHTML='<div id="'+wrapId+'"></div>'+capHtml;
+    var cont=document.getElementById(wrapId);
+    var s=document.createElement('script');
+    s.async=true;
+    s.src='https://telegram.org/js/telegram-widget.js?22';
+    s.setAttribute('data-telegram-post',info.canal+'/'+info.post);
+    s.setAttribute('data-width','100%');
+    if(cont)cont.appendChild(s);
+  }
 }
 function normalizarMediaUrl(u){
   var id=extraerDriveId(u);
@@ -1315,6 +1396,8 @@ function pintarMediaBox(contId,item,vacioTexto){
     el.innerHTML='<div class="ec"><div class="eci">⚠️</div><div class="ect">Ese link es de un album de Google Fotos y no se puede mostrar aqui.<br>Sube la foto a Google Drive y pega ese link.</div></div>';
     return;
   }
+  var social=detectarRedSocial(item.url);
+  if(social){pintarRedSocial(el,contId,social,item);return;}
   var ytId=extraerYoutubeId(item.url);
   var driveId=extraerDriveId(item.url);
   var mediaHtml;
@@ -1334,7 +1417,7 @@ function pintarMediaBox(contId,item,vacioTexto){
     var esVideo=esVideoUrl(item.url);
     mediaHtml=esVideo
       ? '<video class="afmed" src="'+esc(item.url)+'" autoplay loop muted playsinline></video><button class="afsnd" onclick="toggleSonidoAf(this)">🔇</button>'
-      : '<img class="afmed" src="'+esc(item.url)+'" alt="Afiche" loading="lazy">';
+      : '<img class="afmed" src="'+esc(item.url)+'" alt="Afiche" loading="lazy" onerror="mediaImgFallback(this)">';
   }
   el.innerHTML=mediaHtml
     +'<div class="afcap"><span class="afcapn">'+esc(item.titulo)+'</span>'+(item.sub?'<span class="afcaps">'+esc(item.sub)+'</span>':'')+'</div>';
@@ -1347,6 +1430,9 @@ function driveImgFallback(img,driveId){
   ifr.allowFullscreen=true;
   ifr.src='https://drive.google.com/file/d/'+driveId+'/preview';
   img.replaceWith(ifr);
+}
+function mediaImgFallback(img){
+  img.parentElement.innerHTML='<div class="ec"><div class="eci">\u26a0\ufe0f</div><div class="ect">No se pudo cargar ese link como imagen o video.<br>Revisa que sea un link directo a un archivo (no a una pagina web), o un link valido de YouTube/Drive.</div></div>';
 }
 function toggleSonidoAf(btn){
   var v=btn.previousElementSibling;
@@ -1733,7 +1819,8 @@ function saveFichaTecnica(nombre){
     nivel:document.getElementById("ftsel-nivel").value,
     mano:document.getElementById("ftsel-mano").value,
     superficie:document.getElementById("ftsel-superficie").value,
-    golpe:document.getElementById("ftsel-golpe").value
+    golpe:document.getElementById("ftsel-golpe").value,
+    comuna:document.getElementById("ftsel-comuna").value.trim()
   };
 
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
@@ -1749,7 +1836,7 @@ function saveFichaTecnica(nombre){
 
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe})
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,comuna:data.comuna})
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
       SERVER_FICHAS[nombre]=Object.assign({},SERVER_FICHAS[nombre],data); // reflejo optimista, sin pisar "disponible"
@@ -1783,6 +1870,8 @@ function renderFichaTecnica(nombre){
     return "<div class=\"ftgrid\">"
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
+      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna</div>"
+      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comuna||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+jsAttr(nombre)+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
@@ -1796,6 +1885,7 @@ function renderFichaTecnica(nombre){
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
+    +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna</div>"+val(ft.comuna)+"</div>"
     +"</div>"
     +renderLiveDesafio(nombre)
     +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
