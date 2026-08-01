@@ -1614,8 +1614,9 @@ function desafioVivoActivo(nombre){
   lista.sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
   return lista[0];
 }
-function toggleLiveEdit(desafioId){
+function toggleLiveEdit(desafioId,nombre){
   liveEditando=(liveEditando===desafioId)?null:desafioId;
+  showProfile(nombre,false);
 }
 function saveLiveDesafio(desafioId,nombre){
   if(liveGuardando)return;
@@ -1789,7 +1790,7 @@ function renderLiveDesafio(nombre){
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(liveGuardando?" disabled":"")+" onclick=\"saveLiveDesafio('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">"+(liveGuardando?"Guardando...":"Guardar")+"</button>"
-      +"<button class=\"ftbtn cancel\""+(liveGuardando?" disabled":"")+" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"')\">Cancelar</button>"
+      +"<button class=\"ftbtn cancel\""+(liveGuardando?" disabled":"")+" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">Cancelar</button>"
       +"</div>";
   }
 
@@ -1797,7 +1798,7 @@ function renderLiveDesafio(nombre){
   var verBtn=d.liveUrl?("<a class=\"ftbtn\" style=\"display:inline-block;text-decoration:none;text-align:center\" href=\""+esc(d.liveUrl)+"\" target=\"_blank\" rel=\"noopener\">\u25b6\ufe0f Ver partido en vivo</a>"):"";
   return "<div class=\"ftactions\" style=\"margin-top:.6rem\">"
     +verBtn
-    +"<button class=\"ftbtn edit\" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"')\">"+btnTxt+"</button>"
+    +"<button class=\"ftbtn edit\" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">"+btnTxt+"</button>"
     +"</div>";
 }
 
