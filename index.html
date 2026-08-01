@@ -1820,7 +1820,8 @@ function saveFichaTecnica(nombre){
     mano:document.getElementById("ftsel-mano").value,
     superficie:document.getElementById("ftsel-superficie").value,
     golpe:document.getElementById("ftsel-golpe").value,
-    comuna:document.getElementById("ftsel-comuna").value.trim()
+    comunaLaboral:document.getElementById("ftsel-comuna-laboral").value.trim(),
+    comunaParticular:document.getElementById("ftsel-comuna-particular").value.trim()
   };
 
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
@@ -1836,7 +1837,7 @@ function saveFichaTecnica(nombre){
 
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,comuna:data.comuna})
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,comunaLaboral:data.comunaLaboral,comunaParticular:data.comunaParticular})
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
       SERVER_FICHAS[nombre]=Object.assign({},SERVER_FICHAS[nombre],data); // reflejo optimista, sin pisar "disponible"
@@ -1870,8 +1871,10 @@ function renderFichaTecnica(nombre){
     return "<div class=\"ftgrid\">"
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
-      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna</div>"
-      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comuna||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
+      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna laboral</div>"
+      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-laboral\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaLaboral||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
+      +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna particular</div>"
+      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-particular\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaParticular||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+jsAttr(nombre)+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
@@ -1885,7 +1888,8 @@ function renderFichaTecnica(nombre){
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Mano dominante</div>"+val(ft.mano)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Superficie favorita</div>"+val(ft.superficie)+"</div>"
     +"<div class=\"ftitem\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
-    +"<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna</div>"+val(ft.comuna)+"</div>"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Comuna laboral</div>"+val(ft.comunaLaboral)+"</div>"
+    +"<div class=\"ftitem\"><div class=\"ftlbl\">Comuna particular</div>"+val(ft.comunaParticular)+"</div>"
     +"</div>"
     +renderLiveDesafio(nombre)
     +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
