@@ -29,6 +29,12 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scrollbar-width:auto;scrollbar-color:var(--v) var(--gd)}
 body{font-family:'Barlow',sans-serif;background:var(--ng);color:var(--bl);overflow-x:hidden}
+.splash{position:fixed;inset:0;z-index:9999;background:var(--ng);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;transition:opacity .35s ease}
+.splash-logo{width:84px;height:84px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--v)}
+.splash-spin{width:32px;height:32px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--v);border-radius:50%;animation:splashspin .8s linear infinite}
+@keyframes splashspin{to{transform:rotate(360deg)}}
+.splash-txt{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:.75rem;color:var(--gl)}
+.splash.hide{opacity:0;pointer-events:none}
 ::-webkit-scrollbar{width:14px}
 ::-webkit-scrollbar-track{background:var(--gd)}
 ::-webkit-scrollbar-thumb{background:var(--v);border-radius:7px;border:3px solid var(--gd)}
@@ -430,6 +436,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 </style>
 </head>
 <body>
+<div id="splash" class="splash">
+  <img src="logo-club-tenis-estadio-quilicura.jpg" alt="" class="splash-logo">
+  <div class="splash-spin"></div>
+  <div class="splash-txt">Cargando...</div>
+</div>
 <header>
   <div class="lw">
     <img class="lc" src="logo-club-tenis-estadio-quilicura.jpg" alt="Logo del Club de Tenis Estadio Quilicura">
@@ -1109,7 +1120,7 @@ function transformLiveData(json){
 
   // Desafios: hoja "Desafios", se llenan desde el boton Desafiar del perfil.
   DATA.desafios=(json.desafios||[]).map(function(d){
-    return {id:d.id,fecha:d.fecha,de:d.de,para:d.para,dia:d.dia||'',hora:d.hora||'',cancha:d.cancha||'',mensaje:d.mensaje||'',estado:d.estado||'Pendiente',afiche:d.afiche||'',afiche_resultado:d.afiche_resultado||''};
+    return {id:d.id,fecha:d.fecha,de:d.de,para:d.para,dia:d.dia||'',hora:d.hora||'',cancha:d.cancha||'',mensaje:d.mensaje||'',estado:d.estado||'Pendiente',afiche:d.afiche||'',afiche_resultado:d.afiche_resultado||'',liveUrl:d.liveUrl||''};
   });
 }
 
@@ -1155,6 +1166,8 @@ function init(){
   loadLiveData();
   startLiveRefresh();
   initVisitas();
+  var sp=document.getElementById('splash');
+  if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},400);}
 }
 
 function rHeroStats(){
