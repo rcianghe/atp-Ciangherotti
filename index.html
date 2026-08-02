@@ -1972,7 +1972,7 @@ function enviarDesafio(paraNombre){
   var hora=(document.getElementById("dfHora")||{}).value||"";
   var cancha=(document.getElementById("dfCancha")||{}).value||"";
   var mensaje=(document.getElementById("dfMensaje")||{}).value||"";
-  dia=diaLegibleDesdeFecha(dia.trim());
+  dia=dia.trim(); // se manda tal cual del <input type="date"> (YYYY-MM-DD, con año); el texto "Sabado DD-MM" se arma solo al mostrarlo via fmtDesafioDia(), nunca antes de guardar — si se pierde el año aca, desafioVigente() no puede calcular cuando vence el desafio
   hora=hora.trim()?hora.trim()+" hrs":""; // el sufijo evita que Google Sheets autoformatee esto como celda de Hora
   cancha=cancha.trim();mensaje=mensaje.trim();
   if(!de){alert("Selecciona tu nombre para enviar el desafio.");return;}
