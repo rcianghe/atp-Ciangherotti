@@ -1126,8 +1126,15 @@ function transformLiveData(json){
 
 var currentProfileName=null; // jugador actualmente mostrado en la seccion Perfil (evita que el auto-refresh lo resetee al #1 del ranking)
 var liveRefreshBusy=false;
+var splashOculto=false;
+function ocultarSplash(){
+  if(splashOculto)return;
+  splashOculto=true;
+  var sp=document.getElementById('splash');
+  if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},400);}
+}
 function loadLiveData(){
-  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0)return; // sin desplegar aun, se usan datos estaticos
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){ocultarSplash();return;} // sin desplegar aun, se usan datos estaticos
   if(liveRefreshBusy)return; // evita refrescos superpuestos si el anterior no termino
   liveRefreshBusy=true;
   fetch(APPS_SCRIPT_URL+(APPS_SCRIPT_URL.indexOf('?')===-1?'?':'&')+'_t='+Date.now(),{cache:'no-store'}).then(function(res){return res.json();}).then(function(json){
@@ -1138,6 +1145,7 @@ function loadLiveData(){
     console.warn('No se pudo cargar datos en vivo, usando datos estaticos embebidos.',err);
   }).then(function(){
     liveRefreshBusy=false;
+    ocultarSplash(); // recien aca: exito o fracaso, pero ya sabemos que no va a cambiar mas por ahora
   });
 }
 
@@ -1166,8 +1174,6 @@ function init(){
   loadLiveData();
   startLiveRefresh();
   initVisitas();
-  var sp=document.getElementById('splash');
-  if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},400);}
 }
 
 function rHeroStats(){
