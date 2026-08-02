@@ -262,6 +262,11 @@ section{padding:4rem 1.5rem}
 .desrj{background:transparent;color:#e05a4a;border:1px solid rgba(192,57,43,.4)}
 .desac,.desrj{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:.68rem;padding:.35rem .8rem;border:none;border-radius:4px;cursor:pointer}
 .chatbtn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:.68rem;padding:.35rem .8rem;border:1px solid var(--az);border-radius:4px;cursor:pointer;background:transparent;color:var(--az)}
+.desres{margin-top:.55rem}
+.desresbtn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:.68rem;padding:.35rem .8rem;border:1px solid var(--am);border-radius:4px;cursor:pointer;background:transparent;color:var(--am);display:inline-block}
+.desresimg{display:block;max-width:160px;border-radius:6px;overflow:hidden;margin-bottom:.35rem}
+.desresimg img{width:100%;display:block}
+.desreschange{font-size:.68rem;color:var(--gl);text-decoration:underline;cursor:pointer;display:inline-block}
 .chatpanel{margin-top:.7rem;border-top:1px dashed rgba(255,255,255,.15);padding-top:.7rem}
 .chattitle{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--az);margin-bottom:.5rem}
 .chatquien{font-size:.72rem;color:var(--gl);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
@@ -2124,10 +2129,92 @@ function rDesafiosLista(nombre){
       +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"")
       +"<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(d.de)+"','"+jsAttr(d.para)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
       +"<div id=\"chatpanel-"+domSafe(d.id)+"\" class=\"chatpanel\" style=\"display:none\"></div>"
+      +rResultadoBlock(d)
       +"</div>";
   }
   h+="</div>";
   return h;
+}
+
+// ---- Resultado subido por el propio jugador (foto tras el partido) ----
+// Aparece dentro de cada tarjeta "Duelo confirmado". Comprime la foto
+// en el navegador antes de enviarla (evita subidas pesadas) y la manda
+// al backend con accion:'subirResultado'. El backend la guarda en
+// Drive y devuelve la URL, que queda pegada en d.afiche_resultado
+// (misma columna AficheResultadoURL que hoy llenas a mano).
+var resultadoSubiendo={}; // desafioId -> true mientras se sube
+
+function rResultadoBlock(d){
+  var idSafe=domSafe(d.id);
+  if(d.afiche_resultado){
+    return "<div class=\"desres\">"
+      +"<a href=\""+esc(d.afiche_resultado)+"\" target=\"_blank\" class=\"desresimg\"><img src=\""+esc(d.afiche_resultado)+"\" alt=\"Resultado\"></a>"
+      +"<label class=\"desreschange\" for=\"resfile-"+idSafe+"\">"+(resultadoSubiendo[d.id]?"Subiendo...":"Cambiar foto")+"</label>"
+      +"<input type=\"file\" accept=\"image/*\" id=\"resfile-"+idSafe+"\" style=\"display:none\""+(resultadoSubiendo[d.id]?" disabled":"")+" onchange=\"handleResultadoFile('"+jsAttr(d.id)+"',this)\">"
+      +"</div>";
+  }
+  return "<div class=\"desres\">"
+    +"<label class=\"desresbtn\" for=\"resfile-"+idSafe+"\">"+(resultadoSubiendo[d.id]?"Subiendo...":"\uD83D\uDCF7 Subir resultado")+"</label>"
+    +"<input type=\"file\" accept=\"image/*\" id=\"resfile-"+idSafe+"\" style=\"display:none\""+(resultadoSubiendo[d.id]?" disabled":"")+" onchange=\"handleResultadoFile('"+jsAttr(d.id)+"',this)\">"
+    +"</div>";
+}
+
+function handleResultadoFile(id,inputEl){
+  var file=inputEl.files&&inputEl.files[0];
+  if(!file)return;
+  if(!/^image\//.test(file.type)){alert("Selecciona una imagen.");return;}
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){alert("El sistema de resultados necesita el backend conectado (Apps Script).");return;}
+  resultadoSubiendo[id]=true;
+  refrescarPerfilActual();
+  comprimirImagenResultado(file,1280,.82,function(base64,mimeType){
+    fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({accion:'subirResultado',token:FICHA_TOKEN,id:id,imagen:base64,mimeType:mimeType})
+    }).then(function(res){return res.json();}).then(function(json){
+      if(json&&json.ok&&json.url){
+        (DATA.desafios||[]).forEach(function(d){if(d.id===id)d.afiche_resultado=json.url;});
+      }else{
+        console.warn('No se pudo subir el resultado.',json);
+        alert("No se pudo subir la foto. Intenta de nuevo.");
+      }
+    }).catch(function(err){
+      console.warn('Sin conexion al subir resultado.',err);
+      alert("Sin conexion. Intenta de nuevo.");
+    }).then(function(){
+      delete resultadoSubiendo[id];
+      refrescarPerfilActual();
+    });
+  },function(){
+    alert("No se pudo leer la imagen. Intenta con otra foto.");
+    delete resultadoSubiendo[id];
+    refrescarPerfilActual();
+  });
+}
+
+// Reduce tamaño/calidad de la imagen en el navegador antes de enviarla
+// (evita subidas pesadas y timeouts en Apps Script).
+function comprimirImagenResultado(file,maxDim,calidad,cb,cbError){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height,esc2=Math.min(1,maxDim/Math.max(w,h));
+      var cw=Math.max(1,Math.round(w*esc2)),ch=Math.max(1,Math.round(h*esc2));
+      var cv=document.createElement("canvas");
+      cv.width=cw;cv.height=ch;
+      cv.getContext("2d").drawImage(img,0,0,cw,ch);
+      var dataUrl=cv.toDataURL("image/jpeg",calidad);
+      cb(dataUrl.split(",")[1],"image/jpeg");
+    };
+    img.onerror=function(){if(cbError)cbError();};
+    img.src=e.target.result;
+  };
+  reader.onerror=function(){if(cbError)cbError();};
+  reader.readAsDataURL(file);
+}
+
+function refrescarPerfilActual(){
+  if(currentProfileName)showProfile(currentProfileName,false);
 }
 
 function showProfile(nombre,scroll){
