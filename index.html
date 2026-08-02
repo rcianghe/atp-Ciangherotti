@@ -1749,6 +1749,7 @@ var fichaEditando=null; // nombre del jugador cuya ficha esta en modo edicion
 var fichaGuardando=false;
 var liveEditando=null; // id del desafio cuyo link en vivo se esta editando
 var liveGuardando=false;
+var disponibleGuardando={}; // por nombre de jugador, evita doble-toque mientras se guarda
 
 // Busca el desafio "vigente" de un jugador: Aceptado, y donde
 // participa como De o Para. Si tiene mas de uno (no deberia pasar en
@@ -1813,6 +1814,7 @@ function getFicha(nombre){
   return out;
 }
 function toggleDisponibilidad(nombre){
+  if(disponibleGuardando[nombre])return; // ya hay un guardado en curso para este jugador, ignora el toque repetido
   var actual=getFicha(nombre).disponible;
   var nuevo=(actual==='No')?'Si':'No';
 
@@ -1824,6 +1826,7 @@ function toggleDisponibilidad(nombre){
     return;
   }
 
+  disponibleGuardando[nombre]=true;
   // Optimista: se refleja al toque, y si falla el POST se revierte.
   SERVER_FICHAS[nombre]=SERVER_FICHAS[nombre]||{};
   SERVER_FICHAS[nombre].disponible=nuevo;
@@ -1842,6 +1845,8 @@ function toggleDisponibilidad(nombre){
     console.warn('Sin conexion al guardar disponibilidad, se revierte.',err);
     SERVER_FICHAS[nombre].disponible=actual;
     showProfile(nombre,false);
+  }).then(function(){
+    disponibleGuardando[nombre]=false;
   });
 }
 function toggleFichaEdit(nombre){
