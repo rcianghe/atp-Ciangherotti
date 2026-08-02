@@ -298,6 +298,13 @@ section{padding:4rem 1.5rem}
 .ftbtn.save{background:var(--v);color:var(--ng)}
 .ftbtn.cancel{background:transparent;color:var(--gl);border:1px solid var(--gm)}
 .ftsync{padding:0 1.1rem 1.1rem;color:var(--gl);font-size:.72rem;font-style:italic}
+.diachips{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.4rem}
+.diachip{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:600;text-align:center;padding:.55rem .3rem;border:1px solid var(--gm);border-radius:6px;color:var(--gl);background:transparent;cursor:pointer;letter-spacing:.5px}
+.diachip.on{border-color:var(--v);color:var(--v);font-weight:800}
+.diachip:disabled{opacity:.5;cursor:default}
+span.diachip{cursor:default;display:inline-block}
+.diachips.view{display:flex;flex-wrap:wrap;gap:.4rem}
+.diachips.view .diachip{padding:.32rem .7rem}
 .insgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
 .insitem{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.6rem .35rem;text-align:center}
 .insitem.gold{border-color:rgba(212,230,10,.4);background:rgba(212,230,10,.06)}
@@ -1762,6 +1769,20 @@ var liveEditando=null; // id del desafio cuyo link en vivo se esta editando
 var liveGuardando=false;
 var disponibleGuardando={}; // por nombre de jugador, evita doble-toque mientras se guarda
 
+// Dias/turnos disponibles para desafios. El codigo (primer valor) es lo
+// que se guarda en la hoja separado por comas (ej: "mar,jue,sabAM"); el
+// segundo valor es solo la etiqueta que se muestra.
+var DIAS_DESAFIO=[["lun","Lun"],["mar","Mar"],["mie","Mié"],["jue","Jue"],["vie","Vie"],
+  ["sabAM","Sáb AM"],["sabPM","Sáb PM"],["domAM","Dom AM"],["domPM","Dom PM"]];
+// Seleccion en curso mientras se edita la ficha (se llena al abrir el
+// editor y se manda junto al resto de la ficha al Guardar).
+var fichaDispoSel={};
+function toggleDispoDia(nombre,code){
+  if(fichaGuardando)return;
+  fichaDispoSel[code]=!fichaDispoSel[code];
+  showProfile(nombre,false);
+}
+
 // Busca el desafio "vigente" de un jugador: Aceptado, y donde
 // participa como De o Para. Si tiene mas de uno (no deberia pasar en
 // uso normal), toma el mas reciente por fecha de creacion.
@@ -1861,7 +1882,13 @@ function toggleDisponibilidad(nombre){
   });
 }
 function toggleFichaEdit(nombre){
-  fichaEditando=(fichaEditando===nombre)?null:nombre;
+  var abriendo=(fichaEditando!==nombre);
+  fichaEditando=abriendo?nombre:null;
+  if(abriendo){
+    fichaDispoSel={};
+    var actual=(getFicha(nombre).disponibilidadDesafios||'').split(',');
+    for(var i=0;i<actual.length;i++){if(actual[i])fichaDispoSel[actual[i]]=true;}
+  }
   showProfile(nombre,false);
 }
 function saveFichaTecnica(nombre){
@@ -1872,7 +1899,8 @@ function saveFichaTecnica(nombre){
     superficie:document.getElementById("ftsel-superficie").value,
     golpe:document.getElementById("ftsel-golpe").value,
     comunaLaboral:document.getElementById("ftsel-comuna-laboral").value.trim(),
-    comunaParticular:document.getElementById("ftsel-comuna-particular").value.trim()
+    comunaParticular:document.getElementById("ftsel-comuna-particular").value.trim(),
+    disponibilidadDesafios:Object.keys(fichaDispoSel).filter(function(k){return fichaDispoSel[k];}).join(',')
   };
 
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
@@ -1888,7 +1916,7 @@ function saveFichaTecnica(nombre){
 
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,comunaLaboral:data.comunaLaboral,comunaParticular:data.comunaParticular})
+    body:JSON.stringify({accion:'ficha',token:FICHA_TOKEN,nombre:nombre,nivel:data.nivel,mano:data.mano,superficie:data.superficie,golpe:data.golpe,comunaLaboral:data.comunaLaboral,comunaParticular:data.comunaParticular,disponibilidadDesafios:data.disponibilidadDesafios})
   }).then(function(res){return res.json();}).then(function(json){
     if(json&&json.ok){
       SERVER_FICHAS[nombre]=Object.assign({},SERVER_FICHAS[nombre],data); // reflejo optimista, sin pisar "disponible"
@@ -1905,6 +1933,33 @@ function saveFichaTecnica(nombre){
     fichaEditando=null;
     showProfile(nombre,false);
   });
+}
+// Bloque "Disponibilidad para desafios": grilla de dias/turnos
+// tocables, misma logica de edicion que el resto de la ficha (se junta
+// con nivel/mano/etc y se guarda todo con el boton Guardar).
+function renderDispoDesafiosEdit(nombre){
+  var chips="";
+  for(var i=0;i<DIAS_DESAFIO.length;i++){
+    var code=DIAS_DESAFIO[i][0],label=DIAS_DESAFIO[i][1];
+    var on=!!fichaDispoSel[code];
+    chips+="<button type=\"button\" class=\"diachip"+(on?" on":"")+"\""+(fichaGuardando?" disabled":"")+" onclick=\"toggleDispoDia('"+jsAttr(nombre)+"','"+code+"')\">"+esc(label)+"</button>";
+  }
+  return "<div class=\"ftitem\" style=\"grid-column:1/-1;background:rgba(91,191,42,.08);border:1px solid rgba(91,191,42,.35)\">"
+    +"<div class=\"ftlbl\" style=\"color:var(--v)\">Disponibilidad para desafios</div>"
+    +"<div class=\"diachips\">"+chips+"</div></div>";
+}
+function renderDispoDesafiosVista(ft){
+  var activos=(ft.disponibilidadDesafios||'').split(',').filter(Boolean);
+  var vista;
+  if(activos.length){
+    vista="<div class=\"diachips view\">"+activos.map(function(code){
+      var found=DIAS_DESAFIO.filter(function(d){return d[0]===code;})[0];
+      return "<span class=\"diachip on\">"+esc(found?found[1]:code)+"</span>";
+    }).join("")+"</div>";
+  }else{
+    vista="<div class=\"ftval tbd\">Por definir</div>";
+  }
+  return "<div class=\"ftitem\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Disponibilidad para desafios</div>"+vista+"</div>";
 }
 function renderFichaTecnica(nombre){
   var ft=getFicha(nombre);
@@ -1926,6 +1981,7 @@ function renderFichaTecnica(nombre){
       +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-laboral\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaLaboral||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"<div class=\"ftitem comuna\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna particular</div>"
       +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-particular\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaParticular||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
+      +renderDispoDesafiosEdit(nombre)
       +"</div>"
       +"<div class=\"ftactions\">"
       +"<button class=\"ftbtn save\""+(fichaGuardando?" disabled":"")+" onclick=\"saveFichaTecnica('"+jsAttr(nombre)+"')\">"+(fichaGuardando?"Guardando...":"Guardar")+"</button>"
@@ -1941,6 +1997,7 @@ function renderFichaTecnica(nombre){
     +"<div class=\"ftitem datos\"><div class=\"ftlbl\">Golpe favorito</div>"+val(ft.golpe)+"</div>"
     +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna laboral</div>"+val(ft.comunaLaboral)+"</div>"
     +"<div class=\"ftitem comuna\"><div class=\"ftlbl\">Comuna particular</div>"+val(ft.comunaParticular)+"</div>"
+    +renderDispoDesafiosVista(ft)
     +"</div>"
     +renderLiveDesafio(nombre)
     +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
