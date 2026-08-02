@@ -1200,9 +1200,27 @@ function rAll(){
     for(var i=0;i<sorted.length;i++){if(!sorted[i].retirado){top=sorted[i];break;}}
     if(top)nombreAMostrar=top.nombre;
   }
-  if(nombreAMostrar)showProfile(nombreAMostrar,false);
+  // Si el jugador que se esta mostrando tiene algo abierto para editar
+  // (ficha tecnica, link en vivo de un desafio, o el formulario para
+  // desafiar), NO tocamos ese perfil: un refresco de fondo (cada 5 min,
+  // o al volver a la pestana) no debe pisar lo que la persona esta
+  // escribiendo en ese momento. El resto de la pagina (ranking,
+  // resultados, etc.) se sigue actualizando normal, esto solo protege
+  // el formulario abierto.
+  if(nombreAMostrar&&!hayEdicionAbiertaPara(nombreAMostrar))showProfile(nombreAMostrar,false);
   var e=document.querySelectorAll(".fi2");
   for(var i=0;i<e.length;i++)OBS.observe(e[i]);
+}
+function hayEdicionAbiertaPara(nombre){
+  if(fichaEditando===nombre)return true;
+  if(desafioFormAbierto===nombre)return true;
+  if(liveEditando){
+    for(var i=0;i<(DATA.desafios||[]).length;i++){
+      var d=DATA.desafios[i];
+      if(d.id===liveEditando&&(d.de===nombre||d.para===nombre))return true;
+    }
+  }
+  return false;
 }
 
 function showTab(s,v,el){
