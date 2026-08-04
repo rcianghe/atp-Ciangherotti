@@ -197,11 +197,21 @@ section{padding:4rem 1.5rem}
 .si{flex:1;background:var(--g);border:1px solid var(--gm);border-radius:4px;padding:.7rem .9rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
 .si:focus{border-color:var(--v)}
 .si::placeholder{color:var(--gl)}
-.ppc{background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;max-width:840px;margin:0 auto}
+.ppcwrap{position:relative;max-width:840px;margin:0 auto 2.6rem}
+.ppc{background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px rgba(212,230,10,.05),0 18px 40px rgba(0,0,0,.35)}
+.ppcbadge{position:absolute;left:50%;bottom:-19px;transform:translateX(-50%);width:38px;height:38px;border-radius:50%;z-index:3;
+  box-shadow:0 0 0 3px var(--gd),0 0 14px rgba(212,230,10,.6);animation:pavrankPulse 2.6s ease-in-out infinite}
+.ppcbadge img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff;display:block}
 .phero{background:linear-gradient(135deg,var(--gd),rgba(91,191,42,.08));padding:1.4rem;display:flex;align-items:center;gap:1.4rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.pavwrap{position:relative;flex-shrink:0}
+.pavrank{position:absolute;right:-4px;bottom:-4px;min-width:25px;height:25px;padding:0 5px;border-radius:50%;background:var(--am);color:var(--ng);
+  font-family:'Bebas Neue',sans-serif;font-size:.8rem;display:flex;align-items:center;justify-content:center;border:2px solid var(--gd);
+  box-shadow:0 0 8px rgba(212,230,10,.6);animation:pavrankPulse 2.4s ease-in-out infinite}
+@keyframes pavrankPulse{0%,100%{box-shadow:0 0 6px rgba(212,230,10,.45)}50%{box-shadow:0 0 16px rgba(212,230,10,.85)}}
 .pav{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--az));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--ng);box-shadow:0 0 0 3px rgba(91,191,42,.4);flex-shrink:0}
 .pin h2{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px}
 .pin p{color:var(--gl);font-size:.82rem;margin-top:2px}
+.pin p b{color:var(--bl);font-weight:800}
 .pbg{display:flex;gap:.45rem;margin-top:.45rem}
 .pst{display:grid;grid-template-columns:repeat(4,1fr);position:relative;border-radius:10px;overflow:hidden;
   animation:pstGlowPulse 2.6s ease-in-out infinite}
@@ -234,19 +244,31 @@ section{padding:4rem 1.5rem}
 .rmres{font-family:'Bebas Neue',sans-serif;font-size:.92rem;width:20px;text-align:center}
 .rmres.W{color:var(--v)}.rmres.L{color:var(--ro)}
 .rmopp{flex:1;color:var(--gl)}.rmsc{font-family:'Barlow Condensed',sans-serif;font-weight:600}.rmdt{font-size:.7rem;color:var(--gl)}
-.pclub{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);letter-spacing:.5px;margin-top:.3rem}
-.pclub b{color:var(--v)}
-.pcanchalink{color:var(--v);font-weight:700;text-decoration:none;white-space:nowrap}
+.pinfobox{margin-top:.75rem;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.85rem 1rem}
+.pinfrow{display:flex;align-items:center;flex-wrap:wrap;gap:.9rem .8rem}
+.pinfocol{display:flex;align-items:center;gap:.55rem;flex:1;min-width:150px}
+.pinfoic{font-size:1.1rem;line-height:1;flex-shrink:0}
+.pinfolbl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
+.pinfoval{font-weight:700;color:var(--bl);font-size:.85rem;margin-top:1px}
+.pinfodiv{width:1px;align-self:stretch;background:rgba(255,255,255,.1)}
+.pinfocancha{text-align:center;margin-top:.75rem;padding-top:.7rem;border-top:1px solid rgba(255,255,255,.07)}
+.pcanchalink{color:var(--v);font-weight:700;text-decoration:none;white-space:nowrap;font-size:.82rem}
 .pcanchalink:hover,.pcanchalink:active{text-decoration:underline}
-.pchal{margin-top:.6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
-.pchal .dot{width:8px;height:8px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
-.pchal .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--v)}
-.dispToggle{background:transparent;border:none;padding:0;display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.pchal{margin-top:.9rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.pchal .dot{width:10px;height:10px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
+.pchal .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--bl)}
+.pchaldiv{width:1px;align-self:stretch;background:rgba(255,255,255,.1)}
+.dispToggle{background:transparent;border:none;padding:0;display:flex;align-items:center;gap:.55rem;cursor:pointer;text-align:left}
+.pdisptxt{display:flex;flex-direction:column;gap:1px}
+.pdispsub{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;color:var(--gl);letter-spacing:.3px}
 .dispToggle .dot.off{background:var(--gl);box-shadow:none}
 .dispToggle .lbl.off{color:var(--gl)}
 .stkToggle{margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--gl);border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .2s}
 .stkToggle:hover{border-color:var(--v);color:var(--v)}
-.chalbtn{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:.4rem .8rem;background:var(--am);color:var(--ng);border:none;border-radius:3px;cursor:pointer}
+.chalbtn{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:.85rem 1.4rem;background:var(--am);color:var(--ng);border:none;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 0 18px rgba(212,230,10,.35);transition:transform .15s ease,box-shadow .15s ease}
+.chalbtn:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(212,230,10,.55)}
+@media (max-width:480px){.pchaldiv{display:none}.chalbtn{width:100%}.pinfodiv{display:none}.pinfocol{min-width:100%}}
+@media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge{animation:none}}
 .dfform{margin-top:.7rem;background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.5rem;max-width:420px}
 .dfform .fi,.dfform .fsel{background:var(--gd);border:1px solid var(--gm);border-radius:4px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none}
 .dfform .fi::placeholder{color:var(--gl)}
@@ -2405,9 +2427,10 @@ function showProfile(nombre,scroll){
     sparkH="<div class=\"sparkwrap\"><div class=\"rmt\">Evolucion de puntos"+deltaTxt+"</div>"+sparklineSVG(evolucion,300,56)+"</div>";
   }
   var fotoJugador=FOTOS_JUGADORES[nombre];
-  var avatarH=(fotoJugador&&fotoJugador.cara)
+  var avatarH="<div class=\"pavwrap\">"+((fotoJugador&&fotoJugador.cara)
     ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+esc(nombre)+"\"></div>"
-    :"<div class=\"pav\">"+esc(ini)+"</div>";
+    :"<div class=\"pav\">"+esc(ini)+"</div>")
+    +"<div class=\"pavrank\">#"+rp+"</div></div>";
   var heroFigH=(fotoJugador&&fotoJugador.cuerpo)
     ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\">"
     :"";
@@ -2416,17 +2439,24 @@ function showProfile(nombre,scroll){
   var isDisp=dispFicha!=='No'; // por defecto disponible salvo que el jugador diga lo contrario
   var dispToggleH="<button class=\"dispToggle\" onclick=\"toggleDisponibilidad('"+jsAttr(p.nombre)+"')\">"
     +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
-    +"<span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span></button>";
+    +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span>"
+    +"<span class=\"pdispsub\">"+(isDisp?"Listo para jugar":"Toca para activarte")+"</span></span></button>";
   var desafioPanelH=rDesafioFormPanel(p.nombre);
   var desafiosListaH=rDesafiosLista(p.nombre);
+  var pinfoH="<div class=\"pinfobox\"><div class=\"pinfrow\">"
+    +"<div class=\"pinfocol\"><span class=\"pinfoic\">\ud83c\udfdf\ufe0f</span><div><div class=\"pinfolbl\">Club actual</div><div class=\"pinfoval\">"+CLUB_JUGADOR+"</div></div></div>"
+    +(p.encargado?"<div class=\"pinfodiv\"></div><div class=\"pinfocol\"><span class=\"pinfoic\">\ud83d\udc64</span><div><div class=\"pinfolbl\">Encargado</div><div class=\"pinfoval\">"+esc(p.encargado)+"</div></div></div>":"")
+    +"</div>"
+    +(p.linkCancha?"<div class=\"pinfocancha\"><a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a></div>":"")
+    +"</div>";
   document.getElementById("pcc").innerHTML=
-    "<div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
-    +"<div class=\"pin\"><h2>"+esc(p.nombre)+"</h2><p>Ranking #"+rp+" general - Serie "+esc(p.serie)+" #"+sp+"</p>"
+    "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
+    +"<div class=\"pin\"><h2>"+esc(p.nombre)+"</h2><p>Ranking <b>#"+rp+"</b> general \u00b7 Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
     +"<div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
-    +"<div class=\"pclub\">Club actual: <b>"+CLUB_JUGADOR+"</b>"+(p.encargado?" · Encargado: <b>"+esc(p.encargado)+"</b>":"")+(p.linkCancha?" · <a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a>":"")+"</div>"
+    +pinfoH
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
-      :"<div class=\"pchal\">"+dispToggleH+(isDisp?rDesafiarBtn(p.nombre):"")+"</div>"+desafioPanelH)
+      :"<div class=\"pchal\">"+dispToggleH+(isDisp?"<div class=\"pchaldiv\"></div>"+rDesafiarBtn(p.nombre):"")+"</div>"+desafioPanelH)
     +"</div></div>"
     +"<div class=\"pst\"><div class=\"psi2\"><div class=\"psn\">"+p.pj+"</div><div class=\"psl\">Partidos</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pg+"</div><div class=\"psl\">Victorias</div></div>"
@@ -2442,7 +2472,9 @@ function showProfile(nombre,scroll){
     +"<div class=\"rvg\"><div class=\"rvc fav\"><div class=\"rvl\">Rival favorito</div>"+favH+"</div>"
     +"<div class=\"rvc dif\"><div class=\"rvl\">Rival mas dificil</div>"+difH+"</div></div>"
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div>"
-    +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>";
+    +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>"
+    +"<div class=\"ppcbadge\"><img src=\"logo-club-tenis-estadio-quilicura.jpg\" alt=\"\"></div>"
+    +"</div>";
   if(scroll!==false)document.getElementById("perfil").scrollIntoView({behavior:"smooth"});
   restaurarChatAbiertoSiCorresponde();
 }
