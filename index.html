@@ -236,8 +236,8 @@ section{padding:4rem 1.5rem}
 .rmopp{flex:1;color:var(--gl)}.rmsc{font-family:'Barlow Condensed',sans-serif;font-weight:600}.rmdt{font-size:.7rem;color:var(--gl)}
 .pclub{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);letter-spacing:.5px;margin-top:.3rem}
 .pclub b{color:var(--v)}
-.pcanchabtn{display:inline-flex;align-items:center;gap:.3rem;margin-top:.45rem;padding:.3rem .7rem;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--v);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.5px;text-transform:uppercase}
-.pcanchabtn:hover{background:rgba(255,255,255,.16)}
+.pcanchalink{color:var(--v);font-weight:700;text-decoration:none;white-space:nowrap}
+.pcanchalink:hover,.pcanchalink:active{text-decoration:underline}
 .pchal{margin-top:.6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .pchal .dot{width:8px;height:8px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
 .pchal .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--v)}
@@ -2423,8 +2423,7 @@ function showProfile(nombre,scroll){
     "<div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><h2>"+esc(p.nombre)+"</h2><p>Ranking #"+rp+" general - Serie "+esc(p.serie)+" #"+sp+"</p>"
     +"<div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
-    +"<div class=\"pclub\">Club actual: <b>"+CLUB_JUGADOR+"</b>"+(p.encargado?" · Encargado: <b>"+esc(p.encargado)+"</b>":"")+"</div>"
-    +(p.linkCancha?"<a class=\"pcanchabtn\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a>":"")
+    +"<div class=\"pclub\">Club actual: <b>"+CLUB_JUGADOR+"</b>"+(p.encargado?" · Encargado: <b>"+esc(p.encargado)+"</b>":"")+(p.linkCancha?" · <a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a>":"")+"</div>"
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
       :"<div class=\"pchal\">"+dispToggleH+(isDisp?rDesafiarBtn(p.nombre):"")+"</div>"+desafioPanelH)
