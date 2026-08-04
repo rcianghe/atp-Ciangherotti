@@ -203,7 +203,12 @@ section{padding:4rem 1.5rem}
 .pin h2{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px}
 .pin p{color:var(--gl);font-size:.82rem;margin-top:2px}
 .pbg{display:flex;gap:.45rem;margin-top:.45rem}
-.pst{display:grid;grid-template-columns:repeat(4,1fr)}
+.pst{display:grid;grid-template-columns:repeat(4,1fr);position:relative;border-radius:10px;overflow:hidden;
+  animation:pstGlowPulse 2.6s ease-in-out infinite}
+@keyframes pstGlowPulse{
+  0%,100%{box-shadow:inset 0 0 0 1px rgba(212,230,10,.3),0 0 10px rgba(212,230,10,.15)}
+  50%{box-shadow:inset 0 0 0 1.5px rgba(212,230,10,.95),0 0 24px rgba(212,230,10,.55)}
+}
 .psi2{padding:1.1rem;text-align:center;border-right:1px solid rgba(255,255,255,.05)}
 .psi2:last-child{border-right:none}
 .psn{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--v);line-height:1}
@@ -345,7 +350,7 @@ span.diachip{cursor:default;display:inline-block}
   50%{filter:drop-shadow(0 0 9px rgba(212,230,10,.8))}
 }
 @media (prefers-reduced-motion:reduce){
-  .insfeature,.insfeature::before,.insfeature::after,.insfeature .insitem,.insfeature .insitem.gold,.insfeature .insic{animation:none}
+  .insfeature,.insfeature::before,.insfeature::after,.insfeature .insitem,.insfeature .insitem.gold,.insfeature .insic,.pst{animation:none}
 }
 .dispnote{padding:1.1rem;border-top:1px solid rgba(255,255,255,.05);color:var(--gl);font-size:.78rem;font-style:italic}
 @media (max-width:600px){
