@@ -231,6 +231,8 @@ section{padding:4rem 1.5rem}
 .rmopp{flex:1;color:var(--gl)}.rmsc{font-family:'Barlow Condensed',sans-serif;font-weight:600}.rmdt{font-size:.7rem;color:var(--gl)}
 .pclub{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);letter-spacing:.5px;margin-top:.3rem}
 .pclub b{color:var(--v)}
+.pcanchabtn{display:inline-flex;align-items:center;gap:.3rem;margin-top:.45rem;padding:.3rem .7rem;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--v);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.5px;text-transform:uppercase}
+.pcanchabtn:hover{background:rgba(255,255,255,.16)}
 .pchal{margin-top:.6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .pchal .dot{width:8px;height:8px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
 .pchal .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--v)}
@@ -1097,7 +1099,7 @@ function rJugadorDelMes(){
 // Transforma el JSON de Google Sheets al formato que usa la app y
 // reemplaza DATA en el sitio (sin tocar código, solo datos en vivo).
 function transformLiveData(json){
-  var jugadores=json.jugadores.map(function(j){return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo',encargado:j.encargado||''};});
+  var jugadores=json.jugadores.map(function(j){return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo',encargado:j.encargado||'',linkCancha:j.linkCancha||''};});
   var resultadosCrudos=json.resultados.filter(function(r){return r.ganador;}); // jugados
   var pendientesCrudos=json.resultados.filter(function(r){return !r.ganador;}); // sin ganador aun
 
@@ -1109,11 +1111,12 @@ function transformLiveData(json){
   ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
 
   var encargadoPorNombre={};
-  jugadores.forEach(function(j){encargadoPorNombre[j.nombre]=j.encargado;});
+  var linkCanchaPorNombre={};
+  jugadores.forEach(function(j){encargadoPorNombre[j.nombre]=j.encargado;linkCanchaPorNombre[j.nombre]=j.linkCancha;});
 
   DATA.players=jugadores.map(function(j,i){
     var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-    return {id:j.id||(i+1),nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:encargadoPorNombre[j.nombre]||''};
+    return {id:j.id||(i+1),nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:encargadoPorNombre[j.nombre]||'',linkCancha:linkCanchaPorNombre[j.nombre]||''};
   });
 
   DATA.results=resultadosCrudos.map(function(r){
@@ -2379,6 +2382,7 @@ function showProfile(nombre,scroll){
     +"<div class=\"pin\"><h2>"+esc(p.nombre)+"</h2><p>Ranking #"+rp+" general - Serie "+esc(p.serie)+" #"+sp+"</p>"
     +"<div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
     +"<div class=\"pclub\">Club actual: <b>"+CLUB_JUGADOR+"</b>"+(p.encargado?" · Encargado: <b>"+esc(p.encargado)+"</b>":"")+"</div>"
+    +(p.linkCancha?"<a class=\"pcanchabtn\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a>":"")
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
       :"<div class=\"pchal\">"+dispToggleH+(isDisp?rDesafiarBtn(p.nombre):"")+"</div>"+desafioPanelH)
