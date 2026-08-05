@@ -276,9 +276,21 @@ section{padding:4rem 1.5rem}
 .dispToggle .lbl.off{color:var(--gl)}
 .stkToggle{margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--gl);border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .2s}
 .stkToggle:hover{border-color:var(--v);color:var(--v)}
-.chalbtn{font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:.95rem 1.4rem;background:var(--am);color:var(--ng);border:none;border-radius:16px;cursor:pointer;flex:1;box-shadow:0 0 18px rgba(212,230,10,.35);transition:transform .15s ease,box-shadow .15s ease}
-.chalbtn:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(212,230,10,.55)}
-@media (max-width:360px){.chalbtn{padding:.85rem 1rem;font-size:.78rem}.pchal .pdisptxt .lbl{font-size:.66rem}.pchal .pdispsub{font-size:.6rem}}
+.chalbtn{position:relative;display:flex;align-items:stretch;flex:1;min-width:230px;padding:0;margin:0;
+  background:var(--ng);color:var(--bl);border:1.5px solid var(--am);border-radius:16px;overflow:hidden;
+  cursor:pointer;text-align:left;box-shadow:0 0 16px rgba(212,230,10,.28),0 10px 22px rgba(0,0,0,.35);
+  transition:transform .15s ease,box-shadow .15s ease}
+.chalbtn:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(212,230,10,.5),0 12px 26px rgba(0,0,0,.4)}
+.chalbtn:active{transform:translateY(0);box-shadow:0 0 14px rgba(212,230,10,.35)}
+.chalbtn-ic{flex-shrink:0;width:60px;display:flex;align-items:center;justify-content:center;color:var(--am);
+  border-right:1.5px solid var(--am);background:rgba(212,230,10,.06)}
+.chalbtn-ic svg{width:30px;height:auto;filter:drop-shadow(0 0 5px rgba(212,230,10,.55))}
+.chalbtn-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:.55rem 1rem;min-width:0}
+.chalbtn-t{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;color:var(--bl);line-height:1.05;text-transform:uppercase}
+.chalbtn-s{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--gl)}
+.chalbtn-arw{flex-shrink:0;width:32px;display:flex;align-items:center;justify-content:center;color:var(--am);font-size:1.4rem;line-height:1;transition:transform .15s ease}
+.chalbtn:hover .chalbtn-arw{transform:translateX(3px)}
+@media (max-width:360px){.chalbtn-ic{width:50px}.chalbtn-ic svg{width:25px}.chalbtn-t{font-size:1.15rem}.chalbtn-s{font-size:.56rem}.pchal .pdisptxt .lbl{font-size:.66rem}.pchal .pdispsub{font-size:.6rem}}
 @media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge{animation:none}}
 .dfform{margin-top:.7rem;background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.5rem;max-width:420px}
 .dfform .fi,.dfform .fsel{background:var(--gd);border:1px solid var(--gm);border-radius:4px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none}
@@ -527,7 +539,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .pchal{gap:.7rem;margin-top:.85rem}
   .pchal .lbl{font-size:.68rem}
   .pdispsub{font-size:.62rem}
-  .chalbtn{padding:.8rem 1rem;font-size:.82rem;border-radius:13px}
+  .chalbtn{border-radius:13px;min-width:0}
+  .chalbtn-ic{width:48px}.chalbtn-ic svg{width:24px}
+  .chalbtn-t{font-size:1.1rem}.chalbtn-s{font-size:.56rem}.chalbtn-mid{padding:.5rem .8rem}
   .h2hs{flex-direction:column}.h2hsel{min-width:unset;width:100%}
   .h2hstatl{width:110px;font-size:.58rem}
   .h2hstatv{font-size:1.6rem}
@@ -2222,8 +2236,20 @@ function avisarDesafioAceptado(id){
 }
 
 // Boton "Desafiar" que abre/cierra el formulario (va en la fila de disponibilidad).
+var CHALBTN_ICON="<svg viewBox=\"0 0 54 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">"
+  +"<path d=\"M2 9 L17 13\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/>"
+  +"<path d=\"M0 16 L20 16\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/>"
+  +"<path d=\"M2 23 L17 19\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/>"
+  +"<circle cx=\"38\" cy=\"16\" r=\"14\" fill=\"currentColor\"/>"
+  +"<path d=\"M38 2 C30 8 30 24 38 30\" stroke=\"#0e0e0e\" stroke-width=\"1.6\" fill=\"none\" opacity=\".55\"/>"
+  +"<path d=\"M38 2 C46 8 46 24 38 30\" stroke=\"#0e0e0e\" stroke-width=\"1.6\" fill=\"none\" opacity=\".55\"/>"
+  +"</svg>";
 function rDesafiarBtn(nombre){
-  return "<button class=\"chalbtn\" onclick=\"toggleDesafioForm('"+jsAttr(nombre)+"')\">\u26a1 Desafiar</button>";
+  return "<button class=\"chalbtn\" onclick=\"toggleDesafioForm('"+jsAttr(nombre)+"')\">"
+    +"<span class=\"chalbtn-ic\">"+CHALBTN_ICON+"</span>"
+    +"<span class=\"chalbtn-mid\"><span class=\"chalbtn-t\">Desafiar</span><span class=\"chalbtn-s\">Retar a este jugador</span></span>"
+    +"<span class=\"chalbtn-arw\">&#8250;</span>"
+    +"</button>";
 }
 
 // Panel del formulario (solo visible si desafioFormAbierto === nombre).
