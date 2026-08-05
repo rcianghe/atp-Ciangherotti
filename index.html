@@ -215,6 +215,7 @@ section{padding:4rem 1.5rem}
 .pin p b{color:var(--bl);font-weight:800}
 .pbg{display:flex;gap:.45rem;margin-bottom:.55rem}
 .pst{display:grid;grid-template-columns:repeat(4,1fr);position:relative;border-radius:10px;overflow:hidden;
+  border:1.5px solid rgba(212,230,10,.45);
   animation:pstGlowPulse 2.6s ease-in-out infinite}
 @keyframes pstGlowPulse{
   0%,100%{box-shadow:inset 0 0 0 1px rgba(212,230,10,.3),0 0 10px rgba(212,230,10,.15)}
@@ -345,6 +346,7 @@ span.diachip{cursor:default;display:inline-block}
    marco + dos lineas de luz que barren el bloque en diagonal, en los
    colores de marca (verde + lima), como el logo. */
 .insfeature{position:relative;overflow:hidden;border-radius:12px;isolation:isolate;
+  border:1.5px solid rgba(212,230,10,.4);
   animation:insGlowPulse 2.8s ease-in-out infinite}
 .insfeature::before,.insfeature::after{content:"";position:absolute;top:0;left:-70%;
   width:35%;height:100%;pointer-events:none;transform:skewX(-22deg);z-index:0;
