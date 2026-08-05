@@ -1999,7 +1999,11 @@ function toggleFichaEdit(nombre){
   if(abriendo){
     fichaDispoSel={};
     var actual=(getFicha(nombre).disponibilidadDesafios||'').split(',');
-    for(var i=0;i<actual.length;i++){if(actual[i])fichaDispoSel[actual[i]]=true;}
+    for(var i=0;i<actual.length;i++){
+      // Solo se recogen codigos vigentes (dia+turno). Los codigos del
+      // formato antiguo se descartan aqui, asi al Guardar quedan limpios.
+      if(actual[i] && DIAS_DESAFIO.some(function(d){return d[0]===actual[i];}))fichaDispoSel[actual[i]]=true;
+    }
   }
   showProfile(nombre,false);
 }
@@ -2061,7 +2065,12 @@ function renderDispoDesafiosEdit(nombre){
     +"<div class=\"diachips\">"+chips+"</div></div>";
 }
 function renderDispoDesafiosVista(ft){
-  var activos=(ft.disponibilidadDesafios||'').split(',').filter(Boolean);
+  // Filtramos codigos que no calzan con DIAS_DESAFIO (formato antiguo tipo
+  // "lun"/"vie" sin AM/PM, que quedo huerfano tras la migracion) para que
+  // no se muestren crudos en pantalla.
+  var activos=(ft.disponibilidadDesafios||'').split(',').filter(function(code){
+    return code && DIAS_DESAFIO.some(function(d){return d[0]===code;});
+  });
   var vista;
   if(activos.length){
     vista="<div class=\"diachips view\">"+activos.map(function(code){
