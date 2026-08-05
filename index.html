@@ -277,13 +277,18 @@ section{padding:4rem 1.5rem}
 .stkToggle{margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--gl);border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .2s}
 .stkToggle:hover{border-color:var(--v);color:var(--v)}
 .chalbtn{position:relative;display:flex;align-items:stretch;flex:1;min-width:230px;padding:0;margin:0;
-  background:var(--ng);color:var(--bl);border:1.5px solid var(--am);border-radius:16px;overflow:hidden;
-  cursor:pointer;text-align:left;box-shadow:0 0 16px rgba(212,230,10,.28),0 10px 22px rgba(0,0,0,.35);
-  transition:transform .15s ease,box-shadow .15s ease}
-.chalbtn:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(212,230,10,.5),0 12px 26px rgba(0,0,0,.4)}
-.chalbtn:active{transform:translateY(0);box-shadow:0 0 14px rgba(212,230,10,.35)}
+  background:var(--ng);color:var(--bl);border:1.5px solid rgba(212,230,10,.35);border-radius:16px;overflow:hidden;
+  cursor:pointer;text-align:left;box-shadow:0 0 10px rgba(212,230,10,.18),0 10px 22px rgba(0,0,0,.35);
+  transition:transform .15s ease;animation:chalbtnPulse 2.8s ease-in-out infinite}
+.chalbtn:hover{transform:translateY(-1px)}
+.chalbtn:active{transform:translateY(0)}
+@keyframes chalbtnPulse{
+  0%,100%{border-color:rgba(212,230,10,.3);box-shadow:0 0 8px rgba(212,230,10,.16),0 10px 22px rgba(0,0,0,.35)}
+  50%{border-color:rgba(212,230,10,.85);box-shadow:0 0 20px rgba(212,230,10,.5),0 10px 22px rgba(0,0,0,.35)}
+}
 .chalbtn-ic{flex-shrink:0;width:60px;display:flex;align-items:center;justify-content:center;color:var(--am);
-  border-right:1.5px solid var(--am);background:rgba(212,230,10,.06)}
+  border-right:1.5px solid rgba(212,230,10,.35);background:rgba(212,230,10,.06);animation:chalbtnIcPulse 2.8s ease-in-out infinite}
+@keyframes chalbtnIcPulse{0%,100%{border-right-color:rgba(212,230,10,.3)}50%{border-right-color:rgba(212,230,10,.85)}}
 .chalbtn-ic svg{width:30px;height:auto;filter:drop-shadow(0 0 5px rgba(212,230,10,.55))}
 .chalbtn-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:.55rem 1rem;min-width:0}
 .chalbtn-t{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;color:var(--bl);line-height:1.05;text-transform:uppercase}
@@ -291,7 +296,7 @@ section{padding:4rem 1.5rem}
 .chalbtn-arw{flex-shrink:0;width:32px;display:flex;align-items:center;justify-content:center;color:var(--am);font-size:1.4rem;line-height:1;transition:transform .15s ease}
 .chalbtn:hover .chalbtn-arw{transform:translateX(3px)}
 @media (max-width:360px){.chalbtn-ic{width:50px}.chalbtn-ic svg{width:25px}.chalbtn-t{font-size:1.15rem}.chalbtn-s{font-size:.56rem}.pchal .pdisptxt .lbl{font-size:.66rem}.pchal .pdispsub{font-size:.6rem}}
-@media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge{animation:none}}
+@media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge,.chalbtn,.chalbtn-ic{animation:none}.chalbtn{border-color:rgba(212,230,10,.5)}.chalbtn-ic{border-right-color:rgba(212,230,10,.5)}}
 .dfform{margin-top:.7rem;background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.5rem;max-width:420px}
 .dfform .fi,.dfform .fsel{background:var(--gd);border:1px solid var(--gm);border-radius:4px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none}
 .dfform .fi::placeholder{color:var(--gl)}
