@@ -255,13 +255,15 @@ section{padding:4rem 1.5rem}
 .pinfobox{margin-top:.85rem;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.9rem 1.05rem}
 .pinfrow{display:flex;align-items:center;flex-wrap:wrap;gap:.9rem .8rem}
 .pinfocol{display:flex;align-items:center;gap:.65rem;flex:1;min-width:150px}
-.pinfoicwrap{width:34px;height:34px;border-radius:9px;background:rgba(91,191,42,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pinfoic{font-size:1.05rem;line-height:1}
+.pinfoicwrap{width:34px;height:34px;border-radius:9px;background:rgba(91,191,42,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pinfoic{width:18px;height:18px;color:var(--v);display:flex}
+.pinfoic svg{width:100%;height:100%;display:block}
 .pinfolbl{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl)}
 .pinfoval{font-weight:700;color:var(--bl);font-size:.85rem;margin-top:1px}
 .pinfodiv{width:1px;align-self:stretch;background:rgba(255,255,255,.1)}
 .pinfocancha{text-align:center;margin-top:.8rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.07)}
 .pcanchalink{color:var(--v);font-weight:700;text-decoration:none;white-space:nowrap;font-size:.82rem;display:inline-flex;align-items:center;gap:.3rem}
+.pcanchalink svg{width:15px;height:15px;flex-shrink:0}
 .pcanchalink:hover,.pcanchalink:active{text-decoration:underline}
 .pchal{margin-top:1rem;display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap}
 .pchal .dot{width:10px;height:10px;border-radius:50%;background:var(--v);display:inline-block;box-shadow:0 0 6px var(--v)}
@@ -519,7 +521,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .pinfrow{gap:.7rem .55rem}
   .pinfocol{min-width:0;gap:.5rem}
   .pinfoicwrap{width:29px;height:29px;border-radius:8px}
-  .pinfoic{font-size:.9rem}
+  .pinfoic{width:15px;height:15px}
   .pinfolbl{font-size:.54rem}
   .pinfoval{font-size:.78rem}
   .pchal{gap:.7rem;margin-top:.85rem}
@@ -2467,11 +2469,14 @@ function showProfile(nombre,scroll){
     +"<span class=\"pdispsub\">"+(isDisp?"Listo para jugar":"Toca para activarte")+"</span></span></button>";
   var desafioPanelH=rDesafioFormPanel(p.nombre);
   var desafiosListaH=rDesafiosLista(p.nombre);
+  var icBuilding="<svg viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M4 3.5A1.5 1.5 0 015.5 2h9A1.5 1.5 0 0116 3.5V17h1a1 1 0 110 2H3a1 1 0 110-2h1V3.5zM7 6h2v2H7V6zm6 0h-2v2h2V6zM7 9.5h2v2H7v-2zm6 0h-2v2h2v-2zM7 13h2v2H7v-2zm6 0h-2v2h2v-2z\" clip-rule=\"evenodd\"/></svg>";
+  var icPerson="<svg viewBox=\"0 0 20 20\" fill=\"currentColor\"><path d=\"M10 9a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm-6.5 9a6.5 6.5 0 1113 0h-13z\"/></svg>";
+  var icPin="<svg viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z\" clip-rule=\"evenodd\"/></svg>";
   var pinfoH="<div class=\"pinfobox\"><div class=\"pinfrow\">"
-    +"<div class=\"pinfocol\"><span class=\"pinfoicwrap\"><span class=\"pinfoic\">\ud83c\udfdf\ufe0f</span></span><div><div class=\"pinfolbl\">Club actual</div><div class=\"pinfoval\">"+CLUB_JUGADOR+"</div></div></div>"
-    +(p.encargado?"<div class=\"pinfodiv\"></div><div class=\"pinfocol\"><span class=\"pinfoicwrap\"><span class=\"pinfoic\">\ud83d\udc64</span></span><div><div class=\"pinfolbl\">Encargado</div><div class=\"pinfoval\">"+esc(p.encargado)+"</div></div></div>":"")
+    +"<div class=\"pinfocol\"><span class=\"pinfoicwrap\"><span class=\"pinfoic\">"+icBuilding+"</span></span><div><div class=\"pinfolbl\">Club actual</div><div class=\"pinfoval\">"+CLUB_JUGADOR+"</div></div></div>"
+    +(p.encargado?"<div class=\"pinfodiv\"></div><div class=\"pinfocol\"><span class=\"pinfoicwrap\"><span class=\"pinfoic\">"+icPerson+"</span></span><div><div class=\"pinfolbl\">Encargado</div><div class=\"pinfoval\">"+esc(p.encargado)+"</div></div></div>":"")
     +"</div>"
-    +(p.linkCancha?"<div class=\"pinfocancha\"><a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">\ud83d\udccd Ver cancha</a></div>":"")
+    +(p.linkCancha?"<div class=\"pinfocancha\"><a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">"+icPin+" Ver cancha</a></div>":"")
     +"</div>";
   document.getElementById("pcc").innerHTML=
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
