@@ -206,7 +206,8 @@ section{padding:4rem 1.5rem}
   background:var(--ng);display:flex;align-items:center;justify-content:center;
   box-shadow:0 0 0 3px var(--gd),0 0 16px rgba(212,230,10,.65);animation:pavrankPulse 2.6s ease-in-out infinite}
 .ppcbadge img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff;display:block}
-.phero{background:linear-gradient(135deg,var(--gd),rgba(91,191,42,.08));padding:1.6rem 1.5rem;display:flex;align-items:center;gap:1.5rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.phero{background:linear-gradient(135deg,var(--gd),rgba(91,191,42,.08));padding:1.6rem 1.5rem 1.2rem;display:flex;align-items:center;gap:1.5rem}
+.pbody{background:linear-gradient(135deg,var(--gd),rgba(91,191,42,.08));padding:0 1.5rem 1.6rem;border-bottom:1px solid rgba(255,255,255,.06)}
 .pavwrap{position:relative;flex-shrink:0}
 .pavrank{position:absolute;right:-4px;bottom:-4px;min-width:40px;height:40px;padding:0 9px;border-radius:50%;background:var(--am);color:var(--ng);
   font-family:'Bebas Neue',sans-serif;font-size:1.2rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid var(--gd);
@@ -275,7 +276,7 @@ section{padding:4rem 1.5rem}
 .stkToggle:hover{border-color:var(--v);color:var(--v)}
 .chalbtn{font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:.95rem 1.4rem;background:var(--am);color:var(--ng);border:none;border-radius:16px;cursor:pointer;flex:1;box-shadow:0 0 18px rgba(212,230,10,.35);transition:transform .15s ease,box-shadow .15s ease}
 .chalbtn:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(212,230,10,.55)}
-@media (max-width:480px){.pchaldiv{display:none}.chalbtn{width:100%}.pinfodiv{display:none}.pinfocol{min-width:100%}}
+@media (max-width:360px){.chalbtn{padding:.85rem 1rem;font-size:.78rem}.pchal .pdisptxt .lbl{font-size:.66rem}.pchal .pdispsub{font-size:.6rem}}
 @media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge{animation:none}}
 .dfform{margin-top:.7rem;background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.5rem;max-width:420px}
 .dfform .fi,.dfform .fsel{background:var(--gd);border:1px solid var(--gm);border-radius:4px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none}
@@ -513,6 +514,18 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .pin h2{font-size:1.55rem;letter-spacing:1px}
   .pin p{font-size:.76rem}
   .pbg .sb{font-size:.62rem;padding:.24rem .65rem}
+  .pbody{padding:0 1.1rem 1.3rem}
+  .pinfobox{padding:.75rem .8rem}
+  .pinfrow{gap:.7rem .55rem}
+  .pinfocol{min-width:0;gap:.5rem}
+  .pinfoicwrap{width:29px;height:29px;border-radius:8px}
+  .pinfoic{font-size:.9rem}
+  .pinfolbl{font-size:.54rem}
+  .pinfoval{font-size:.78rem}
+  .pchal{gap:.7rem;margin-top:.85rem}
+  .pchal .lbl{font-size:.68rem}
+  .pdispsub{font-size:.62rem}
+  .chalbtn{padding:.8rem 1rem;font-size:.82rem;border-radius:13px}
   .h2hs{flex-direction:column}.h2hsel{min-width:unset;width:100%}
   .h2hstatl{width:110px;font-size:.58rem}
   .h2hstatv{font-size:1.6rem}
@@ -2464,11 +2477,13 @@ function showProfile(nombre,scroll){
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
     +"<h2>"+esc(p.nombre)+"</h2><p>Ranking <b>#"+rp+"</b> general \u00b7 Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
+    +"</div></div>"
+    +"<div class=\"pbody\">"
     +pinfoH
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
       :"<div class=\"pchal\">"+dispToggleH+(isDisp?"<div class=\"pchaldiv\"></div>"+rDesafiarBtn(p.nombre):"")+"</div>"+desafioPanelH)
-    +"</div></div>"
+    +"</div>"
     +"<div class=\"pst\"><div class=\"psi2\"><div class=\"psn\">"+p.pj+"</div><div class=\"psl\">Partidos</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pg+"</div><div class=\"psl\">Victorias</div></div>"
     +"<div class=\"psi2\"><div class=\"psn\">"+p.pp+"</div><div class=\"psl\">Derrotas</div></div>"
