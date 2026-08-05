@@ -204,15 +204,16 @@ section{padding:4rem 1.5rem}
 .ppcbadge img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff;display:block}
 .phero{background:linear-gradient(135deg,var(--gd),rgba(91,191,42,.08));padding:1.4rem;display:flex;align-items:center;gap:1.4rem;border-bottom:1px solid rgba(255,255,255,.06)}
 .pavwrap{position:relative;flex-shrink:0}
-.pavrank{position:absolute;right:-4px;bottom:-4px;min-width:25px;height:25px;padding:0 5px;border-radius:50%;background:var(--am);color:var(--ng);
-  font-family:'Bebas Neue',sans-serif;font-size:.8rem;display:flex;align-items:center;justify-content:center;border:2px solid var(--gd);
-  box-shadow:0 0 8px rgba(212,230,10,.6);animation:pavrankPulse 2.4s ease-in-out infinite}
-@keyframes pavrankPulse{0%,100%{box-shadow:0 0 6px rgba(212,230,10,.45)}50%{box-shadow:0 0 16px rgba(212,230,10,.85)}}
-.pav{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--az));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--ng);box-shadow:0 0 0 3px rgba(91,191,42,.4);flex-shrink:0}
-.pin h2{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px}
+.pavrank{position:absolute;right:-2px;bottom:-2px;min-width:38px;height:38px;padding:0 8px;border-radius:50%;background:var(--am);color:var(--ng);
+  font-family:'Bebas Neue',sans-serif;font-size:1.15rem;display:flex;align-items:center;justify-content:center;border:3px solid var(--gd);
+  box-shadow:0 0 10px rgba(212,230,10,.6);animation:pavrankPulse 2.4s ease-in-out infinite}
+@keyframes pavrankPulse{0%,100%{box-shadow:0 0 6px rgba(212,230,10,.45)}50%{box-shadow:0 0 18px rgba(212,230,10,.9)}}
+.pav{width:112px;height:112px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--az));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--ng);box-shadow:0 0 0 4px rgba(212,230,10,.55),0 0 24px rgba(212,230,10,.22);flex-shrink:0}
+@media (min-width:560px){.pav{width:150px;height:150px;font-size:3.4rem}}
+.pin h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.9rem,5vw,2.7rem);letter-spacing:2px;color:var(--bl)}
 .pin p{color:var(--gl);font-size:.82rem;margin-top:2px}
 .pin p b{color:var(--bl);font-weight:800}
-.pbg{display:flex;gap:.45rem;margin-top:.45rem}
+.pbg{display:flex;gap:.45rem;margin-bottom:.55rem}
 .pst{display:grid;grid-template-columns:repeat(4,1fr);position:relative;border-radius:10px;overflow:hidden;
   animation:pstGlowPulse 2.6s ease-in-out infinite}
 @keyframes pstGlowPulse{
@@ -2451,8 +2452,8 @@ function showProfile(nombre,scroll){
     +"</div>";
   document.getElementById("pcc").innerHTML=
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
-    +"<div class=\"pin\"><h2>"+esc(p.nombre)+"</h2><p>Ranking <b>#"+rp+"</b> general \u00b7 Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
-    +"<div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
+    +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
+    +"<h2>"+esc(p.nombre)+"</h2><p>Ranking <b>#"+rp+"</b> general \u00b7 Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
     +pinfoH
     +(p.retirado
       ?"<div class=\"pchal\"><span class=\"dot\" style=\"background:var(--ro);box-shadow:0 0 6px var(--ro)\"></span><span class=\"lbl\" style=\"color:var(--ro)\">Retirado del torneo</span></div>"
