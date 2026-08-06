@@ -47,16 +47,6 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(14,14,14,
 nav a{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl);text-decoration:none;padding:0 .7rem;height:58px;display:inline-flex;align-items:center;border-bottom:3px solid transparent;transition:all .2s}
 nav a:hover,nav a.active{color:var(--v);border-bottom-color:var(--v)}
 .nt{background:var(--v);color:var(--ng)!important;border-radius:4px;padding:.3rem .7rem!important;height:auto!important;border-bottom:none!important;font-weight:700!important;margin-left:.6rem;font-size:.68rem!important}
-.authbox{display:flex;align-items:center;margin-left:.8rem;flex-shrink:0}
-.authbtn{display:flex;align-items:center;gap:.4rem;background:var(--bl);color:var(--ng);border:none;border-radius:20px;padding:.38rem .85rem;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.authbtn:hover{background:var(--vl);transform:translateY(-1px)}
-.authuser{display:flex;align-items:center;gap:.4rem}
-.authavatar{width:26px;height:26px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--v)}
-.authavatar-i{display:flex;align-items:center;justify-content:center;background:var(--v);color:var(--ng);font-family:'Bebas Neue',sans-serif;font-size:.85rem;box-shadow:none}
-.authnombre{font-size:.72rem;color:var(--bl);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.authlogout{background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--gl);border-radius:14px;padding:.18rem .55rem;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.authlogout:hover{border-color:var(--ro);color:#e05a4a}
-@media(max-width:480px){.authnombre{display:none}.authbox{margin-left:.4rem}}
 section{padding:4rem 1.5rem}
 .container{max-width:1100px;margin:0 auto}
 .sh{text-align:center;margin-bottom:2.5rem}
@@ -585,7 +575,6 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <a href="#galeria">Galeria</a>
     <a href="#tienda" class="nt">Tienda</a>
   </nav>
-  <div class="authbox" id="authBox"></div>
 </header>
 
 <section id="hero">
@@ -730,7 +719,6 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i].isIntersecting)e[i].target.classList.add("visible");}},{threshold:0.1});
 var WA="56974723654";
@@ -753,58 +741,12 @@ var firebaseConfig={
   appId:"1:240530471180:web:58db290f9ce9b430f6b129"
 };
 var chatDb=null;
-var auth=null;
 try{
   if(typeof firebase!=="undefined"){
     firebase.initializeApp(firebaseConfig);
     chatDb=firebase.firestore();
-    auth=firebase.auth();
   }
 }catch(e){console.warn('No se pudo iniciar el chat.',e);}
-
-/* ============================================================
-   LOGIN (Fase 1-2): boton en el header con Google Sign-In.
-   Por ahora esto SOLO identifica a la persona (uid, nombre de
-   Google, foto). Todavia no reemplaza los selectores manuales de
-   "quien eres" en desafios/chat -- eso es la Fase 3-4, para no
-   romper nada mientras tanto. Si Firebase Auth no esta disponible
-   por cualquier motivo, el sitio sigue funcionando exactamente
-   igual que hoy (el boton no aparece, y ya).
-   ============================================================ */
-var usuarioActual=null; // {uid, nombre, foto, email} o null si no hay sesion
-function loginConGoogle(){
-  if(!auth){alert("El login no esta disponible en este momento.");return;}
-  var proveedor=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(proveedor).catch(function(err){
-    console.warn('No se pudo iniciar sesion.',err);
-    if(err&&err.code!=='auth/popup-closed-by-user')alert("No se pudo iniciar sesion. Intenta de nuevo.");
-  });
-}
-function logout(){
-  if(!auth)return;
-  auth.signOut().catch(function(err){console.warn('No se pudo cerrar sesion.',err);});
-}
-function rAuthBox(){
-  var el=document.getElementById('authBox');
-  if(!el)return;
-  if(!usuarioActual){
-    el.innerHTML='<button class="authbtn" onclick="loginConGoogle()">'
-      +'<svg viewBox="0 0 18 18" width="16" height="16"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 01-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.86 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 009 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 013.68 9c0-.59.1-1.16.27-1.7V4.97H.98A9 9 0 000 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 00.98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>'
-      +'<span>Iniciar sesion</span></button>';
-  }else{
-    el.innerHTML='<div class="authuser">'
-      +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar authavatar-i">'+esc((usuarioActual.nombre||'?')[0])+'</span>')
-      +'<span class="authnombre">'+esc(usuarioActual.nombre||usuarioActual.email||'Sesion activa')+'</span>'
-      +'<button class="authlogout" onclick="logout()" title="Cerrar sesion">Salir</button>'
-      +'</div>';
-  }
-}
-if(auth){
-  auth.onAuthStateChanged(function(user){
-    usuarioActual=user?{uid:user.uid,nombre:user.displayName,foto:user.photoURL,email:user.email}:null;
-    rAuthBox();
-  });
-}
 
 var chatUnsub={};    // desafioId(raw) -> funcion para cancelar el listener activo
 var chatYo={};       // desafioId(raw) -> nombre elegido manualmente como remitente
