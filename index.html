@@ -731,6 +731,17 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<!-- Cliente de Supabase: se carga e inicializa ANTES del script principal
+     para que window.supabaseClient ya exista cuando init() corre y
+     getTitulos()/contarTitulos() consultan la tabla "titulos". -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_1CYx5Sqz4FDaF7m7pl1Enw_WGm-4bGQ';
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
 <script>
 var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i].isIntersecting)e[i].target.classList.add("visible");}},{threshold:0.1});
 var WA="56974723654";
@@ -1707,15 +1718,40 @@ function filterPS(val){
   s.innerHTML=h;
 }
 
-function getTitulos(nombre){
-  var t=(DATA.titulos||[]).filter(function(x){return x.nombre===nombre;});
+// Obtiene los titulos de un jugador consultando la tabla "titulos" de
+// Supabase (columnas jugador | serie | temporada | periodo), filtrando
+// por nombre. Si Supabase no responde (sin red, tabla vacia, etc.) se
+// cae de vuelta a DATA.titulos (sincronizado desde la planilla) para
+// no dejar la seccion vacia.
+async function getTitulos(nombre){
   var pOrd={"Clausura":1,"Apertura":0};
-  t.sort(function(a,b){
-    var ta=a.temporada||0,tb=b.temporada||0;
-    if(tb!==ta)return tb-ta;
-    return (pOrd[b.periodo]||0)-(pOrd[a.periodo]||0);
-  });
-  return t;
+  function ordenar(t){
+    t.sort(function(a,b){
+      var ta=a.temporada||0,tb=b.temporada||0;
+      if(tb!==ta)return tb-ta;
+      return (pOrd[b.periodo]||0)-(pOrd[a.periodo]||0);
+    });
+    return t;
+  }
+  if(window.supabaseClient){
+    try{
+      var res=await window.supabaseClient
+        .from('titulos')
+        .select('*')
+        .eq('jugador',nombre);
+      if(!res.error&&res.data){
+        var t=res.data.map(function(row){
+          return {nombre:row.jugador||row.nombre,serie:row.serie,temporada:row.temporada,periodo:row.periodo||''};
+        });
+        return ordenar(t);
+      }
+      console.warn('Supabase (titulos) devolvio error, se usa respaldo local.',res.error);
+    }catch(err){
+      console.warn('Sin conexion a Supabase, se usa respaldo local para titulos.',err);
+    }
+  }
+  var t=(DATA.titulos||[]).filter(function(x){return x.nombre===nombre;});
+  return ordenar(t);
 }
 
 function getRivalStats(nombre){
@@ -2464,7 +2500,7 @@ function refrescarPerfilActual(){
   if(currentProfileName)showProfile(currentProfileName,false);
 }
 
-function showProfile(nombre,scroll){
+async function showProfile(nombre,scroll){
   currentProfileName=nombre;
   document.getElementById("psr").style.display="none";
   document.getElementById("psi").value=nombre;
@@ -2494,7 +2530,7 @@ function showProfile(nombre,scroll){
   var rv=getRivalStats(nombre);
   var favH=rv.fav?("<div class=\"rvn\">"+esc(rv.fav.name)+"</div><div class=\"rvs2\">"+rv.fav.w+"V - "+rv.fav.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   var difH=rv.dif?("<div class=\"rvn\">"+esc(rv.dif.name)+"</div><div class=\"rvs2\">"+rv.dif.w+"V - "+rv.dif.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
-  var tits=getTitulos(nombre);
+  var tits=await getTitulos(nombre); // consulta la tabla "titulos" en Supabase filtrando por jugador
   var ftH=renderFichaTecnica(nombre);
   // Rachas y tendencias
   var tend=tendenciasJugador(nombre);
@@ -2625,10 +2661,11 @@ function rankEnSerie(nombre){
   for(var i=0;i<mismos.length;i++){if(mismos[i].nombre===nombre)return i+1;}
   return '-';
 }
-function contarTitulos(nombre){
-  var c=0;
-  for(var i=0;i<DATA.titulos.length;i++){if(DATA.titulos[i].nombre===nombre)c++;}
-  return c;
+// Cantidad de titulos obtenidos por un jugador (usada en el H2H).
+// Reutiliza getTitulos(), que ya consulta Supabase con respaldo local.
+async function contarTitulos(nombre){
+  var t=await getTitulos(nombre);
+  return t.length;
 }
 // Genera una previa automatica estilo prensa deportiva combinando
 // posicion en el ranking de Serie + historial H2H entre los dos jugadores.
@@ -2907,7 +2944,7 @@ function generarPrevia(p1,p2,serie){
   }
   return frase;
 }
-function calcH2H(){
+async function calcH2H(){
   var p1=document.getElementById("h1").value,p2=document.getElementById("h2").value;
   var con=document.getElementById("hr");
   if(!p1||!p2||p1===p2){con.innerHTML="<p style=\"text-align:center;color:var(--gl);padding:2rem\">Selecciona dos jugadores distintos</p>";return;}
@@ -2924,7 +2961,9 @@ function calcH2H(){
     if(DATA.players[i].nombre===p2)s2=DATA.players[i].serie;
   }
   var mr1=rankEnSerie(p1),mr2=rankEnSerie(p2);
-  var tit1=contarTitulos(p1),tit2=contarTitulos(p2);
+  con.innerHTML="<p style=\"text-align:center;color:var(--gl);padding:2rem\">Cargando historial...</p>";
+  var titulosPar=await Promise.all([contarTitulos(p1),contarTitulos(p2)]); // consulta Supabase (tabla "titulos") para ambos jugadores
+  var tit1=titulosPar[0],tit2=titulosPar[1];
   var rH="";
   for(var i=0;i<ml.length;i++){
     var r=ml[i],lw=r.ganador===p1;
@@ -3098,15 +3137,5 @@ if (window.elHm) {
   }
   </script>
 
-  <!-- 1. CDN de Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- 2. Inicializar cliente de Supabase -->
-  <script>
-    const SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_1CYx5Sqz4FDaF7m7pl1Enw_WGm-4bGQ';
-
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>
 </body>
 </html>
