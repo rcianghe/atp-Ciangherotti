@@ -3096,6 +3096,17 @@ if(elHm){
   elHm.style.height="auto";
   elHm.style.margin="15px auto";
   }
+  </script>
+
+  <!-- 1. CDN de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2. Inicializar cliente de Supabase -->
+  <script>
+    const SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_1CYx5Sqz4FDaF7m7pl1Enw_WGm-4bGQ';
+
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 </body>
 </html>
