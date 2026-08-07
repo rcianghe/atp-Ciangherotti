@@ -1718,12 +1718,21 @@ function filterPS(val){
   s.innerHTML=h;
 }
 
+// Limpia el nombre de un jugador antes de usarlo como filtro: quita
+// cualquier "(Serie)" al final (ej: "Gonzalo Reyes (A)" -> "Gonzalo Reyes")
+// y espacios extra. Los selectores de H2H muestran el nombre con la
+// serie entre parentesis, pero en Supabase los titulos se guardan sin ella.
+function limpiarNombreJugador(nombre){
+  return (nombre||'').replace(/\s*\([^)]*\)\s*$/,'').trim();
+}
+
 // Obtiene los titulos de un jugador consultando la tabla "titulos" de
 // Supabase (columnas jugador | serie | temporada | periodo), filtrando
 // por nombre. Si Supabase no responde (sin red, tabla vacia, etc.) se
 // cae de vuelta a DATA.titulos (sincronizado desde la planilla) para
 // no dejar la seccion vacia.
 async function getTitulos(nombre){
+  var nombreLimpio=limpiarNombreJugador(nombre);
   var pOrd={"Clausura":1,"Apertura":0};
   function ordenar(t){
     t.sort(function(a,b){
@@ -1738,7 +1747,7 @@ async function getTitulos(nombre){
       var res=await window.supabaseClient
         .from('titulos')
         .select('*')
-        .eq('jugador',nombre);
+        .eq('jugador',nombreLimpio);
       if(!res.error&&res.data){
         var t=res.data.map(function(row){
           return {nombre:row.jugador||row.nombre,serie:row.serie,temporada:row.temporada,periodo:row.periodo||''};
@@ -1750,7 +1759,7 @@ async function getTitulos(nombre){
       console.warn('Sin conexion a Supabase, se usa respaldo local para titulos.',err);
     }
   }
-  var t=(DATA.titulos||[]).filter(function(x){return x.nombre===nombre;});
+  var t=(DATA.titulos||[]).filter(function(x){return x.nombre===nombreLimpio;});
   return ordenar(t);
 }
 
