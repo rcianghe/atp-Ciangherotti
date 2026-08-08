@@ -745,7 +745,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <script>
 var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i].isIntersecting)e[i].target.classList.add("visible");}},{threshold:0.1});
 var WA="56974723654";
-var METRO=["Plaza Quilicura","Lo Cruzat","Hospitales","Cal y Canto","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
+var METRO=["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
 
 /* ============================================================
    CHAT PRIVADO ENTRE CONTRINCANTES (Firebase / Cloud Firestore)
@@ -1075,6 +1075,11 @@ var PRODS=[
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwutZxQIvWM4Yqu-VyAHKTaQ9QdSBtM6SA1-fnB2ar5jEO8kEo18lvZvMPjVj_er0a44Q/exec"; // reemplazar tras desplegar
 
 var PUNTOS = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0,bonoTodosGanados:500,bonoTodosJugados:150,bonoBagelBagel:100};
+// Tamaño de fixture por serie (partidos totales de la temporada), usado
+// para los bonos de "todos jugados"/"todos ganados" en calcularRanking().
+// Se actualiza con lo que llega de la hoja Config via Apps Script, y se
+// reutiliza cuando se recalcula el ranking con datos de Supabase.
+var FIXTURE_SIZE_ACTUAL={A:9,B:9,C:22};
 
 function numSets(m){var n=0;if(m.set1)n++;if(m.set2)n++;if(m.set3)n++;return n;}
 function esBagel(setStr,ganadorEsJ1){if(!setStr)return false;var p=setStr.split('-');var a=parseInt(p[0],10),b=parseInt(p[1],10);if(isNaN(a)||isNaN(b))return false;return ganadorEsJ1?(a===6&&b===0):(b===6&&a===0);}
@@ -1281,6 +1286,7 @@ function transformLiveData(json){
   // Fichas tecnicas sincronizadas desde la hoja FichaTecnica (si existe).
   SERVER_FICHAS=json.fichas||{};
 
+  FIXTURE_SIZE_ACTUAL=json.fixtureSize||FIXTURE_SIZE_ACTUAL; // se reusa en cargarJugadoresYResultadosSupabase()
   var ranking=calcularRanking(jugadores,json.resultados,json.fixtureSize);
   var porNombre={};
   ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
@@ -1314,6 +1320,74 @@ function transformLiveData(json){
   });
 }
 
+// ============================================================
+// JUGADORES Y RESULTADOS DESDE SUPABASE
+// ============================================================
+// Reemplaza DATA.players/DATA.results (que hasta ahora venian de
+// Apps Script/Google Sheets via transformLiveData) por datos leidos
+// directo de las tablas "jugadores" y "resultados" de Supabase, ya
+// migradas. Mismo patron de respaldo que getTitulos(): si Supabase
+// no responde, NO se toca DATA (se queda con lo ultimo que tenia,
+// sea el respaldo estatico embebido o el ultimo dato de Sheets), asi
+// nunca se rompe la pantalla por un fallo de red puntual.
+//
+// El calculo de puntos/ranking se hace con la MISMA funcion
+// calcularRanking() de siempre, para que insignias, rachas,
+// matagigantes, etc seguir funcionando identico sin tocar esa logica.
+var jugadoresSupabaseCargando=false;
+async function cargarJugadoresYResultadosSupabase(){
+  if(!window.supabaseClient)return; // Supabase no esta inicializado, se mantienen los datos previos
+  if(jugadoresSupabaseCargando)return; // evita refrescos superpuestos
+  jugadoresSupabaseCargando=true;
+  try{
+    var jugRes=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado');
+    var resRes=await window.supabaseClient.from('resultados').select('serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha');
+    if(jugRes.error||resRes.error){
+      console.warn('Supabase (jugadores/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
+      return;
+    }
+    var jugadoresRaw=jugRes.data.map(function(j){
+      return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo'};
+    });
+    var idANombre={};
+    jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
+
+    var resultadosRaw=resRes.data.map(function(r){
+      // Supabase entrega la fecha como 'YYYY-MM-DD'; el motor de
+      // ranking (parseFechaDDMMYYYY) espera 'DD-MM-YYYY', asi que se
+      // convierte aca antes de usarla.
+      var p=(r.fecha||'').split('-');
+      var fechaDDMMYYYY=p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):r.fecha;
+      return {
+        fecha:fechaDDMMYYYY,serie:r.serie,
+        jugador1:idANombre[r.jugador1_id],jugador2:idANombre[r.jugador2_id],
+        set1:r.set1,set2:r.set2,set3:r.set3,
+        ganador:idANombre[r.ganador_id],tipo:r.tipo
+      };
+    });
+
+    var ranking=calcularRanking(jugadoresRaw,resultadosRaw,FIXTURE_SIZE_ACTUAL);
+    var porNombre={};
+    ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
+
+    DATA.players=jugadoresRaw.map(function(j){
+      var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado};
+    });
+    DATA.results=resultadosRaw.map(function(r){
+      var score=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
+      return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie};
+    });
+
+    rAll();
+    console.log('Jugadores y resultados cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length);
+  }catch(err){
+    console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
+  }finally{
+    jugadoresSupabaseCargando=false;
+  }
+}
+
 var currentProfileName=null; // jugador actualmente mostrado en la seccion Perfil (evita que el auto-refresh lo resetee al #1 del ranking)
 var liveRefreshBusy=false;
 var splashOculto=false;
@@ -1343,12 +1417,22 @@ function loadLiveData(){
 // asi los cambios de resultados se reflejan solos sin necesidad de recargar (F5).
 var LIVE_REFRESH_MS=300000;
 function startLiveRefresh(){
-  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0)return;
+  if(APPS_SCRIPT_URL&&APPS_SCRIPT_URL.indexOf('PEGA_AQUI')!==0){
+    setInterval(function(){
+      if(document.visibilityState==='visible')loadLiveData();
+    },LIVE_REFRESH_MS);
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='visible')loadLiveData(); // refresca al volver a la pestana
+    });
+  }
+  // Jugadores/Resultados ya migrados: refresco independiente contra
+  // Supabase, para que siga funcionando aunque el día de mañana se
+  // retire Apps Script por completo.
   setInterval(function(){
-    if(document.visibilityState==='visible')loadLiveData();
+    if(document.visibilityState==='visible')cargarJugadoresYResultadosSupabase();
   },LIVE_REFRESH_MS);
   document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible')loadLiveData(); // refresca al volver a la pestana
+    if(document.visibilityState==='visible')cargarJugadoresYResultadosSupabase();
   });
 }
 
@@ -1362,6 +1446,7 @@ function init(){
   rAll();
   window.scrollTo(0,0);
   loadLiveData();
+  cargarJugadoresYResultadosSupabase(); // jugadores/resultados ya migrados: se leen de Supabase, no de Sheets
   startLiveRefresh();
   initVisitas();
 }
