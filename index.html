@@ -1829,22 +1829,33 @@ async function getTitulos(nombre){
     return t;
   }
   if(window.supabaseClient){
-    try{
-      var res=await window.supabaseClient
+  try{
+    var jugadorRes = await window.supabaseClient
+      .from('jugadores')
+      .select('id')
+      .eq('nombre', nombreLimpio)
+      .single();
+
+    if(!jugadorRes.error && jugadorRes.data){
+      var res = await window.supabaseClient
         .from('titulos')
         .select('*')
-        .eq('jugador',nombreLimpio);
-      if(!res.error&&res.data){
-        var t=res.data.map(function(row){
-          return {nombre:row.jugador||row.nombre,serie:row.serie,temporada:row.temporada,periodo:row.periodo||''};
+        .eq('jugador_id', jugadorRes.data.id);
+
+      if(!res.error && res.data){
+        var t = res.data.map(function(row){
+          return {nombre: nombreLimpio, serie: row.serie, temporada: row.temporada, periodo: row.periodo||''};
         });
         return ordenar(t);
       }
-      console.warn('Supabase (titulos) devolvio error, se usa respaldo local.',res.error);
-    }catch(err){
-      console.warn('Sin conexion a Supabase, se usa respaldo local para titulos.',err);
+      console.warn('Supabase (titulos) devolvio error, se usa respaldo local.', res.error);
+    } else {
+      console.warn('Supabase (jugadores) no encontro coincidencia para', nombreLimpio, jugadorRes.error);
     }
+  } catch(e){
+    console.warn('Error consultando titulos en Supabase, se usa respaldo local.', e);
   }
+}
   var t=(DATA.titulos||[]).filter(function(x){return x.nombre===nombreLimpio;});
   return ordenar(t);
 }
