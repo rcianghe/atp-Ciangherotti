@@ -841,6 +841,11 @@ async function sincronizarJugadorVinculado(){
     jugadorVinculado=null;
   }
   rAuthBox();
+  // Sin esto, si entrabas a tu propio perfil ANTES de que el login
+  // terminara de confirmarse, el boton de disponibilidad y "Editar
+  // ficha" quedaban calculados con jugadorVinculado en null para
+  // siempre, aunque el login ya hubiera terminado un instante despues.
+  if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))showProfile(currentProfileName,false);
 }
 
 // Lista de jugadores sin cuenta vinculada todavia (para el selector
@@ -1536,7 +1541,13 @@ async function cargarFichasSupabase(){
       };
     });
     SERVER_FICHAS=nuevo;
-    if(currentProfileName)showProfile(currentProfileName,false);
+    // OJO: antes esto forzaba un re-render SIEMPRE, incluso con un
+    // formulario de edicion abierto (ej. al volver de cambiar de
+    // pestana, dispara visibilitychange -> este refresco). Eso
+    // reconstruia el HTML de la ficha con los valores viejos y borraba
+    // lo que la persona estuviera escribiendo/seleccionando en ese
+    // momento, dando la sensacion de "no me deja cambiar nada".
+    if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))showProfile(currentProfileName,false);
   }catch(err){
     console.warn('Sin conexion a Supabase para fichas tecnicas.',err);
   }
