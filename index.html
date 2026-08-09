@@ -290,6 +290,9 @@ section{padding:4rem 1.5rem}
 .dispToggle .lbl.off{color:var(--gl)}
 .stkToggle{margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--gl);border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .2s}
 .stkToggle:hover{border-color:var(--v);color:var(--v)}
+.chalbtn-locked{flex:1;min-width:230px;padding:.9rem 1rem;border-radius:16px;border:1.5px dashed rgba(255,255,255,.2);color:var(--gl);font-size:.78rem;text-align:center;font-style:italic}
+.dfquien{font-size:.82rem;color:var(--gl);margin-bottom:.2rem}
+.dfquien b{color:var(--v)}
 .chalbtn{position:relative;display:flex;align-items:stretch;flex:1;min-width:230px;padding:0;margin:0;
   background:var(--ng);color:var(--bl);border:1.5px solid rgba(91,191,42,.35);border-radius:16px;overflow:hidden;
   cursor:pointer;text-align:left;box-shadow:0 0 10px rgba(91,191,42,.18),0 10px 22px rgba(0,0,0,.35);
@@ -943,6 +946,7 @@ var chatAbiertoSugerido=null; // nombre de perfil sugerido para ese chat (por si
 function domSafe(s){return String(s==null?"":s).replace(/[^a-zA-Z0-9_-]/g,'_');}
 
 function toggleChatPanel(desafioId,de,para,sugerido){
+  if(!jugadorVinculado||(jugadorVinculado.nombre!==de&&jugadorVinculado.nombre!==para))return; // resguardo: solo participantes reales
   var elId=domSafe(desafioId);
   var panel=document.getElementById('chatpanel-'+elId);
   if(!panel)return;
@@ -974,14 +978,14 @@ function abrirChatPanelInterno(desafioId,de,para,sugerido){
       +'<div class="chatoff">El chat no esta disponible por ahora.</div>';
     return;
   }
-  var actual=chatYo[desafioId]||sugerido||de;
+  // "Enviando como" ya no se elige a mano: se toma directo de la sesion
+  // vinculada, para que no puedas mandar mensajes haciendote pasar por
+  // tu rival dentro del mismo chat. toggleChatPanel() ya verifico que
+  // jugadorVinculado es de o para antes de llegar hasta aca.
+  var actual=(jugadorVinculado&&(jugadorVinculado.nombre===de||jugadorVinculado.nombre===para))?jugadorVinculado.nombre:(sugerido||de);
   chatYo[desafioId]=actual;
   panel.innerHTML='<div class="chattitle">Chat para comunicarse de forma directa entre contrincantes</div>'
-    +'<div class="chatquien">Enviando como '
-    +'<select class="chatquiensel" id="chatquien-'+elId+'" onchange="cambiarChatYo(\''+jsAttr(desafioId)+'\',this.value)">'
-    +'<option value="'+jsAttr(de)+'"'+(actual===de?' selected':'')+'>'+esc(de)+'</option>'
-    +'<option value="'+jsAttr(para)+'"'+(actual===para?' selected':'')+'>'+esc(para)+'</option>'
-    +'</select></div>'
+    +'<div class="chatquien">Enviando como <b>'+esc(actual)+'</b></div>'
     +'<div class="chatmsgs" id="chatmsgs-'+elId+'"><div class="chatoff">Cargando...</div></div>'
     +'<div class="chatinputrow">'
     +'<input class="chatinput" id="chatinput-'+elId+'" type="text" maxlength="500" placeholder="Escribe un mensaje..." onkeydown="if(event.key===\'Enter\')enviarChatMsg(\''+jsAttr(desafioId)+'\')">'
@@ -2219,6 +2223,7 @@ function desafioVivoActivo(nombre){
   return lista[0];
 }
 function toggleLiveEdit(desafioId,nombre){
+  if(!jugadorVinculado)return; // resguardo: sin sesion vinculada, no se puede editar
   liveEditando=(liveEditando===desafioId)?null:desafioId;
   showProfile(nombre,false);
 }
@@ -2270,6 +2275,7 @@ function getFicha(nombre){
   return out;
 }
 function toggleDisponibilidad(nombre){
+  if(!jugadorVinculado||jugadorVinculado.nombre!==nombre)return; // resguardo: solo el dueño del perfil
   if(disponibleGuardando[nombre])return; // ya hay un guardado en curso para este jugador, ignora el toque repetido
   var actual=getFicha(nombre).disponible;
   var nuevo=(actual==='No')?'Si':'No';
@@ -2306,6 +2312,7 @@ function toggleDisponibilidad(nombre){
   });
 }
 function toggleFichaEdit(nombre){
+  if(!jugadorVinculado||jugadorVinculado.nombre!==nombre)return; // resguardo: solo el dueño del perfil
   var abriendo=(fichaEditando!==nombre);
   fichaEditando=abriendo?nombre:null;
   if(abriendo){
@@ -2396,7 +2403,8 @@ function renderDispoDesafiosVista(ft){
 }
 function renderFichaTecnica(nombre){
   var ft=getFicha(nombre);
-  if(fichaEditando===nombre){
+  var esPropio=!!(jugadorVinculado&&jugadorVinculado.nombre===nombre); // gating: solo el dueño edita
+  if(esPropio&&fichaEditando===nombre){
     function sel(campo,label){
       var opts="<option value=\"\">Por definir</option>";
       var opciones=FICHA_OPCIONES[campo];
@@ -2433,7 +2441,7 @@ function renderFichaTecnica(nombre){
     +renderDispoDesafiosVista(ft)
     +"</div>"
     +renderLiveDesafio(nombre)
-    +"<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>";
+    +(esPropio?("<div class=\"ftactions\">"+"<button class=\"ftbtn edit\" onclick=\"toggleFichaEdit('"+jsAttr(nombre)+"')\">\u270f\ufe0f Editar ficha</button></div>"):"");
 }
 
 // Widget del link en vivo, scoped a un desafio Aceptado del jugador
@@ -2443,8 +2451,9 @@ function renderLiveDesafio(nombre){
   var d=desafioVivoActivo(nombre);
   if(!d)return "";
   var rival=(d.de===nombre)?d.para:d.de;
+  var esParticipante=!!(jugadorVinculado&&(jugadorVinculado.nombre===d.de||jugadorVinculado.nombre===d.para));
 
-  if(liveEditando===d.id){
+  if(esParticipante&&liveEditando===d.id){
     return "<div class=\"ftitem\" style=\"grid-column:1/-1;margin-top:.6rem\">"
       +"<div class=\"ftlbl\">Link en vivo del duelo vs "+esc(rival)+" (YouTube)</div>"
       +"<input type=\"url\" class=\"ftselect\" id=\"live-input-"+esc(d.id)+"\" placeholder=\"https://youtube.com/live/...\" value=\""+esc(d.liveUrl||'')+"\""+(liveGuardando?" disabled":"")+">"
@@ -2457,9 +2466,10 @@ function renderLiveDesafio(nombre){
 
   var btnTxt=d.liveUrl?"\u270f\ufe0f Editar link en vivo":"\u25b6\ufe0f Agregar link en vivo";
   var verBtn=d.liveUrl?("<a class=\"ftbtn\" style=\"display:inline-block;text-decoration:none;text-align:center\" href=\""+esc(d.liveUrl)+"\" target=\"_blank\" rel=\"noopener\">\u25b6\ufe0f Ver partido en vivo</a>"):"";
+  var editBtn=esParticipante?("<button class=\"ftbtn edit\" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">"+btnTxt+"</button>"):"";
+  if(!verBtn&&!editBtn)return "";
   return "<div class=\"ftactions\" style=\"margin-top:.6rem\">"
-    +verBtn
-    +"<button class=\"ftbtn edit\" onclick=\"toggleLiveEdit('"+jsAttr(d.id)+"','"+jsAttr(nombre)+"')\">"+btnTxt+"</button>"
+    +verBtn+editBtn
     +"</div>";
 }
 
@@ -2478,6 +2488,7 @@ var desafioFormValores={de:'',dia:'',hora:'',cancha:'',mensaje:''};
 function guardarDfValor(campo,valor){desafioFormValores[campo]=valor;}
 
 function toggleDesafioForm(nombre){
+  if(!jugadorVinculado||jugadorVinculado.nombre===nombre)return; // resguardo: sin sesion, o intentando desafiarse a si mismo
   if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){
     alert("El sistema de desafios necesita el backend conectado (Apps Script). Por ahora, coordina el partido directamente con el jugador.");
     return;
@@ -2490,8 +2501,8 @@ function toggleDesafioForm(nombre){
 
 function enviarDesafio(paraNombre){
   if(desafioEnviando)return;
-  var deEl=document.getElementById("dfDe");
-  var de=deEl?deEl.value:"";
+  if(!jugadorVinculado){alert("Inicia sesion y vincula tu perfil para poder desafiar.");return;}
+  var de=jugadorVinculado.nombre;
   var dia=(document.getElementById("dfDia")||{}).value||"";
   var hora=(document.getElementById("dfHora")||{}).value||"";
   var cancha=(document.getElementById("dfCancha")||{}).value||"";
@@ -2571,6 +2582,10 @@ var CHALBTN_ICON="<svg viewBox=\"0 0 54 32\" fill=\"none\" xmlns=\"http://www.w3
   +"<path d=\"M38 2 C46 8 46 24 38 30\" stroke=\"#0e0e0e\" stroke-width=\"1.6\" fill=\"none\" opacity=\".55\"/>"
   +"</svg>";
 function rDesafiarBtn(nombre){
+  if(jugadorVinculado&&jugadorVinculado.nombre===nombre)return ""; // no te puedes desafiar a ti mismo
+  if(!jugadorVinculado){
+    return "<div class=\"chalbtn-locked\">Inicia sesion y vincula tu perfil para poder desafiar</div>";
+  }
   return "<button class=\"chalbtn\" onclick=\"toggleDesafioForm('"+jsAttr(nombre)+"')\">"
     +"<span class=\"chalbtn-ic\">"+CHALBTN_ICON+"</span>"
     +"<span class=\"chalbtn-mid\"><span class=\"chalbtn-t\">Desafiar</span><span class=\"chalbtn-s\">Retar a este jugador</span></span>"
@@ -2579,17 +2594,14 @@ function rDesafiarBtn(nombre){
 }
 
 // Panel del formulario (solo visible si desafioFormAbierto === nombre).
+// Ya no existe selector de "quien eres": se toma directo de jugadorVinculado
+// (la sesion real), asi nadie puede mandar un desafio en nombre de otro.
 function rDesafioFormPanel(nombre){
   if(desafioFormAbierto!==nombre)return "";
+  if(!jugadorVinculado)return "";
   var v=desafioFormValores;
-  var activos=DATA.players.filter(function(pl){return !pl.retirado;}).slice().sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
-  var opts="<option value=\"\">Tu nombre...</option>";
-  for(var i=0;i<activos.length;i++){
-    var sel=(v.de===activos[i].nombre)?" selected":"";
-    opts+="<option value=\""+esc(activos[i].nombre)+"\""+sel+">"+esc(activos[i].nombre)+"</option>";
-  }
   return "<div class=\"dfform\">"
-    +"<select class=\"fsel\" id=\"dfDe\" onchange=\"guardarDfValor('de',this.value)\""+(desafioEnviando?" disabled":"")+">"+opts+"</select>"
+    +"<div class=\"dfquien\">Vas a desafiar como <b>"+esc(jugadorVinculado.nombre)+"</b></div>"
     +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"date\" aria-label=\"Dia del desafio\" value=\""+esc(v.dia)+"\" oninput=\"guardarDfValor('dia',this.value)\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"time\" aria-label=\"Hora del desafio\" value=\""+esc(v.hora)+"\" oninput=\"guardarDfValor('hora',this.value)\""+(desafioEnviando?" disabled":"")+"></div>"
     +"<input class=\"fi\" id=\"dfCancha\" type=\"text\" placeholder=\"Cancha (opcional)\" value=\""+esc(v.cancha)+"\" oninput=\"guardarDfValor('cancha',this.value)\""+(desafioEnviando?" disabled":"")+">"
     +"<input class=\"fi\" id=\"dfMensaje\" type=\"text\" placeholder=\"Mensaje (opcional)\" value=\""+esc(v.mensaje)+"\" oninput=\"guardarDfValor('mensaje',this.value)\""+(desafioEnviando?" disabled":"")+">"
@@ -2601,9 +2613,15 @@ function rDesafioFormPanel(nombre){
 
 // Arma el bloque con los desafios pendientes/aceptados relacionados a `nombre`
 // (recibidos con Aceptar/Rechazar, enviados en espera, y duelos ya aceptados).
+// Las acciones (aceptar/rechazar, chat, subir resultado) solo se habilitan
+// si jugadorVinculado coincide con la persona real involucrada -- ver el
+// perfil de otro no te deja actuar en su nombre, aunque el bloque siga
+// siendo visible para todos (transparencia: se ve que hay un desafio,
+// pero no se puede tocar nada ajeno).
 function rDesafiosLista(nombre){
   var todos=(DATA.desafios||[]).filter(function(d){return d.de===nombre||d.para===nombre;});
   if(!todos.length)return "";
+  var esPropio=!!(jugadorVinculado&&jugadorVinculado.nombre===nombre);
   var recibidos=todos.filter(function(d){return d.para===nombre&&d.estado==='Pendiente';});
   var enviados=todos.filter(function(d){return d.de===nombre&&d.estado==='Pendiente';});
   var aceptados=todos.filter(function(d){return desafioVigente(d);});
@@ -2615,10 +2633,11 @@ function rDesafiosLista(nombre){
     h+="<div class=\"descard pend\"><div class=\"destit\">"+esc(d.de)+" te desafio</div>"
       +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"")
       +(d.mensaje?"<div class=\"desmsg\">\u201c"+esc(d.mensaje)+"\u201d</div>":"")
-      +"<div class=\"desbtns\">"
-      +"<button class=\"desac\" onclick=\"responderDesafioUI('"+jsAttr(d.id)+"','Aceptado','"+jsAttr(nombre)+"')\">Aceptar</button>"
-      +"<button class=\"desrj\" onclick=\"responderDesafioUI('"+jsAttr(d.id)+"','Rechazado','"+jsAttr(nombre)+"')\">Rechazar</button>"
-      +"</div></div>";
+      +(esPropio?("<div class=\"desbtns\">"
+        +"<button class=\"desac\" onclick=\"responderDesafioUI('"+jsAttr(d.id)+"','Aceptado','"+jsAttr(nombre)+"')\">Aceptar</button>"
+        +"<button class=\"desrj\" onclick=\"responderDesafioUI('"+jsAttr(d.id)+"','Rechazado','"+jsAttr(nombre)+"')\">Rechazar</button>"
+        +"</div>"):"")
+      +"</div>";
   }
   for(var i=0;i<enviados.length;i++){
     var d=enviados[i];
@@ -2626,13 +2645,16 @@ function rDesafiosLista(nombre){
   }
   for(var i=0;i<aceptados.length;i++){
     var d=aceptados[i],rival=d.de===nombre?d.para:d.de;
+    var esParticipante=!!(jugadorVinculado&&(jugadorVinculado.nombre===d.de||jugadorVinculado.nombre===d.para));
     var detalle=[fmtDesafioDia(d.dia),fmtDesafioHora(d.hora),d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
     h+="<div class=\"descard ok\"><div class=\"destit\">Duelo confirmado vs "+esc(rival)+"</div>"
-      +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"")
-      +"<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(d.de)+"','"+jsAttr(d.para)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
-      +"<div id=\"chatpanel-"+domSafe(d.id)+"\" class=\"chatpanel\" style=\"display:none\"></div>"
-      +rResultadoBlock(d)
-      +"</div>";
+      +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"");
+    if(esParticipante){
+      h+="<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(d.de)+"','"+jsAttr(d.para)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
+        +"<div id=\"chatpanel-"+domSafe(d.id)+"\" class=\"chatpanel\" style=\"display:none\"></div>"
+        +rResultadoBlock(d);
+    }
+    h+="</div>";
   }
   h+="</div>";
   return h;
@@ -2815,10 +2837,15 @@ async function showProfile(nombre,scroll){
   var tieneFigura=!!(fotoJugador&&fotoJugador.cuerpo);
   var dispFicha=getFicha(p.nombre).disponible;
   var isDisp=dispFicha!=='No'; // por defecto disponible salvo que el jugador diga lo contrario
-  var dispToggleH="<button class=\"dispToggle\" onclick=\"toggleDisponibilidad('"+jsAttr(p.nombre)+"')\">"
-    +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
-    +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span>"
-    +"<span class=\"pdispsub\">"+(isDisp?"Listo para jugar":"Toca para activarte")+"</span></span></button>";
+  var esPropioPerfil=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
+  var dispToggleH=esPropioPerfil
+    ?("<button class=\"dispToggle\" onclick=\"toggleDisponibilidad('"+jsAttr(p.nombre)+"')\">"
+      +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
+      +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span>"
+      +"<span class=\"pdispsub\">"+(isDisp?"Listo para jugar":"Toca para activarte")+"</span></span></button>")
+    :("<div class=\"dispToggle\" style=\"cursor:default\">"
+      +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
+      +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span></span></div>");
   var desafioPanelH=rDesafioFormPanel(p.nombre);
   var desafiosListaH=rDesafiosLista(p.nombre);
   var icBuilding="<svg viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M4 3.5A1.5 1.5 0 015.5 2h9A1.5 1.5 0 0116 3.5V17h1a1 1 0 110 2H3a1 1 0 110-2h1V3.5zM7 6h2v2H7V6zm6 0h-2v2h2V6zM7 9.5h2v2H7v-2zm6 0h-2v2h2v-2zM7 13h2v2H7v-2zm6 0h-2v2h2v-2z\" clip-rule=\"evenodd\"/></svg>";
