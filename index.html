@@ -1403,44 +1403,44 @@ function rJugadorDelMes(){
 // reemplaza DATA en el sitio (sin tocar código, solo datos en vivo).
 function transformLiveData(json){
   var jugadores=json.jugadores.map(function(j){return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo',encargado:j.encargado||'',linkCancha:j.linkCancha||''};});
-  var resultadosCrudos=json.resultados.filter(function(r){return r.ganador;}); // jugados
   var pendientesCrudos=json.resultados.filter(function(r){return !r.ganador;}); // sin ganador aun
 
   // Fichas tecnicas sincronizadas desde la hoja FichaTecnica (si existe).
   SERVER_FICHAS=json.fichas||{};
 
   FIXTURE_SIZE_ACTUAL=json.fixtureSize||FIXTURE_SIZE_ACTUAL; // se reusa en cargarJugadoresYResultadosSupabase()
-  var ranking=calcularRanking(jugadores,json.resultados,json.fixtureSize);
-  var porNombre={};
-  ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
 
-  var encargadoPorNombre={};
-  var linkCanchaPorNombre={};
-  jugadores.forEach(function(j){encargadoPorNombre[j.nombre]=j.encargado;linkCanchaPorNombre[j.nombre]=j.linkCancha;});
-
-  DATA.players=jugadores.map(function(j,i){
-    var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-    return {id:j.id||(i+1),nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:encargadoPorNombre[j.nombre]||'',linkCancha:linkCanchaPorNombre[j.nombre]||''};
+  // OJO: DATA.players YA NO se sobreescribe completo desde aca. Los IDs
+  // de la hoja de Google Sheets son numeros viejos (ej: "33"), y Supabase
+  // necesita UUID reales para de_id/para_id al crear un desafio. Si esta
+  // funcion pisaba DATA.players despues de que cargarJugadoresYResultadosSupabase()
+  // ya habia puesto los UUID correctos, un jugador terminaba con
+  // p.id="33" y crear un desafio fallaba con "invalid input syntax for
+  // type uuid: '33'". Encargado y link de cancha SI siguen viviendo solo
+  // en la Sheet por ahora, asi que se "pegan" al jugador ya existente
+  // (matcheado por nombre) sin tocar id/pts/pj/pg/pp/retirado.
+  var porNombreDATA={};
+  (DATA.players||[]).forEach(function(p){porNombreDATA[p.nombre]=p;});
+  jugadores.forEach(function(j){
+    var p=porNombreDATA[j.nombre];
+    if(p){p.encargado=j.encargado||'';p.linkCancha=j.linkCancha||'';}
   });
 
-  DATA.results=resultadosCrudos.map(function(r){
-    var score=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
-    return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,cancha:r.cancha||''};
-  });
+  // DATA.results: idem, ya viene completo de Supabase (cargarJugadoresYResultadosSupabase).
 
   DATA.matches=pendientesCrudos.map(function(r,i){
     return {id:i+1,p1:r.jugador1||null,p2:r.jugador2||null,serie:r.serie,fecha:r.fecha,hora:r.hora||'',cancha:r.cancha||'',status:'pending',score:null};
   });
 
   // Titulos: hoja opcional "Titulos" con columnas Jugador | Serie | Temporada
+  // (esto es solo respaldo: getTitulos() consulta Supabase directo primero)
   DATA.titulos=(json.titulos||[]).map(function(t){
     return {nombre:t.jugador||t.nombre,serie:t.serie,temporada:t.temporada,periodo:t.periodo||''};
   });
 
-  // Desafios: hoja "Desafios", se llenan desde el boton Desafiar del perfil.
-  DATA.desafios=(json.desafios||[]).map(function(d){
-    return {id:d.id,fecha:d.fecha,de:d.de,para:d.para,dia:d.dia||'',hora:d.hora||'',cancha:d.cancha||'',mensaje:d.mensaje||'',estado:d.estado||'Pendiente',afiche:d.afiche||'',afiche_resultado:d.afiche_resultado||'',liveUrl:d.liveUrl||''};
-  });
+  // DATA.desafios: idem que players/results -- ya viene completo de Supabase
+  // (cargarDesafiosSupabase). Los IDs viejos de la hoja "Desafios" ("D172...")
+  // tampoco son UUID validos, mismo problema que con los jugadores.
 }
 
 // ============================================================
@@ -1458,6 +1458,7 @@ function transformLiveData(json){
 // calcularRanking() de siempre, para que insignias, rachas,
 // matagigantes, etc seguir funcionando identico sin tocar esa logica.
 var jugadoresSupabaseCargando=false;
+var jugadoresSupabaseListo=false; // true recien cuando DATA.players tiene los UUID reales (no el array estatico viejo con IDs numericos)
 async function cargarJugadoresYResultadosSupabase(){
   if(!window.supabaseClient)return; // Supabase no esta inicializado, se mantienen los datos previos
   if(jugadoresSupabaseCargando)return; // evita refrescos superpuestos
@@ -1502,6 +1503,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie};
     });
 
+    jugadoresSupabaseListo=true;
     rAll();
     console.log('Jugadores y resultados cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length);
   }catch(err){
@@ -2585,6 +2587,7 @@ function toggleDesafioForm(nombre){
 async function enviarDesafio(paraNombre){
   if(desafioEnviando)return;
   if(!jugadorVinculado){alert("Inicia sesion y vincula tu perfil para poder desafiar.");return;}
+  if(!jugadoresSupabaseListo){alert("Todavia se estan cargando los datos. Espera unos segundos e intenta de nuevo.");return;}
   if(jugadorVinculado.nombre===paraNombre){alert("No puedes desafiarte a ti mismo.");return;}
   var paraJugador=null;
   for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].nombre===paraNombre){paraJugador=DATA.players[i];break;}}
