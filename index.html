@@ -803,9 +803,18 @@ var reclamandoPerfil=false;
 
 function loginConGoogle(){
   if(!window.supabaseClient){alert("El login no esta disponible en este momento.");return;}
+  // OJO: nunca usar window.location.href tal cual como redirectTo. Si la
+  // persona esta viendo una seccion (ej. #ranking, por el scroll-spy del
+  // menu), Supabase le agrega su propio token pegando OTRO "#" al final
+  // (quedando "...#ranking#access_token=..."). El navegador solo reconoce
+  // el primer "#" como inicio del fragmento, asi que Supabase nunca
+  // encuentra la clave "access_token" al volver y la sesion no se crea
+  // (el login "no entra" aunque Google si autentico). Por eso se arma
+  // la URL base limpia (origin+pathname), sin ningun hash previo.
+  var redirectLimpio=window.location.origin+window.location.pathname;
   window.supabaseClient.auth.signInWithOAuth({
     provider:'google',
-    options:{redirectTo:window.location.href}
+    options:{redirectTo:redirectLimpio}
   }).catch(function(err){
     console.warn('No se pudo iniciar sesion.',err);
     alert("No se pudo iniciar sesion. Intenta de nuevo.");
