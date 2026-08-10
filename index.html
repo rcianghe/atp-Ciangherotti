@@ -2310,10 +2310,16 @@ var DIAS_DESAFIO=[["lunAM","Lun AM"],["lunPM","Lun PM"],["marAM","Mar AM"],["mar
 // Seleccion en curso mientras se edita la ficha (se llena al abrir el
 // editor y se manda junto al resto de la ficha al Guardar).
 var fichaDispoSel={};
-function toggleDispoDia(nombre,code){
+function toggleDispoDia(nombre,code,btn){
   if(fichaGuardando)return;
   fichaDispoSel[code]=!fichaDispoSel[code];
-  showProfile(nombre,false);
+  // OJO: NO se llama a showProfile() aca. Un re-render completo del
+  // perfil reconstruye tambien los <select> de Nivel/Mano/Superficie/Golpe
+  // desde el ultimo valor guardado (ft[campo]), borrando en el camino
+  // cualquier seleccion que el usuario ya hubiera hecho ahi pero no
+  // guardado todavia. En vez de eso, se refleja el toque solo en el
+  // boton clickeado (clase "on"), dejando el resto del formulario intacto.
+  if(btn)btn.classList.toggle('on',!!fichaDispoSel[code]);
 }
 
 // Busca el desafio "vigente" de un jugador: Aceptado, y donde
@@ -2468,7 +2474,7 @@ function renderDispoDesafiosEdit(nombre){
   for(var i=0;i<DIAS_DESAFIO.length;i++){
     var code=DIAS_DESAFIO[i][0],label=DIAS_DESAFIO[i][1];
     var on=!!fichaDispoSel[code];
-    chips+="<button type=\"button\" class=\"diachip"+(on?" on":"")+"\""+(fichaGuardando?" disabled":"")+" onclick=\"toggleDispoDia('"+jsAttr(nombre)+"','"+code+"')\">"+esc(label)+"</button>";
+    chips+="<button type=\"button\" class=\"diachip"+(on?" on":"")+"\""+(fichaGuardando?" disabled":"")+" onclick=\"toggleDispoDia('"+jsAttr(nombre)+"','"+code+"',this)\">"+esc(label)+"</button>";
   }
   return "<div class=\"ftitem\" style=\"grid-column:1/-1;background:rgba(91,191,42,.08);border:1px solid rgba(91,191,42,.35)\">"
     +"<div class=\"ftlbl\" style=\"color:var(--v)\">Disponibilidad para desafios</div>"
