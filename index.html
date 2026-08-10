@@ -2390,11 +2390,13 @@ async function toggleDisponibilidad(nombre){
       .upsert({jugador_id:jugadorVinculado.id,disponible:nuevo},{onConflict:'jugador_id'});
     if(res.error){
       console.warn('No se pudo guardar disponibilidad en Supabase.',res.error);
+      alert("No se pudo guardar tu disponibilidad ("+(res.error.message||'error desconocido')+"). Vuelve a intentarlo; si persiste, avisa al coordinador.");
       SERVER_FICHAS[nombre].disponible=actual;
       showProfile(nombre,false);
     }
   }catch(err){
     console.warn('Sin conexion al guardar disponibilidad, se revierte.',err);
+    alert("Sin conexion. No se pudo guardar tu disponibilidad.");
     SERVER_FICHAS[nombre].disponible=actual;
     showProfile(nombre,false);
   }finally{
@@ -2444,6 +2446,7 @@ async function saveFichaTecnica(nombre){
       try{localStorage.removeItem("ficha_"+nombre);}catch(e){} // ya no hace falta el respaldo local
     }else{
       console.warn('No se pudo guardar la ficha en Supabase, se guarda solo local.',res.error);
+      alert("No se pudo guardar en el servidor ("+(res.error.message||'error desconocido')+"). Se guardo solo en este dispositivo por ahora.");
       try{localStorage.setItem("ficha_"+nombre,JSON.stringify(data));}catch(e){}
     }
   }catch(err){
@@ -2628,11 +2631,26 @@ async function enviarDesafio(paraNombre){
 }
 
 async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
+  if(nuevoEstado==='Aceptado'){
+    // Regla: 1 desafio aceptado como maximo por jugador. Si ya tenes
+    // uno vigente (desafioVivoActivo usa la misma vigencia que el
+    // resto del sitio: Aceptado + margen de horas tras la hora
+    // pactada), no se puede aceptar otro hasta que ese termine o pase
+    // su plazo.
+    var yaTengoUno=desafioVivoActivo(nombrePerfil);
+    if(yaTengoUno&&yaTengoUno.id!==id){
+      alert("Ya tienes un desafio aceptado vigente (vs "+((yaTengoUno.de===nombrePerfil)?yaTengoUno.para:yaTengoUno.de)+"). Debes jugarlo, o esperar a que venza su plazo, antes de aceptar otro.");
+      return;
+    }
+  }
   try{
     var res=await window.supabaseClient.from('desafios').update({estado:nuevoEstado}).eq('id',id).select().maybeSingle();
     if(!res.error&&res.data){
       for(var i=0;i<DATA.desafios.length;i++){if(DATA.desafios[i].id===id){DATA.desafios[i].estado=nuevoEstado;break;}}
-      if(nuevoEstado==='Aceptado')avisarDesafioAceptado(id);
+      if(nuevoEstado==='Aceptado'){
+        avisarDesafioAceptado(id);
+        cancelarOtrosPendientesMios(id,nombrePerfil); // al aceptar, el resto de MIS pendientes se cancelan solos
+      }
     }else{
       console.warn('No se pudo actualizar el desafio.',res.error);
       alert("No se pudo guardar la respuesta. Intenta de nuevo.");
@@ -2642,6 +2660,31 @@ async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
     alert("Sin conexion. Intenta de nuevo.");
   }
   showProfile(nombrePerfil,false);
+}
+
+// Al aceptar un desafio, cancela automaticamente el resto de MIS
+// desafios pendientes (los que yo envie o recibi, sin contar el que
+// acabo de aceptar) -- asi cada jugador queda con maximo un aceptado
+// vigente a la vez. Por diseño, esto SOLO cancela los pendientes
+// donde YO participo: la policy de Supabase no deja tocar desafios
+// ajenos donde no soy parte, asi que si el rival tiene otros
+// pendientes con terceros, esos quedan intactos hasta que el o ella
+// misma acepte/actue (o venzan solos a las 4 horas).
+async function cancelarOtrosPendientesMios(idAceptado,nombre){
+  var otros=(DATA.desafios||[]).filter(function(d){
+    return d.id!==idAceptado&&d.estado==='Pendiente'&&(d.de===nombre||d.para===nombre);
+  });
+  for(var i=0;i<otros.length;i++){
+    var d=otros[i];
+    try{
+      var r=await window.supabaseClient.from('desafios').update({estado:'Cancelado'}).eq('id',d.id);
+      if(!r.error)d.estado='Cancelado';
+      else console.warn('No se pudo cancelar automaticamente un desafio pendiente.',r.error);
+    }catch(err){
+      console.warn('Sin conexion al cancelar desafios pendientes automaticamente.',err);
+    }
+  }
+  if(otros.length)rAll();
 }
 
 // Cuando un jugador Acepta un desafio (es decir, ambos jugadores ya
