@@ -1601,6 +1601,27 @@ async function cargarFichasSupabase(){
 // Apps Script) por datos de la tabla "desafios". Igual que fichas,
 // necesita DATA.players ya cargado para traducir de_id/para_id a
 // nombres (el resto del sitio sigue trabajando con nombres, no ids).
+// Un desafio "Pendiente" que lleva mas de 4 horas sin respuesta se
+// considera vencido: deja de contar como pendiente en toda la app
+// (no bloquea nuevos desafios entre esos dos jugadores, no se
+// muestra en "Desafios" de ningun perfil), sin importar lo que diga
+// el campo estado en la base de datos en ese momento.
+var DESAFIO_PENDIENTE_MARGEN_HORAS=4;
+function desafioPendienteVigente(d){
+  if(!d||d.estado!=='Pendiente')return false;
+  if(!d.fecha)return true;
+  var creado=new Date(d.fecha).getTime();
+  if(isNaN(creado))return true;
+  return (Date.now()-creado)<DESAFIO_PENDIENTE_MARGEN_HORAS*3600000;
+}
+// Chequeo usado antes de enviar un desafio nuevo, para no permitir
+// dos "Pendiente" vigentes entre el mismo par de jugadores.
+function hayDesafioPendienteEntre(nombreA,nombreB){
+  return (DATA.desafios||[]).some(function(d){
+    return desafioPendienteVigente(d)&&((d.de===nombreA&&d.para===nombreB)||(d.de===nombreB&&d.para===nombreA));
+  });
+}
+
 async function cargarDesafiosSupabase(){
   if(!window.supabaseClient)return;
   try{
@@ -1622,6 +1643,18 @@ async function cargarDesafiosSupabase(){
         liveUrl:d.live_url||''
       };
     });
+
+    // Limpieza oportunista de pendientes vencidos que me involucran.
+    if(jugadorVinculado){
+      res.data.forEach(function(d){
+        var vencido=d.estado==='Pendiente'&&d.created_at&&(Date.now()-new Date(d.created_at).getTime())>=DESAFIO_PENDIENTE_MARGEN_HORAS*3600000;
+        if(vencido&&(d.de_id===jugadorVinculado.id||d.para_id===jugadorVinculado.id)){
+          window.supabaseClient.from('desafios').update({estado:'Expirado'}).eq('id',d.id)
+            .then(function(r){if(r.error)console.warn('No se pudo marcar el desafio como expirado.',r.error);});
+        }
+      });
+    }
+
     rAll();
   }catch(err){
     console.warn('Sin conexion a Supabase para desafios.',err);
@@ -2637,6 +2670,10 @@ async function enviarDesafio(paraNombre){
   if(!jugadorVinculado){alert("Inicia sesion y vincula tu perfil para poder desafiar.");return;}
   if(!jugadoresSupabaseListo){alert("Todavia se estan cargando los datos. Espera unos segundos e intenta de nuevo.");return;}
   if(jugadorVinculado.nombre===paraNombre){alert("No puedes desafiarte a ti mismo.");return;}
+  if(hayDesafioPendienteEntre(jugadorVinculado.nombre,paraNombre)){
+    alert("Ya tienes un desafio pendiente con este jugador. Espera su respuesta (o a que pasen 4 horas) antes de volver a desafiarlo.");
+    return;
+  }
   var paraJugador=null;
   for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].nombre===paraNombre){paraJugador=DATA.players[i];break;}}
   if(!paraJugador){alert("No se pudo identificar al jugador desafiado.");return;}
@@ -2663,6 +2700,13 @@ async function enviarDesafio(paraNombre){
       DATA.desafios.push({id:res.data.id,fecha:res.data.created_at,de:jugadorVinculado.nombre,para:paraNombre,dia:dia,hora:hora,cancha:cancha,mensaje:mensaje,estado:'Pendiente',afiche:'',afiche_resultado:'',liveUrl:''});
       desafioFormAbierto=null;
       desafioFormValores={dia:'',hora:'',cancha:'',mensaje:''};
+    }else if(res.error&&res.error.code==='23505'){
+      console.warn('Desafio duplicado bloqueado por la base de datos.',res.error);
+      alert("Ya existe un desafio pendiente con este jugador.");
+      cargarDesafiosSupabase();
+    }else if(res.error&&res.error.code==='P0001'){
+      console.warn('Bloqueado por regla de horario del servidor.',res.error);
+      alert(res.error.message||"No se pudo enviar el desafio: hay un conflicto de horario.");
     }else{
       console.warn('No se pudo crear el desafio.',res.error);
       alert("No se pudo enviar el desafio. Intenta de nuevo.");
@@ -2696,6 +2740,9 @@ async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
         avisarDesafioAceptado(id);
         cancelarOtrosPendientesMios(id,nombrePerfil); // al aceptar, el resto de MIS pendientes se cancelan solos
       }
+    }else if(res.error&&res.error.code==='P0001'){
+      console.warn('Bloqueado por regla de horario del servidor.',res.error);
+      alert(res.error.message||"No se pudo guardar la respuesta: hay un conflicto de horario.");
     }else{
       console.warn('No se pudo actualizar el desafio.',res.error);
       alert("No se pudo guardar la respuesta. Intenta de nuevo.");
