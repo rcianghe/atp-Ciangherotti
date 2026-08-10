@@ -2975,7 +2975,7 @@ async function showProfile(nombre,scroll){
     :"";
   var tieneFigura=!!(fotoJugador&&fotoJugador.cuerpo);
   var dispFicha=getFicha(p.nombre).disponible;
-  var isDisp=dispFicha!=='No'; // por defecto disponible salvo que el jugador diga lo contrario
+  var isDisp=dispFicha!==false; // por defecto disponible salvo que el jugador lo desactive (booleano real desde Supabase)
   var esPropioPerfil=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
   var dispToggleH=esPropioPerfil
     ?("<button class=\"dispToggle\" onclick=\"toggleDisponibilidad('"+jsAttr(p.nombre)+"')\">"
