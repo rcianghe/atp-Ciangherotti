@@ -875,10 +875,46 @@ async function toggleReclamarPanel(){
   }
 }
 
+// Compara el nombre de la cuenta de Google con el nombre del jugador
+// elegido para detectar vinculaciones por descuido (p.ej. alguien
+// selecciona sin querer el nombre de otro jugador de la lista). No es
+// un bloqueo duro: normaliza tildes/mayusculas y exige que compartan
+// al menos nombre y apellido para considerarse "coincidencia".
+function normalizaNombre(s){
+  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().trim().split(/\s+/).filter(Boolean);
+}
+function nombresCoinciden(a,b){
+  var pa=normalizaNombre(a),pb=normalizaNombre(b);
+  if(!pa.length||!pb.length)return false;
+  var compartidas=pa.filter(function(w){return pb.indexOf(w)!==-1;}).length;
+  // Al menos 2 palabras en comun (tipicamente nombre + apellido)
+  return compartidas>=2||(pa.length===1&&compartidas>=1);
+}
+
 async function confirmarReclamo(){
   var sel=document.getElementById('reclamarSelect');
   var jugadorId=sel?sel.value:'';
   if(!jugadorId){alert("Selecciona tu nombre de la lista.");return;}
+  var opt=sel.options[sel.selectedIndex];
+  var nombreJugador=opt?opt.textContent.replace(/\s*\(Serie.*\)$/,''):'';
+
+  // Resguardo extra: si por alguna razon esta cuenta ya quedo vinculada
+  // a otro jugador (dos pestanas abiertas, etc.), no dejar que reclame
+  // un segundo perfil.
+  if(jugadorVinculado){
+    alert("Tu cuenta ya esta vinculada al perfil de "+jugadorVinculado.nombre+". No puedes vincular un segundo perfil. Si esto es un error, contacta al coordinador.");
+    return;
+  }
+
+  // Aviso con confirmacion extra (no bloqueo duro) si el nombre elegido
+  // no calza con el de la cuenta de Google: cubre el caso de descuido
+  // (seleccionar el nombre de otra persona por error) sin trabar casos
+  // legitimos donde el nombre puede variar un poco (apodos, etc.).
+  if(!nombresCoinciden(usuarioActual.nombre,nombreJugador)){
+    if(!confirm("El nombre de tu cuenta de Google (\""+usuarioActual.nombre+"\") no coincide con el perfil que elegiste (\""+nombreJugador+"\").\n\n¿Estas SEGURO de que este es tu perfil?"))return;
+  }
+
   if(!confirm("Vas a vincular tu cuenta de Google a este perfil. Esto no se puede deshacer desde el sitio (si te equivocaste, contacta al coordinador). ¿Confirmas?"))return;
   try{
     var res=await window.supabaseClient.from('jugadores')
