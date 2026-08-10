@@ -1405,8 +1405,11 @@ function transformLiveData(json){
   var jugadores=json.jugadores.map(function(j){return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo',encargado:j.encargado||'',linkCancha:j.linkCancha||''};});
   var pendientesCrudos=json.resultados.filter(function(r){return !r.ganador;}); // sin ganador aun
 
-  // Fichas tecnicas sincronizadas desde la hoja FichaTecnica (si existe).
-  SERVER_FICHAS=json.fichas||{};
+  // Fichas tecnicas: ya NO se leen desde Google Sheets. La fuente de
+  // verdad es la tabla "fichas_tecnicas" de Supabase (cargarFichasSupabase()).
+  // Si esta linea volviera a sobreescribir SERVER_FICHAS con json.fichas,
+  // cada refresco automatico (cada 90s) borraria cualquier cambio guardado
+  // por el usuario mientras Supabase tardaba mas que Sheets en responder.
 
   FIXTURE_SIZE_ACTUAL=json.fixtureSize||FIXTURE_SIZE_ACTUAL; // se reusa en cargarJugadoresYResultadosSupabase()
 
