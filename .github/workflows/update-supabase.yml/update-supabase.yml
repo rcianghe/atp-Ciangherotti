@@ -1,0 +1,26 @@
+name: Actualizar Supabase JS Local
+
+on:
+  schedule:
+    # Se ejecuta automáticamente todos los domingos a la medianoche (UTC)
+    - cron: '0 0 * * 0'
+  workflow_dispatch: # Permite ejecutarlo manualmente desde GitHub cuando quieras
+
+jobs:
+  update-lib:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Descargar última versión de Supabase JS
+        run: |
+          mkdir -p lib
+          curl -sL "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" -o lib/supabase.min.js
+
+      - name: Guardar cambios si hay actualización
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add lib/supabase.min.js
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: supabase.min.js a la última versión" && git push)
