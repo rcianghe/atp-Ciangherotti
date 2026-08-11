@@ -954,13 +954,12 @@ function rAuthBox(){
       +'<span>Iniciar sesion</span></button>';
     return;
   }
-  var pill='<div class="authuser">'
-    +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar authavatar-i">'+esc((usuarioActual.nombre||'?')[0])+'</span>')
-    +'<span class="authnombre">'+esc(jugadorVinculado?jugadorVinculado.nombre:(usuarioActual.nombre||usuarioActual.email||'Sesion activa'))+'</span>';
-  if(!jugadorVinculado)pill+='<button class="authlogout" style="border-color:var(--am);color:var(--am)" onclick="toggleReclamarPanel()">Vincular perfil</button>';
+var pill='<div class="authuser">'
+    +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar">👤</span>')
+    +'<span class="authnombre">'+esc(jugadorVinculado?jugadorVinculado.nombre:(usuarioActual.nombre||usuarioActual.email))+'</span>'
+    +'<button class="authlogout" style="border-color:#3b82f6;color:#60a5fa;" onclick="suscribirANotificaciones(jugadorVinculado?.id||usuarioActual.id)" title="Activar Notificaciones">🔔</button>';
+  if(!jugadorVinculado) pill+='<button class="authlogout" style="border-color:var(--am);color:var(--am)" onclick="toggleVincularModal()">Vincular</button>';
   pill+='<button class="authlogout" onclick="logout()" title="Cerrar sesion">Salir</button></div>';
-  if(reclamandoPerfil){
-    pill+='<div class="reclamarpanel"><div class="reclamarttl">¿Cuál es tu nombre en el club?</div>'
       +'<select class="fsel" id="reclamarSelect" style="margin-bottom:.5rem"><option value="">Cargando...</option></select>'
       +'<div style="display:flex;gap:.5rem"><button class="dfsend" onclick="confirmarReclamo()">Confirmar, soy yo</button>'
       +'<button class="dfcancel" onclick="toggleReclamarPanel()">Cancelar</button></div></div>';
