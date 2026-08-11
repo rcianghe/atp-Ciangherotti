@@ -2687,6 +2687,16 @@ async function enviarDesafio(paraNombre){
   // esos eran parches para el autoformateo de Google Sheets. Postgres
   // (columnas date/time reales) recibe "YYYY-MM-DD"/"HH:MM" tal cual.
 
+  // El dia es obligatorio: un desafio Aceptado sin dia queda "vigente"
+  // para siempre en desafioVigente() (no hay fecha de cierre que calcular),
+  // lo que bloquearia al jugador de por vida para aceptar cualquier otro
+  // desafio, sin ninguna forma de destrabarlo desde la interfaz.
+  if(!dia){
+    alert("Debes seleccionar un dia para el desafio.");
+    desafioEnviando=false;
+    return;
+  }
+
   desafioEnviando=true;
   showProfile(paraNombre,false); // re-render para mostrar "Enviando..."
 
@@ -2822,7 +2832,7 @@ function rDesafioFormPanel(nombre){
   var v=desafioFormValores;
   return "<div class=\"dfform\">"
     +"<div class=\"dfquien\">Vas a desafiar como <b>"+esc(jugadorVinculado.nombre)+"</b></div>"
-    +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"date\" aria-label=\"Dia del desafio\" value=\""+esc(v.dia)+"\" oninput=\"guardarDfValor('dia',this.value)\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"time\" aria-label=\"Hora del desafio\" value=\""+esc(v.hora)+"\" oninput=\"guardarDfValor('hora',this.value)\""+(desafioEnviando?" disabled":"")+"></div>"
+    +"<div class=\"dfrow\"><input class=\"fi\" id=\"dfDia\" type=\"date\" required aria-label=\"Dia del desafio (obligatorio)\" placeholder=\"Dia *\" value=\""+esc(v.dia)+"\" oninput=\"guardarDfValor('dia',this.value)\""+(desafioEnviando?" disabled":"")+"><input class=\"fi\" id=\"dfHora\" type=\"time\" aria-label=\"Hora del desafio\" value=\""+esc(v.hora)+"\" oninput=\"guardarDfValor('hora',this.value)\""+(desafioEnviando?" disabled":"")+"></div>"
     +"<input class=\"fi\" id=\"dfCancha\" type=\"text\" placeholder=\"Cancha (opcional)\" value=\""+esc(v.cancha)+"\" oninput=\"guardarDfValor('cancha',this.value)\""+(desafioEnviando?" disabled":"")+">"
     +"<input class=\"fi\" id=\"dfMensaje\" type=\"text\" placeholder=\"Mensaje (opcional)\" value=\""+esc(v.mensaje)+"\" oninput=\"guardarDfValor('mensaje',this.value)\""+(desafioEnviando?" disabled":"")+">"
     +"<div class=\"dfactions\">"
