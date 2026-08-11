@@ -313,7 +313,7 @@ section{padding:4rem 1.5rem}
 .chalbtn-arw{flex-shrink:0;width:32px;display:flex;align-items:center;justify-content:center;color:var(--v);font-size:1.4rem;line-height:1;transition:transform .15s ease}
 .chalbtn:hover .chalbtn-arw{transform:translateX(3px)}
 @media (max-width:360px){.chalbtn-ic{width:50px}.chalbtn-ic svg{width:25px}.chalbtn-t{font-size:1.15rem}.chalbtn-s{font-size:.56rem}.pchal .pdisptxt .lbl{font-size:.66rem}.pchal .pdispsub{font-size:.6rem}}
-@media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge,.chalbtn,.chalbtn-ic{animation:none}.chalbtn{border-color:rgba(91,191,42,.5)}.chalbtn-ic{border-right-color:rgba(91,191,42,.5)}}
+@media (prefers-reduced-motion:reduce){.pavrank,.ppcbadge,.chalbtn,.chalbtn-ic,.descard.ok.proximo{animation:none}.chalbtn{border-color:rgba(91,191,42,.5)}.chalbtn-ic{border-right-color:rgba(91,191,42,.5)}.descard.ok.proximo{background:rgba(192,57,43,.09)}}
 .dfform{margin-top:.7rem;background:rgba(0,0,0,.18);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.5rem;max-width:420px}
 .dfform .fi,.dfform .fsel{background:var(--gd);border:1px solid var(--gm);border-radius:4px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none}
 .dfform .fi::placeholder{color:var(--gl)}
@@ -328,6 +328,12 @@ section{padding:4rem 1.5rem}
 .descard.pend{border-left:3px solid var(--am)}
 .descard.wait{border-left:3px solid var(--gl)}
 .descard.ok{border-left:3px solid var(--v)}
+.descard.ok.proximo{border-left-color:var(--ro);animation:descardProximoPulse 2.6s ease-in-out infinite}
+@keyframes descardProximoPulse{
+  0%,100%{box-shadow:inset 0 0 0 rgba(192,57,43,0);background:rgba(0,0,0,.18)}
+  50%{box-shadow:inset 0 0 0 1px rgba(192,57,43,.4);background:rgba(192,57,43,.09)}
+}
+.desproxbadge{display:inline-block;margin-left:.35rem;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ff8a7a;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);border-radius:12px;padding:.12rem .5rem;vertical-align:middle}
 .destit{font-weight:700;color:var(--bl)}
 .desmeta{color:var(--gl);font-size:.76rem;margin-top:.2rem}
 .desmsg{color:#e8e8e8;font-size:.8rem;margin-top:.3rem;font-style:italic}
@@ -2730,25 +2736,19 @@ async function enviarDesafio(paraNombre){
 }
 
 async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
-  if(nuevoEstado==='Aceptado'){
-    // Regla: 1 desafio aceptado como maximo por jugador. Si ya tenes
-    // uno vigente (desafioVivoActivo usa la misma vigencia que el
-    // resto del sitio: Aceptado + margen de horas tras la hora
-    // pactada), no se puede aceptar otro hasta que ese termine o pase
-    // su plazo.
-    var yaTengoUno=desafioVivoActivo(nombrePerfil);
-    if(yaTengoUno&&yaTengoUno.id!==id){
-      alert("Ya tienes un desafio aceptado vigente (vs "+((yaTengoUno.de===nombrePerfil)?yaTengoUno.para:yaTengoUno.de)+"). Debes jugarlo, o esperar a que venza su plazo, antes de aceptar otro.");
-      return;
-    }
-  }
+  // Ya NO se bloquea por "ya tienes un Aceptado vigente": un jugador puede
+  // tener varios duelos Aceptados a la vez (hoy, mañana, la otra semana),
+  // siempre que no se solapen en horario. El unico que decide si hay
+  // conflicto es el trigger de Supabase (regla de 4 horas de margen entre
+  // partidos del mismo dia); si lo hay, la propia base de datos rechaza el
+  // update con codigo P0001 y ese error se muestra mas abajo.
   try{
     var res=await window.supabaseClient.from('desafios').update({estado:nuevoEstado}).eq('id',id).select().maybeSingle();
     if(!res.error&&res.data){
       for(var i=0;i<DATA.desafios.length;i++){if(DATA.desafios[i].id===id){DATA.desafios[i].estado=nuevoEstado;break;}}
       if(nuevoEstado==='Aceptado'){
         avisarDesafioAceptado(id);
-        cancelarOtrosPendientesMios(id,nombrePerfil); // al aceptar, el resto de MIS pendientes se cancelan solos
+        cancelarPendientesConflictivos(id,nombrePerfil); // solo cancela los pendientes que SI chocan en horario con este
       }
     }else if(res.error&&res.error.code==='P0001'){
       console.warn('Bloqueado por regla de horario del servidor.',res.error);
@@ -2764,29 +2764,72 @@ async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
   showProfile(nombrePerfil,false);
 }
 
-// Al aceptar un desafio, cancela automaticamente el resto de MIS
-// desafios pendientes (los que yo envie o recibi, sin contar el que
-// acabo de aceptar) -- asi cada jugador queda con maximo un aceptado
-// vigente a la vez. Por diseño, esto SOLO cancela los pendientes
-// donde YO participo: la policy de Supabase no deja tocar desafios
-// ajenos donde no soy parte, asi que si el rival tiene otros
-// pendientes con terceros, esos quedan intactos hasta que el o ella
-// misma acepte/actue (o venzan solos a las 4 horas).
-async function cancelarOtrosPendientesMios(idAceptado,nombre){
-  var otros=(DATA.desafios||[]).filter(function(d){
-    return d.id!==idAceptado&&d.estado==='Pendiente'&&(d.de===nombre||d.para===nombre);
+// Diferencia en horas entre dos horarios "HH:MM". Espejo de la logica del
+// trigger fn_check_conflicto_horario() en Supabase, para poder decidir en
+// el cliente cuales pendientes quedaron con horario imposible de aceptar.
+function _diffHorasHHMM(h1,h2){
+  function mins(h){var p=(h||'').split(':');var hh=parseInt(p[0],10),mm=parseInt(p[1],10);return isNaN(hh)||isNaN(mm)?null:hh*60+mm;}
+  var m1=mins(h1),m2=mins(h2);
+  if(m1===null||m2===null)return null; // sin hora en alguno de los dos: no se puede evaluar, se trata como "sin conflicto"
+  return Math.abs(m1-m2)/60;
+}
+// true si dos desafios (mismo dia, y hora a menos de 4hs entre si) chocan.
+// Dias distintos, o sin dia/hora definidos en alguno, nunca chocan aca
+// (misma regla que el trigger: dia distinto pasa siempre).
+function _desafiosChocan(a,b){
+  if(!a.dia||!b.dia||a.dia!==b.dia)return false;
+  var diff=_diffHorasHHMM(a.hora,b.hora);
+  return diff!==null&&diff<4;
+}
+
+// Timestamp (ms) del INICIO pactado de un desafio (dia+hora), o null si
+// no tiene dia valido. Se usa para ordenar cronologicamente los duelos
+// Aceptados de un jugador y asi detectar cual es el "proximo a jugar"
+// cuando tiene varios en paralelo (ver rDesafiosLista). Mismo parseo de
+// dia/hora que desafioVigente(), pero sin el margen de 4h de cierre --
+// aca interesa el inicio, no el cierre.
+function _desafioInicioTs(d){
+  if(!d||!d.dia)return null;
+  var y,mo,da;
+  var mIso=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.dia);
+  var mDmy=/^(\d{2})\/(\d{2})\/(\d{4})/.exec(d.dia);
+  if(mIso){y=Number(mIso[1]);mo=Number(mIso[2]);da=Number(mIso[3]);}
+  else if(mDmy){da=Number(mDmy[1]);mo=Number(mDmy[2]);y=Number(mDmy[3]);}
+  else return null;
+  var horaM=/^(\d{1,2}):(\d{2})/.exec(d.hora||'');
+  var h=horaM?parseInt(horaM[1],10):23;
+  var mi=horaM?parseInt(horaM[2],10):59;
+  return new Date(y,mo-1,da,h,mi,0,0).getTime();
+}
+
+// Al aceptar un desafio, cancela automaticamente SOLO los pendientes
+// MIOS que quedaron en conflicto de horario con el que acabo de aceptar
+// (mismo dia, menos de 4 horas de diferencia) -- esos ya no se podrian
+// aceptar de todas formas (el trigger de Supabase los rechazaria), asi
+// que se limpian solos en vez de quedar visibles pero inutilizables.
+// El resto de mis pendientes (otros dias, u horarios con margen de sobra)
+// se dejan intactos: ahora si se pueden tener varios duelos Aceptados o
+// Pendientes en paralelo mientras no se solapen. Por diseño, esto SOLO
+// cancela los pendientes donde YO participo: la policy de Supabase no
+// deja tocar desafios ajenos donde no soy parte.
+async function cancelarPendientesConflictivos(idAceptado,nombre){
+  var aceptado=null;
+  for(var i=0;i<DATA.desafios.length;i++){if(DATA.desafios[i].id===idAceptado){aceptado=DATA.desafios[i];break;}}
+  if(!aceptado)return;
+  var conflictivos=(DATA.desafios||[]).filter(function(d){
+    return d.id!==idAceptado&&d.estado==='Pendiente'&&(d.de===nombre||d.para===nombre)&&_desafiosChocan(d,aceptado);
   });
-  for(var i=0;i<otros.length;i++){
-    var d=otros[i];
+  for(var i=0;i<conflictivos.length;i++){
+    var d=conflictivos[i];
     try{
       var r=await window.supabaseClient.from('desafios').update({estado:'Cancelado'}).eq('id',d.id);
       if(!r.error)d.estado='Cancelado';
-      else console.warn('No se pudo cancelar automaticamente un desafio pendiente.',r.error);
+      else console.warn('No se pudo cancelar automaticamente un desafio pendiente en conflicto.',r.error);
     }catch(err){
-      console.warn('Sin conexion al cancelar desafios pendientes automaticamente.',err);
+      console.warn('Sin conexion al cancelar desafios pendientes en conflicto.',err);
     }
   }
-  if(otros.length)rAll();
+  if(conflictivos.length)rAll();
 }
 
 // Cuando un jugador Acepta un desafio (es decir, ambos jugadores ya
@@ -2855,6 +2898,20 @@ function rDesafiosLista(nombre){
   var recibidos=todos.filter(function(d){return d.para===nombre&&d.estado==='Pendiente';});
   var enviados=todos.filter(function(d){return d.de===nombre&&d.estado==='Pendiente';});
   var aceptados=todos.filter(function(d){return desafioVigente(d);});
+  // "Proximo a jugar": cuando hay 2+ duelos Aceptados en paralelo (fechas
+  // distintas, con >=4h de margen entre si, ya que si chocaran el trigger
+  // de Supabase no habria dejado aceptar el segundo), se destaca el que
+  // esta mas cerca en el tiempo para que no se le pase al jugador entre
+  // varios pendientes de jugar. Con 1 solo aceptado no hace falta: ya es
+  // obvio cual toca jugar.
+  var proximoId=null;
+  if(aceptados.length>1){
+    var conFecha=aceptados.filter(function(d){return _desafioInicioTs(d)!==null;});
+    if(conFecha.length){
+      conFecha.sort(function(a,b){return _desafioInicioTs(a)-_desafioInicioTs(b);});
+      proximoId=conFecha[0].id;
+    }
+  }
   var h="<div class=\"desblk\"><div class=\"rmt\">Desafios</div>";
 
   for(var i=0;i<recibidos.length;i++){
@@ -2877,7 +2934,9 @@ function rDesafiosLista(nombre){
     var d=aceptados[i],rival=d.de===nombre?d.para:d.de;
     var esParticipante=!!(jugadorVinculado&&(jugadorVinculado.nombre===d.de||jugadorVinculado.nombre===d.para));
     var detalle=[fmtDesafioDia(d.dia),fmtDesafioHora(d.hora),d.cancha?("Cancha "+d.cancha):""].filter(Boolean).map(esc).join(' · ');
-    h+="<div class=\"descard ok\"><div class=\"destit\">Duelo confirmado vs "+esc(rival)+"</div>"
+    var esProximo=(proximoId!==null&&d.id===proximoId);
+    h+="<div class=\"descard ok"+(esProximo?" proximo":"")+"\"><div class=\"destit\">Duelo confirmado vs "+esc(rival)
+      +(esProximo?" <span class=\"desproxbadge\">\u23f1\ufe0f Pr\u00f3ximo a jugar</span>":"")+"</div>"
       +(detalle?"<div class=\"desmeta\">"+detalle+"</div>":"");
     if(esParticipante){
       h+="<div class=\"desbtns\"><button class=\"chatbtn\" onclick=\"toggleChatPanel('"+jsAttr(d.id)+"','"+jsAttr(d.de)+"','"+jsAttr(d.para)+"','"+jsAttr(nombre)+"')\">\uD83D\uDCAC Chat privado</button></div>"
