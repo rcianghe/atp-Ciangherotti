@@ -986,6 +986,11 @@ var chatYo={};       // desafioId(raw) -> nombre elegido manualmente como remite
 var chatLastMsgs={}; // desafioId(raw) -> ultima lista de mensajes recibida (para repintar sin refetch)
 var chatAbierto=null;     // desafioId(raw) del chat que el usuario dejo abierto (o null)
 var chatAbiertoSugerido=null; // nombre de perfil sugerido para ese chat (por si no ha elegido aun)
+var chatDraft={};    // desafioId(raw) -> texto que el usuario esta escribiendo pero aun no envio.
+// Respaldo ademas del gate en hayEdicionAbiertaPara(): si por cualquier
+// motivo el panel se reconstruye (abrirChatPanelInterno) mientras habia
+// texto tipeado, se recupera aca en vez de perderse.
+function guardarChatDraft(desafioId,valor){chatDraft[desafioId]=valor;}
 
 // Los ids de desafio pueden traer espacios u otros caracteres; para usarlos
 // como id de elemento HTML los limpiamos, pero el id real (con jsAttr) es
@@ -1010,6 +1015,7 @@ function cerrarChatPanel(desafioId){
   if(panel)panel.style.display='none';
   if(chatUnsub[desafioId]){chatUnsub[desafioId]();delete chatUnsub[desafioId];}
   if(chatAbierto===desafioId){chatAbierto=null;chatAbiertoSugerido=null;}
+  delete chatDraft[desafioId]; // se cierra a proposito, no hace falta arrastrar el borrador
 }
 
 // Reconstruye el panel (selector de nombre + mensajes + input) y (re)suscribe
@@ -1035,7 +1041,7 @@ function abrirChatPanelInterno(desafioId,de,para,sugerido){
     +'<div class="chatquien">Enviando como <b>'+esc(actual)+'</b></div>'
     +'<div class="chatmsgs" id="chatmsgs-'+elId+'"><div class="chatoff">Cargando...</div></div>'
     +'<div class="chatinputrow">'
-    +'<input class="chatinput" id="chatinput-'+elId+'" type="text" maxlength="500" placeholder="Escribe un mensaje..." onkeydown="if(event.key===\'Enter\')enviarChatMsg(\''+jsAttr(desafioId)+'\')">'
+    +'<input class="chatinput" id="chatinput-'+elId+'" type="text" maxlength="500" placeholder="Escribe un mensaje..." value="'+esc(chatDraft[desafioId]||'')+'" oninput="guardarChatDraft(\''+jsAttr(desafioId)+'\',this.value)" onkeydown="if(event.key===\'Enter\')enviarChatMsg(\''+jsAttr(desafioId)+'\')">'
     +'<button class="chatsend" onclick="enviarChatMsg(\''+jsAttr(desafioId)+'\')">Enviar</button>'
     +'</div>';
   if(chatLastMsgs[desafioId])renderChatMessages(desafioId);
@@ -1134,6 +1140,7 @@ function enviarChatMsg(desafioId){
   var yo=chatYo[desafioId];
   if(!yo)return;
   input.value='';
+  delete chatDraft[desafioId];
   chatDb.collection('chats').add({
     chatId:desafioId,
     de:yo,
@@ -1142,6 +1149,11 @@ function enviarChatMsg(desafioId){
   }).catch(function(err){
     console.warn('No se pudo enviar el mensaje.',err);
     alert('No se pudo enviar el mensaje. Intenta de nuevo.');
+    // Se restaura el texto en el borrador y en el input (si el panel
+    // sigue abierto) para no perder el mensaje por un error de red.
+    chatDraft[desafioId]=texto;
+    var inputAhora=document.getElementById('chatinput-'+elId);
+    if(inputAhora)inputAhora.value=texto;
   });
 }
 
@@ -1792,6 +1804,15 @@ function hayEdicionAbiertaPara(nombre){
     for(var i=0;i<(DATA.desafios||[]).length;i++){
       var d=DATA.desafios[i];
       if(d.id===liveEditando&&(d.de===nombre||d.para===nombre))return true;
+    }
+  }
+  if(chatAbierto){
+    // El chat tambien cuenta como "edicion abierta": si el refresco de
+    // fondo reconstruye el perfil mientras el jugador esta escribiendo un
+    // mensaje, el panel de chat se rearma desde cero y borra lo tipeado.
+    for(var i=0;i<(DATA.desafios||[]).length;i++){
+      var d=DATA.desafios[i];
+      if(d.id===chatAbierto&&(d.de===nombre||d.para===nombre))return true;
     }
   }
   return false;
