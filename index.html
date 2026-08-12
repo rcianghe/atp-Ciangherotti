@@ -3700,49 +3700,37 @@ if (window.elHm) {
   }
   // --- INTEGRACIÓN NOTIFICACIONES PUSH ---
   window.suscribirANotificaciones = async function(jugadorId) {
-    try {
-      if (!('Notification' in window)) {
-        alert('Este navegador no soporta notificaciones push.');
-        return;
-      }
-
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        // Cargar Firebase dinámicamente si no está inicializado
-        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-        const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
-
-        const firebaseConfig = {
-          apiKey: "AIzaSyA237FUvmXmEXDuhs7Mz2c0...", // Tus credenciales de Firebase
-          authDomain: "chat-app-accc3.firebaseapp.com",
-          projectId: "chat-app-accc3",
-          storageBucket: "chat-app-accc3.firebasestorage.app",
-          messagingSenderId: "240530471180",
-          appId: "1:240530471180:web:58db290f9c..."
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const messaging = getMessaging(app);
-
-        const token = await getToken(messaging, {
-          vapidKey: 'BFJYSG4M18DTgO6Ydes_R5_Boc637oJARpZEhNicIzGntpZ3rgoUIXYuQmDX4_9G2_LeyuCGFidhTnYtb7AsxVE'
-        });
-
-        if (token) {
-          const { error } = await supabase
-            .from('push_tokens')
-            .upsert({ jugador_id: jugadorId, token: token }, { onConflict: 'token' });
-
-          if (error) console.error('Error al guardar token:', error);
-          else alert('¡Notificaciones activadas con éxito! 🔔');
-        }
-      } else {
-        alert('Permiso de notificaciones denegado.');
-      }
-    } catch (error) {
-      console.error('Error suscribiendo a notificaciones:', error);
+  try {
+    if (!('Notification' in window) || !firebase.messaging) {
+      alert('Este navegador no soporta notificaciones push.');
+      return;
     }
-  };
+    if (!jugadorId) {
+      alert('Vincula tu perfil primero para poder activar las notificaciones.');
+      return;
+    }
+    var permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      alert('Permiso de notificaciones denegado.');
+      return;
+    }
+    var reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    var messaging = firebase.messaging();
+    var token = await messaging.getToken({
+      vapidKey: 'BFJYSG4M18DTgO6Ydes_R5_Boc637oJARpZEhNicIzGntpZ3rgoUIXYuQmDX4_9G2_LeyuCGFidhTnYtb7AsxVE',
+      serviceWorkerRegistration: reg
+    });
+    if (token) {
+      var res = await window.supabaseClient.from('push_tokens')
+        .upsert({ jugador_id: jugadorId, token: token }, { onConflict: 'jugador_id' });
+      if (res.error) { console.warn('Error al guardar token:', res.error); alert('No se pudo guardar la suscripcion.'); }
+      else alert('¡Notificaciones activadas con éxito! 🔔');
+    }
+  } catch (error) {
+    console.warn('Error suscribiendo a notificaciones:', error);
+    alert('No se pudieron activar las notificaciones. Revisa que el archivo firebase-messaging-sw.js exista en la raíz del sitio.');
+  }
+};
   </script>
 
 </body>
