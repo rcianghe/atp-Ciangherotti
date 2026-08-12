@@ -743,6 +743,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 
 <!-- Cliente de Supabase: se carga e inicializa ANTES del script principal
      para que window.supabaseClient ya exista cuando init() corre y
@@ -955,11 +956,13 @@ function rAuthBox(){
     return;
   }
 var pill='<div class="authuser">'
-    +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar">👤</span>')
-    +'<span class="authnombre">'+esc(jugadorVinculado?jugadorVinculado.nombre:(usuarioActual.nombre||usuarioActual.email))+'</span>'
-    +'<button class="authlogout" style="border-color:#3b82f6;color:#60a5fa;" onclick="suscribirANotificaciones(jugadorVinculado?.id||usuarioActual.id)" title="Activar Notificaciones">🔔</button>';
-  if(!jugadorVinculado) pill+='<button class="authlogout" style="border-color:var(--am);color:var(--am)" onclick="toggleVincularModal()">Vincular</button>';
+    +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar authavatar-i">'+esc((usuarioActual.nombre||'?')[0])+'</span>')
+    +'<span class="authnombre">'+esc(jugadorVinculado?jugadorVinculado.nombre:(usuarioActual.nombre||usuarioActual.email||'Sesion activa'))+'</span>'
+    +'<button class="authlogout" style="border-color:#3b82f6;color:#60a5fa" onclick="suscribirANotificaciones(\''+jsAttr(jugadorVinculado?jugadorVinculado.id:usuarioActual.uid)+'\')" title="Activar Notificaciones">🔔</button>';
+  if(!jugadorVinculado)pill+='<button class="authlogout" style="border-color:var(--am);color:var(--am)" onclick="toggleReclamarPanel()">Vincular</button>';
   pill+='<button class="authlogout" onclick="logout()" title="Cerrar sesion">Salir</button></div>';
+  if(reclamandoPerfil){
+    pill+='<div class="reclamarpanel"><div class="reclamarttl">¿Cuál es tu nombre en el club?</div>'
       +'<select class="fsel" id="reclamarSelect" style="margin-bottom:.5rem"><option value="">Cargando...</option></select>'
       +'<div style="display:flex;gap:.5rem"><button class="dfsend" onclick="confirmarReclamo()">Confirmar, soy yo</button>'
       +'<button class="dfcancel" onclick="toggleReclamarPanel()">Cancelar</button></div></div>';
