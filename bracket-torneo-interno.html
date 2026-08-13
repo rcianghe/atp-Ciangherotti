@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Torneo Interno — Bracket (demo)</title>
+<style>
+:root{--v:#5BBF2A;--vd:#3d8a1a;--vl:#7ed44a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#888;--bl:#f5f5f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Barlow',Arial,sans-serif;background:var(--ng);color:var(--bl);padding:2rem 1rem}
+.sh{text-align:center;margin-bottom:1.6rem}
+.se{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--v)}
+.st{font-family:Georgia,serif;font-size:1.9rem;letter-spacing:1px}
+
+/* ---- selector de torneo (serie / periodo) ---- */
+.tint-tabs{display:flex;gap:.35rem;justify-content:center;margin-bottom:1.4rem;flex-wrap:wrap}
+.tint-tb{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:.38rem 1.1rem;background:var(--g);color:var(--gl);border:1px solid var(--gm);border-radius:3px;cursor:pointer}
+.tint-tb.active{background:var(--v);color:var(--ng);border-color:var(--v)}
+.tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.2rem}
+.tint-estado b{color:var(--am)}
+
+/* ---- campeón destacado ---- */
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15)}
+.tint-campeon .ic{font-size:1.8rem}
+.tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
+.tint-campeon .nom{font-family:Georgia,serif;font-size:1.5rem;color:var(--am);margin-top:.15rem}
+
+/* ---- bracket ---- */
+.tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
+.tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
+.tint-ronda{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;min-width:190px}
+.tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center;margin-bottom:.3rem}
+.tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
+.tint-match:hover{border-color:rgba(91,191,42,.4)}
+.tint-match.final{border-color:rgba(212,230,10,.5);box-shadow:0 0 14px rgba(212,230,10,.15)}
+.tint-slot{display:flex;align-items:center;justify-content:space-between;padding:.5rem .6rem;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.05)}
+.tint-slot:last-child{border-bottom:none}
+.tint-slot.win{background:rgba(91,191,42,.1)}
+.tint-slot .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tint-slot.win .nm{color:var(--v)}
+.tint-slot.tbd .nm{color:var(--gl);font-style:italic;font-weight:400}
+.tint-slot .sc{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);flex-shrink:0;margin-left:.4rem}
+.tint-bye{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--gl);text-align:center;padding:.35rem;font-style:italic}
+.tint-mp{position:absolute;top:-8px;right:8px;background:var(--az);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:.1rem .4rem;border-radius:8px}
+/* Conectores entre rondas (líneas de bracket clásicas) */
+.tint-ronda:not(:first-child) .tint-match::before{content:"";position:absolute;left:-1.3rem;top:50%;width:1.3rem;height:1px;background:var(--gm)}
+.tint-ronda:not(:last-child){position:relative}
+
+.tint-admin-cta{max-width:420px;margin:1.8rem auto 0;text-align:center;font-size:.78rem;color:var(--gl)}
+@media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
+</style>
+</head>
+<body>
+
+<div class="sh">
+  <div class="se">Club de Tenis Estadio Quilicura</div>
+  <h2 class="st">Torneo Interno por Series</h2>
+</div>
+
+<div class="tint-tabs" id="tintTabs"></div>
+<div class="tint-estado" id="tintEstado"></div>
+<div id="tintCampeon"></div>
+<div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracket"></div></div>
+
+<script>
+/* ============================================================
+   DEMO con datos de ejemplo. En produccion, reemplaza MOCK_TORNEOS
+   por una consulta real a Supabase:
+
+   async function cargarTorneosInternos(){
+     var tRes = await window.supabaseClient.from('torneos_internos').select('*');
+     var pRes = await window.supabaseClient.from('torneo_partidos').select('*');
+     var jRes = await window.supabaseClient.from('jugadores').select('id,nombre');
+     // arma la misma forma que MOCK_TORNEOS y llama rTorneoInterno()
+   }
+
+   Este archivo es standalone (sin Supabase) solo para que puedas ver
+   el bracket funcionando y copiar el CSS + las funciones tal cual al
+   index.html. Los nombres de función (tint*) fueron elegidos para no
+   chocar con nada que ya exista en tu sitio.
+   ============================================================ */
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+
+var MOCK_TORNEOS = {
+  "A-Apertura": {
+    id:"demo-a", serie:"A", periodo:"Apertura", temporada:2026, estado:"finalizado",
+    campeon:"Gonzalo Reyes",
+    rondas:[
+      [ {j1:"Gonzalo Reyes",j2:null,bye:true,ganador:"Gonzalo Reyes"},
+        {j1:"Cristian Vargas",j2:"Marco Toledo",score:"6-3 6-2",ganador:"Cristian Vargas"},
+        {j1:"Cristian Vega",j2:"Hector Leiva",score:"7-6 4-6 10-7",ganador:"Cristian Vega"},
+        {j1:"Manuel Cubillos",j2:null,bye:true,ganador:"Manuel Cubillos"} ],
+      [ {j1:"Gonzalo Reyes",j2:"Cristian Vargas",score:"6-2 6-4",ganador:"Gonzalo Reyes"},
+        {j1:"Cristian Vega",j2:"Manuel Cubillos",score:"6-1 6-3",ganador:"Cristian Vega",mejorPerdedor:false} ],
+      [ {j1:"Gonzalo Reyes",j2:"Cristian Vega",score:"6-4 3-6 10-8",ganador:"Gonzalo Reyes",final:true} ]
+    ]
+  },
+  "B-Apertura": {
+    id:"demo-b", serie:"B", periodo:"Apertura", temporada:2026, estado:"en_curso",
+    campeon:null,
+    rondas:[
+      [ {j1:"Luis Duran",j2:null,bye:true,ganador:"Luis Duran"},
+        {j1:"Alex Gonzalez",j2:"Cristobal Tello",score:"6-2 6-3",ganador:"Alex Gonzalez"},
+        {j1:"Cristian Crisostomo",j2:"Ricardo Ciangherotti",score:null,ganador:null},
+        {j1:"Oscar Medina",j2:null,bye:true,ganador:"Oscar Medina"} ],
+      [ {j1:"Luis Duran",j2:"Alex Gonzalez",score:null,ganador:null},
+        {j1:null,j2:"Oscar Medina",score:null,ganador:null} ],
+      [ {j1:null,j2:null,score:null,ganador:null,final:true} ]
+    ]
+  }
+};
+
+var tintActual="A-Apertura";
+
+function tintKeys(){return Object.keys(MOCK_TORNEOS);}
+
+function rTintTabs(){
+  var el=document.getElementById("tintTabs");
+  var h="";
+  tintKeys().forEach(function(k){
+    var t=MOCK_TORNEOS[k];
+    h+="<button class=\"tint-tb"+(k===tintActual?" active":"")+"\" onclick=\"tintCambiar('"+k+"')\">Serie "+esc(t.serie)+" · "+esc(t.periodo)+"</button>";
+  });
+  el.innerHTML=h;
+}
+function tintCambiar(k){tintActual=k;rTorneoInterno();}
+
+function rTintEstadoYCampeon(t){
+  var estados={armado:"Cuadro armado, sin iniciar",en_curso:"En curso",finalizado:"Finalizado",cancelado:"Cancelado"};
+  document.getElementById("tintEstado").innerHTML="Temporada "+t.temporada+" · <b>"+(estados[t.estado]||t.estado)+"</b>";
+  var camp=document.getElementById("tintCampeon");
+  if(t.campeon){
+    camp.innerHTML="<div class=\"tint-campeon\"><div class=\"ic\">🏆</div><div class=\"lbl\">Campeón "+esc(t.periodo)+" — Serie "+esc(t.serie)+"</div><div class=\"nom\">"+esc(t.campeon)+"</div></div>";
+  }else{
+    camp.innerHTML="";
+  }
+}
+
+function tintSlotHtml(nombre,esGanador,score,tbd){
+  if(tbd)return "<div class=\"tint-slot tbd\"><span class=\"nm\">Por definir</span></div>";
+  return "<div class=\"tint-slot"+(esGanador?" win":"")+"\"><span class=\"nm\">"+esc(nombre)+"</span>"+(score?"<span class=\"sc\">"+esc(score)+"</span>":"")+"</div>";
+}
+
+function rTintBracket(t){
+  var nombresRonda=["Primera ronda","Segunda ronda","Tercera ronda","Semifinal","Final"];
+  // Para cuadros chicos, la "última" ronda siempre se etiqueta Final
+  var totalRondas=t.rondas.length;
+  var h="";
+  t.rondas.forEach(function(matches,ri){
+    var esFinal=(ri===totalRondas-1);
+    var titulo=esFinal?"Final":(nombresRonda[ri]||("Ronda "+(ri+1)));
+    h+="<div class=\"tint-ronda\"><div class=\"tint-rondatit\">"+titulo+"</div>";
+    matches.forEach(function(m){
+      if(m.bye){
+        h+="<div class=\"tint-match\">"+tintSlotHtml(m.j1,true,null,false)+"<div class=\"tint-bye\">Bye — pasa directo</div></div>";
+        return;
+      }
+      var cls="tint-match"+(esFinal?" final":"");
+      h+="<div class=\""+cls+"\">";
+      if(m.mejorPerdedor)h+="<span class=\"tint-mp\">Mejor perdedor</span>";
+      h+=tintSlotHtml(m.j1,m.ganador&&m.ganador===m.j1,m.ganador?m.score:null,!m.j1);
+      h+=tintSlotHtml(m.j2,m.ganador&&m.ganador===m.j2,m.ganador?m.score:null,!m.j2);
+      h+="</div>";
+    });
+    h+="</div>";
+  });
+  document.getElementById("tintBracket").innerHTML=h;
+}
+
+function rTorneoInterno(){
+  var t=MOCK_TORNEOS[tintActual];
+  rTintTabs();
+  rTintEstadoYCampeon(t);
+  rTintBracket(t);
+}
+
+rTorneoInterno();
+</script>
+</body>
+</html>
