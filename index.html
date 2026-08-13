@@ -3708,7 +3708,7 @@ if (window.elHm) {
       alert('Permiso de notificaciones denegado.');
       return;
     }
-    var reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    var reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
     var messaging = firebase.messaging();
     var token = await messaging.getToken({
       vapidKey: 'BFJYSG4M18DTgO6Ydes_R5_Boc637oJARpZEhNicIzGntpZ3rgoUIXYuQmDX4_9G2_LeyuCGFidhTnYtb7AsxVE',
