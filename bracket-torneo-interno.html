@@ -62,24 +62,81 @@ body{margin:0;font-family:'Barlow',Arial,sans-serif;background:var(--ng);color:v
 <div id="tintCampeon"></div>
 <div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracket"></div></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="lib/supabase.min.js/supabase.min.js"></script>
 <script>
 /* ============================================================
-   DEMO con datos de ejemplo. En produccion, reemplaza MOCK_TORNEOS
-   por una consulta real a Supabase:
-
-   async function cargarTorneosInternos(){
-     var tRes = await window.supabaseClient.from('torneos_internos').select('*');
-     var pRes = await window.supabaseClient.from('torneo_partidos').select('*');
-     var jRes = await window.supabaseClient.from('jugadores').select('id,nombre');
-     // arma la misma forma que MOCK_TORNEOS y llama rTorneoInterno()
-   }
-
-   Este archivo es standalone (sin Supabase) solo para que puedas ver
-   el bracket funcionando y copiar el CSS + las funciones tal cual al
-   index.html. Los nombres de función (tint*) fueron elegidos para no
-   chocar con nada que ya exista en tu sitio.
+   CONEXION REAL A SUPABASE
+   ============================================================
+   Mismas credenciales que ya usa tu index.html (es el mismo
+   proyecto Supabase, mismas tablas de "jugadores", ahora sumando
+   "torneos_internos" y "torneo_partidos"). Si tu proyecto cambia de
+   URL/key alguna vez, hay que actualizarlo en LOS DOS archivos.
    ============================================================ */
+var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+
+/* ============================================================
+   CARGA REAL DESDE SUPABASE (reemplaza MOCK_TORNEOS)
+   ============================================================
+   Arma exactamente la misma forma que MOCK_TORNEOS (mismas claves:
+   id, serie, periodo, temporada, estado, campeon, rondas[][])
+   para que rTorneoInterno()/rTintBracket() no necesiten cambiar nada.
+   Se llama sola al cargar la pagina, mas abajo (en vez de rTorneoInterno()
+   directo sobre el mock). */
+async function cargarTorneosInternos(){
+  try{
+    var tRes = await window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
+    var pRes = await window.supabaseClient.from('torneo_partidos').select('*');
+    var jRes = await window.supabaseClient.from('jugadores').select('id,nombre');
+    if(tRes.error||pRes.error||jRes.error){
+      console.warn('No se pudo cargar el torneo interno desde Supabase, se muestran datos de ejemplo.',tRes.error,pRes.error,jRes.error);
+      return; // se queda con MOCK_TORNEOS
+    }
+    var idANombre={};
+    jRes.data.forEach(function(j){idANombre[j.id]=j.nombre;});
+
+    var torneosNuevos={};
+    tRes.data.forEach(function(t){
+      var key=t.serie+"-"+(t.periodo||"Unico")+"-"+t.temporada;
+      var partidosDelTorneo=pRes.data.filter(function(p){return p.torneo_id===t.id;});
+      var rondaMax=0;
+      partidosDelTorneo.forEach(function(p){if(p.ronda>rondaMax)rondaMax=p.ronda;});
+      var rondas=[];
+      for(var r=1;r<=rondaMax;r++){
+        var enRonda=partidosDelTorneo.filter(function(p){return p.ronda===r;}).sort(function(a,b){return a.posicion-b.posicion;});
+        rondas.push(enRonda.map(function(p){
+          return {
+            j1:p.jugador1_id?idANombre[p.jugador1_id]:null,
+            j2:p.jugador2_id?idANombre[p.jugador2_id]:null,
+            ganador:p.ganador_id?idANombre[p.ganador_id]:null,
+            score:[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':null),
+            bye:!!p.es_bye,
+            mejorPerdedor:!!p.es_mejor_perdedor,
+            final:(r===rondaMax)
+          };
+        }));
+      }
+      var campeon=null;
+      if(rondaMax>0){
+        var finalPartido=partidosDelTorneo.filter(function(p){return p.ronda===rondaMax;})[0];
+        if(finalPartido&&finalPartido.ganador_id)campeon=idANombre[finalPartido.ganador_id];
+      }
+      torneosNuevos[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:t.estado,campeon:campeon,rondas:rondas};
+    });
+
+    if(Object.keys(torneosNuevos).length){
+      MOCK_TORNEOS=torneosNuevos; // reemplaza los datos de ejemplo por los reales
+      tintActual=Object.keys(MOCK_TORNEOS)[0];
+    }
+    rTorneoInterno();
+  }catch(err){
+    console.warn('Sin conexion a Supabase, se muestran datos de ejemplo.',err);
+  }
+}
 
 var MOCK_TORNEOS = {
   "A-Apertura": {
@@ -174,7 +231,8 @@ function rTorneoInterno(){
   rTintBracket(t);
 }
 
-rTorneoInterno();
+rTorneoInterno();      // pinta el demo con MOCK_TORNEOS de inmediato (sin esperar red)
+cargarTorneosInternos(); // y en cuanto responda Supabase, reemplaza por datos reales
 </script>
 </body>
 </html>
