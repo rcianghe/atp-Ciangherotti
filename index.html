@@ -2382,15 +2382,6 @@ var FICHA_OPCIONES={
   superficie:["Cancha dura","Polvo de ladrillo","Cesped","Sintetica rapida","Sin preferencia"],
   golpe:["Drive","Reves a una mano","Reves a dos manos","Saque","Volea","Globo","Golpe cortado","Drop Shot","Slice"]
 };
-// Mismo token que TOKEN en Code.gs (doPost). Cambiar en ambos lados a la vez.
-// Nota: al vivir en el frontend, cualquiera puede verlo en el codigo fuente;
-// solo frena escrituras casuales, no reemplaza login real (Fase 1).
-// En desuso: desafios, ficha tecnica, disponibilidad y fotos de
-// resultado ya se manejan directo contra Supabase (con RLS real, en
-// vez de este token compartido escrito en el codigo fuente). Se deja
-// declarado por si en el futuro se necesita para alguna accion que
-// siga pasando por Apps Script/Google Sheets.
-var FICHA_TOKEN='Tainted6-Cedar7-Spirited2-Unburned9-Nearness6-Repaying1-Snooze2-Reshape9-Could6-Reoccupy0';
 var SERVER_FICHAS={}; // se llena en transformLiveData() con lo que devuelve doGet
 var fichaEditando=null; // nombre del jugador cuya ficha esta en modo edicion
 var fichaGuardando=false;
@@ -3717,7 +3708,7 @@ if (window.elHm) {
       alert('Permiso de notificaciones denegado.');
       return;
     }
-    var reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './' });
+    var reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     var messaging = firebase.messaging();
     var token = await messaging.getToken({
       vapidKey: 'BFJYSG4M18DTgO6Ydes_R5_Boc637oJARpZEhNicIzGntpZ3rgoUIXYuQmDX4_9G2_LeyuCGFidhTnYtb7AsxVE',
