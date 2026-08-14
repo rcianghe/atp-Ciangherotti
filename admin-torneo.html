@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — Torneo Interno CTQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v:#5BBF2A;--vd:#3d8a1a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#888;--bl:#f5f5f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Barlow',Arial,sans-serif;background:var(--ng);color:var(--bl);padding:1.2rem 1rem 4rem;max-width:760px;margin:0 auto}
+h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--v);margin:0 0 .2rem}
+.sub{color:var(--gl);font-size:.8rem;margin-bottom:1.4rem}
+.card{background:var(--gd);border:1px solid var(--gm);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem}
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:.72rem;padding:.5rem .9rem;border:none;border-radius:5px;cursor:pointer}
+.btn.v{background:var(--v);color:var(--ng)}
+.btn.az{background:var(--az);color:#fff}
+.btn.ro{background:transparent;color:#e05a4a;border:1px solid rgba(192,57,43,.5)}
+.btn.gl{background:transparent;color:var(--gl);border:1px solid var(--gm)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],select{background:var(--g);border:1px solid var(--gm);border-radius:5px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.85rem}
+.tabs{display:flex;gap:.4rem;margin-bottom:1rem}
+.tb{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:1px;padding:.4rem 1rem;background:var(--g);color:var(--gl);border:1px solid var(--gm);border-radius:5px;cursor:pointer}
+.tb.active{background:var(--v);color:var(--ng);border-color:var(--v)}
+.torneo-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem}
+.torneo-item:last-child{border-bottom:none}
+.estado-pill{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;padding:.15rem .5rem;border-radius:10px;background:var(--gm);color:var(--gl)}
+.estado-pill.armado{background:rgba(46,125,209,.2);color:#7ab5e8}
+.estado-pill.en_curso{background:rgba(212,230,10,.2);color:var(--am)}
+.estado-pill.finalizado{background:rgba(91,191,42,.2);color:var(--v)}
+.seedlist{display:flex;flex-direction:column;gap:.35rem;margin:.7rem 0}
+.seedrow{display:flex;align-items:center;gap:.5rem;background:var(--g);border-radius:6px;padding:.4rem .6rem;font-size:.85rem}
+.seedrow .num{font-family:'Bebas Neue',sans-serif;color:var(--v);width:22px}
+.seedrow .nm{flex:1}
+.seedrow.excluido{opacity:.4}
+.seedrow .pts{font-size:.68rem;color:var(--gl)}
+.iconbtn{background:var(--gm);border:none;color:var(--bl);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:.8rem}
+.iconbtn:hover{background:var(--v);color:var(--ng)}
+.ronda-tit{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);margin:1.1rem 0 .5rem}
+.match{background:var(--g);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:.7rem .8rem;margin-bottom:.6rem}
+.match.final{border-color:rgba(212,230,10,.5)}
+.mplayers{display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:.4rem}
+.mplayers .win{color:var(--v);font-weight:700}
+.mp-badge{font-size:.6rem;background:var(--az);color:#fff;padding:.1rem .4rem;border-radius:8px;margin-left:.3rem}
+.bye-tag{font-size:.7rem;color:var(--gl);font-style:italic}
+.resform{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;margin-top:.4rem}
+.resform input[type=text]{width:70px}
+.jugado{font-size:.78rem;color:var(--gl)}
+.msg{font-size:.8rem;padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem}
+.msg.err{background:rgba(192,57,43,.15);color:#ff8a7a;border:1px solid rgba(192,57,43,.4)}
+.msg.ok{background:rgba(91,191,42,.15);color:var(--v);border:1px solid rgba(91,191,42,.4)}
+.backbtn{background:none;border:none;color:var(--gl);font-size:.78rem;cursor:pointer;margin-bottom:.8rem;padding:0}
+.backbtn:hover{color:var(--v)}
+.mp-picker{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--gm)}
+.mp-opt{display:flex;align-items:center;gap:.5rem;font-size:.82rem;padding:.35rem 0}
+</style>
+</head>
+<body>
+
+<h1>Torneo Interno — Panel Admin</h1>
+<div class="sub">Club de Tenis Estadio Quilicura</div>
+
+<div id="app"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="lib/supabase.min.js/supabase.min.js"></script>
+<script>
+var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function jsAttr(s){return esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'"));}
+
+var PUNTOS={gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0};
+
+var usuarioActual=null, esAdmin=false, chequeoListo=false;
+var serieActual='A';
+var jugadoresClub=[]; // [{id,nombre,serie,estado}]
+var torneosSerie=[];
+var torneoAbierto=null; // fila de torneos_internos
+var partidos=[]; // filas de torneo_partidos del torneo abierto
+var seedList=[]; // [{id,nombre,pts,incluido}] solo mientras no hay ronda 1 creada
+var mensaje=null; // {tipo:'ok'|'err', texto}
+var mpSeleccion=null; // jugador_id elegido como "mejor perdedor" al avanzar de ronda
+var guardando=false;
+
+function setMsg(tipo,texto){mensaje={tipo:tipo,texto:texto};render();}
+
+function loginConGoogle(){
+  var redirectLimpio=window.location.origin+window.location.pathname;
+  window.supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:redirectLimpio}});
+}
+function logout(){window.supabaseClient.auth.signOut();}
+
+window.supabaseClient.auth.getSession().then(function(r){
+  var session=r.data&&r.data.session;
+  usuarioActual=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,email:session.user.email}:null;
+  chequearAdmin();
+});
+window.supabaseClient.auth.onAuthStateChange(function(event,session){
+  usuarioActual=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,email:session.user.email}:null;
+  chequearAdmin();
+});
+
+async function chequearAdmin(){
+  chequeoListo=false;render();
+  if(!usuarioActual){esAdmin=false;chequeoListo=true;render();return;}
+  try{
+    var res=await window.supabaseClient.from('admins').select('user_id').eq('user_id',usuarioActual.uid).maybeSingle();
+    esAdmin=!res.error&&!!res.data;
+  }catch(e){esAdmin=false;}
+  chequeoListo=true;
+  if(esAdmin){
+    await cargarJugadoresClub();
+    await cargarTorneosDeSerie(serieActual);
+  }
+  render();
+}
+
+async function cargarJugadoresClub(){
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado');
+  jugadoresClub=res.error?[]:res.data;
+}
+
+async function cargarTorneosDeSerie(serie){
+  var res=await window.supabaseClient.from('torneos_internos').select('*').eq('serie',serie).order('temporada',{ascending:false});
+  torneosSerie=res.error?[]:res.data;
+}
+
+function seleccionarSerie(s){
+  serieActual=s;torneoAbierto=null;partidos=[];mensaje=null;
+  cargarTorneosDeSerie(s).then(render);
+  render();
+}
+
+// ---- Puntos base de la Escalerilla (solo para sugerir el orden de siembra) ----
+async function calcularPuntosBaseSerie(serie){
+  var res=await window.supabaseClient.from('resultados')
+    .select('jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,serie,torneo_partido_id')
+    .eq('serie',serie).is('torneo_partido_id',null); // solo partidos de la escalerilla, no de un interno anterior
+  var pts={};
+  if(!res.error){
+    res.data.forEach(function(r){
+      [r.jugador1_id,r.jugador2_id].forEach(function(id){
+        if(!id)return;
+        var gane=r.ganador_id===id;
+        var esWO=r.tipo==='W.O.';
+        var sets=esWO?0:[r.set1,r.set2,r.set3].filter(Boolean).length;
+        var p=gane?(esWO?PUNTOS.ganaWO:(sets===2?PUNTOS.gana2sets:PUNTOS.gana3sets))
+                  :(esWO?PUNTOS.pierdeWO:(sets===2?PUNTOS.pierde2sets:PUNTOS.pierde3sets));
+        pts[id]=(pts[id]||0)+p;
+      });
+    });
+  }
+  return pts;
+}
+
+async function crearTorneo(){
+  var temporada=parseInt(document.getElementById('inTemporada').value,10);
+  var periodo=(document.getElementById('inPeriodo').value||'').trim()||null;
+  if(!temporada){setMsg('err','Ingresa la temporada (año).');return;}
+  guardando=true;render();
+  var res=await window.supabaseClient.from('torneos_internos').insert({serie:serieActual,temporada:temporada,periodo:periodo}).select().maybeSingle();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
+  await cargarTorneosDeSerie(serieActual);
+  abrirTorneo(res.data);
+}
+
+function abrirTorneoIdx(idx){abrirTorneo(torneosSerie[idx]);}
+async function abrirTorneo(t){
+  torneoAbierto=t;mensaje=null;mpSeleccion=null;
+  await cargarPartidos(t.id);
+  if(!partidos.length)await prepararSeeding();
+  render();
+}
+function volverListado(){torneoAbierto=null;partidos=[];mensaje=null;render();}
+
+async function cargarPartidos(torneoId){
+  var res=await window.supabaseClient.from('torneo_partidos').select('*').eq('torneo_id',torneoId).order('ronda').order('posicion');
+  partidos=res.error?[]:res.data;
+}
+
+async function prepararSeeding(){
+  var pts=await calcularPuntosBaseSerie(serieActual);
+  var jugadoresSerie=jugadoresClub.filter(function(j){return j.serie===serieActual&&j.estado!=='Retirado -50%';});
+  jugadoresSerie.sort(function(a,b){return (pts[b.id]||0)-(pts[a.id]||0);});
+  seedList=jugadoresSerie.map(function(j){return {id:j.id,nombre:j.nombre,pts:pts[j.id]||0,incluido:true};});
+}
+
+function nombreDe(id){
+  var j=jugadoresClub.filter(function(x){return x.id===id;})[0];
+  return j?j.nombre:'?';
+}
+
+function moverSeed(idx,delta){
+  var j=idx+delta;
+  if(j<0||j>=seedList.length)return;
+  var tmp=seedList[idx];seedList[idx]=seedList[j];seedList[j]=tmp;
+  render();
+}
+function toggleSeedIncluido(idx){seedList[idx].incluido=!seedList[idx].incluido;render();}
+
+// ---- Generar Ronda 1 segun el reglamento: sembrados 1 y 2 con bye,
+// el resto emparejado mas alto vs mas bajo. ----
+async function generarRonda1(){
+  var incluidos=seedList.filter(function(s){return s.incluido;});
+  if(incluidos.length<4){setMsg('err','Necesitas al menos 4 jugadores incluidos para armar un cuadro.');return;}
+  var byes=incluidos.slice(0,2);
+  var resto=incluidos.slice(2);
+  var filas=[];
+  var pos=0;
+  byes.forEach(function(s){
+    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:s.id,jugador2_id:null,ganador_id:s.id,es_bye:true});
+  });
+  var i=0,j=resto.length-1;
+  while(i<j){
+    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:resto[j].id,es_bye:false});
+    i++;j--;
+  }
+  if(i===j){ // cantidad impar de "resto": el ultimo tambien pasa con bye
+    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:null,ganador_id:resto[i].id,es_bye:true});
+  }
+  guardando=true;render();
+  var res=await window.supabaseClient.from('torneo_partidos').insert(filas);
+  if(!res.error)await window.supabaseClient.from('torneos_internos').update({estado:'en_curso'}).eq('id',torneoAbierto.id);
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo crear la Ronda 1: '+res.error.message);return;}
+  await cargarPartidos(torneoAbierto.id);
+  torneoAbierto.estado='en_curso';
+  setMsg('ok','Ronda 1 creada.');
+}
+
+function rondaMaxima(){var m=0;partidos.forEach(function(p){if(p.ronda>m)m=p.ronda;});return m;}
+function partidosDeRonda(r){return partidos.filter(function(p){return p.ronda===r;}).sort(function(a,b){return a.posicion-b.posicion;});}
+function rondaCompleta(r){return partidosDeRonda(r).every(function(p){return !!p.ganador_id;});}
+
+async function guardarResultado(partidoId,jugador1Id,jugador2Id){
+  var s1=document.getElementById('s1-'+partidoId).value.trim();
+  var s2=document.getElementById('s2-'+partidoId).value.trim();
+  var s3=document.getElementById('s3-'+partidoId).value.trim();
+  var wo=document.getElementById('wo-'+partidoId).checked;
+  var ganadorSel=document.getElementById('gan-'+partidoId).value;
+  if(!ganadorSel){setMsg('err','Selecciona quien gano el partido.');return;}
+  if(!wo&&!s1){setMsg('err','Ingresa al menos el primer set, o marca W.O.');return;}
+  guardando=true;render();
+  var res=await window.supabaseClient.rpc('registrar_resultado_partido',{
+    p_partido_id:partidoId,p_ganador_id:ganadorSel,
+    p_set1:wo?null:(s1||null),p_set2:wo?null:(s2||null),p_set3:wo?null:(s3||null),
+    p_tipo:wo?'W.O.':'normal'
+  });
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo guardar el resultado: '+res.error.message);return;}
+  await cargarPartidos(torneoAbierto.id);
+  var tRes=await window.supabaseClient.from('torneos_internos').select('*').eq('id',torneoAbierto.id).maybeSingle();
+  if(!tRes.error&&tRes.data)torneoAbierto=tRes.data;
+  setMsg('ok','Resultado guardado.');
+}
+
+async function deshacerResultado(partidoId){
+  if(!confirm('¿Deshacer este resultado? El partido queda sin marcador otra vez.'))return;
+  guardando=true;render();
+  var res=await window.supabaseClient.rpc('deshacer_resultado_partido',{p_partido_id:partidoId});
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo deshacer: '+res.error.message);return;}
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Resultado deshecho.');
+}
+
+async function reiniciarCuadro(){
+  if(!confirm('Esto borra TODO el cuadro (todas las rondas y resultados) de este torneo y vuelve a "armado". ¿Confirmas?'))return;
+  guardando=true;render();
+  var res=await window.supabaseClient.rpc('reset_torneo_interno',{p_torneo_id:torneoAbierto.id});
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo reiniciar: '+res.error.message);return;}
+  torneoAbierto.estado='armado';
+  await cargarPartidos(torneoAbierto.id);
+  await prepararSeeding();
+  setMsg('ok','Cuadro reiniciado. Puedes volver a armarlo.');
+}
+
+async function eliminarTorneo(){
+  if(!confirm('Esto elimina el torneo COMPLETO (no solo el cuadro). ¿Confirmas?'))return;
+  guardando=true;render();
+  var res=await window.supabaseClient.rpc('eliminar_torneo_interno',{p_torneo_id:torneoAbierto.id});
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo eliminar: '+res.error.message);return;}
+  await cargarTorneosDeSerie(serieActual);
+  volverListado();
+}
+
+// ---- Avanzar de ronda ----
+function ganadoresDeRonda(r){return partidosDeRonda(r).map(function(p){return p.ganador_id;}).filter(Boolean);}
+function perdedoresRealesDeRonda(r){ // excluye byes, que no tienen "perdedor"
+  return partidosDeRonda(r).filter(function(p){return !p.es_bye&&p.ganador_id;}).map(function(p){
+    var perdedorId=p.ganador_id===p.jugador1_id?p.jugador2_id:p.jugador1_id;
+    var score=[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':'');
+    return {id:perdedorId,score:score,rivalGanador:p.ganador_id};
+  });
+}
+
+async function avanzarRonda(){
+  var r=rondaMaxima();
+  var ganadores=ganadoresDeRonda(r);
+  if(ganadores.length===1){setMsg('err','Ya no hay mas rondas: el campeon ya deberia estar definido.');return;}
+  var listaAvance=ganadores.slice();
+  if(listaAvance.length%2!==0){
+    if(!mpSeleccion){setMsg('err','Cantidad impar de ganadores: selecciona abajo el "mejor perdedor" que avanza junto con ellos.');return;}
+    listaAvance.push(mpSeleccion);
+  }
+  var filas=[];
+  var pos=0;
+  for(var i=0;i<listaAvance.length;i+=2){
+    var esMP=(listaAvance[i]===mpSeleccion||listaAvance[i+1]===mpSeleccion);
+    filas.push({torneo_id:torneoAbierto.id,ronda:r+1,posicion:pos++,jugador1_id:listaAvance[i],jugador2_id:listaAvance[i+1],es_bye:false,es_mejor_perdedor:esMP});
+  }
+  guardando=true;render();
+  var res=await window.supabaseClient.from('torneo_partidos').insert(filas);
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo crear la siguiente ronda: '+res.error.message);return;}
+  mpSeleccion=null;
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Ronda '+(r+1)+' creada.');
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){
+  var el=document.getElementById('app');
+  if(!chequeoListo){el.innerHTML='<div class="sub">Cargando...</div>';return;}
+  if(!usuarioActual){
+    el.innerHTML='<div class="card"><p style="margin-top:0">Inicia sesion con la cuenta de Google que esta en la tabla <code>admins</code>.</p>'
+      +'<button class="btn v" onclick="loginConGoogle()">Iniciar sesion con Google</button></div>';
+    return;
+  }
+  if(!esAdmin){
+    el.innerHTML='<div class="card"><p style="margin-top:0">La cuenta <b>'+esc(usuarioActual.email||usuarioActual.nombre)+'</b> no esta autorizada como administradora del torneo.</p>'
+      +'<button class="btn gl" onclick="logout()">Cerrar sesion</button></div>';
+    return;
+  }
+  var h='<div class="row" style="justify-content:space-between;margin-bottom:1rem">'
+    +'<span class="sub" style="margin:0">Conectado como <b style="color:var(--bl)">'+esc(usuarioActual.nombre||usuarioActual.email)+'</b></span>'
+    +'<button class="btn gl" onclick="logout()">Salir</button></div>';
+
+  if(mensaje){
+    h+='<div class="msg '+(mensaje.tipo==='ok'?'ok':'err')+'">'+esc(mensaje.texto)+'</div>';
+  }
+
+  if(torneoAbierto){
+    h+=renderTorneoAbierto();
+  }else{
+    h+=renderSelectorYListado();
+  }
+  el.innerHTML=h;
+}
+
+function renderSelectorYListado(){
+  var h='<div class="tabs">';
+  ['A','B','C'].forEach(function(s){
+    h+='<button class="tb'+(s===serieActual?' active':'')+'" onclick="seleccionarSerie(\''+s+'\')">Serie '+s+'</button>';
+  });
+  h+='</div>';
+
+  h+='<div class="card"><b>Torneos de Serie '+esc(serieActual)+'</b>';
+  if(!torneosSerie.length){
+    h+='<p class="sub" style="margin-bottom:0">Todavia no hay ningun torneo interno creado para esta serie.</p>';
+  }else{
+    torneosSerie.forEach(function(t,idx){
+      h+='<div class="torneo-item"><span>Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')+' <span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></span>'
+        +'<button class="btn az" onclick="abrirTorneoIdx('+idx+')">Abrir</button></div>';
+    });
+  }
+  h+='</div>';
+
+  h+='<div class="card"><b>Crear nuevo torneo — Serie '+esc(serieActual)+'</b>'
+    +'<div class="row" style="margin-top:.7rem">'
+    +'<input type="number" id="inTemporada" placeholder="Temporada (ej: 2026)" value="'+new Date().getFullYear()+'">'
+    +'<input type="text" id="inPeriodo" placeholder="Periodo (opcional, ej: Apertura)">'
+    +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="crearTorneo()">'+(guardando?'Creando...':'Crear torneo')+'</button>'
+    +'</div><p class="sub" style="margin-bottom:0">Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).</p></div>';
+  return h;
+}
+
+function renderTorneoAbierto(){
+  var t=torneoAbierto;
+  var h='<button class="backbtn" onclick="volverListado()">&larr; Volver al listado</button>';
+  h+='<div class="card"><div class="row" style="justify-content:space-between">'
+    +'<b>Serie '+esc(t.serie)+' &middot; Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')+'</b>'
+    +'<span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></div></div>';
+
+  if(!partidos.length){
+    h+=renderSeeding();
+  }else{
+    h+=renderBracketAdmin();
+  }
+
+  h+='<div class="card"><b style="color:#e05a4a">Zona de riesgo</b><div class="row" style="margin-top:.6rem">'
+    +'<button class="btn ro" '+(guardando?'disabled':'')+' onclick="reiniciarCuadro()">Reiniciar cuadro completo</button>'
+    +'<button class="btn ro" '+(guardando?'disabled':'')+' onclick="eliminarTorneo()">Eliminar torneo entero</button>'
+    +'</div><p class="sub" style="margin-bottom:0">Reiniciar borra todas las rondas y resultados (vuelve a "armado"). Eliminar borra el torneo completo del sistema. Ambas acciones son irreversibles y en cascada quitan cualquier titulo de campeon ya otorgado por este torneo.</p></div>';
+  return h;
+}
+
+function renderSeeding(){
+  var h='<div class="card"><b>Armar cuadro — orden de siembra</b>'
+    +'<p class="sub">Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno. Los 2 primeros de la lista quedan con <i>bye</i> en la Ronda 1, segun el reglamento.</p>'
+    +'<div class="seedlist">';
+  seedList.forEach(function(s,idx){
+    h+='<div class="seedrow'+(s.incluido?'':' excluido')+'">'
+      +'<span class="num">'+(idx+1)+'</span>'
+      +'<span class="nm">'+esc(s.nombre)+'</span>'
+      +'<span class="pts">'+s.pts+' pts</span>'
+      +'<button class="iconbtn" onclick="moverSeed('+idx+',-1)">&uarr;</button>'
+      +'<button class="iconbtn" onclick="moverSeed('+idx+',1)">&darr;</button>'
+      +'<button class="iconbtn" onclick="toggleSeedIncluido('+idx+')">'+(s.incluido?'&times;':'+')+'</button>'
+      +'</div>';
+  });
+  h+='</div><button class="btn v" '+(guardando?'disabled':'')+' onclick="generarRonda1()">'+(guardando?'Creando...':'Generar Ronda 1')+'</button></div>';
+  return h;
+}
+
+function renderBracketAdmin(){
+  var h='';
+  var rMax=rondaMaxima();
+  for(var r=1;r<=rMax;r++){
+    var esUltima=(r===rMax);
+    h+='<div class="ronda-tit">'+(esUltima?'Ultima ronda cargada':'Ronda '+r)+'</div>';
+    partidosDeRonda(r).forEach(function(p){
+      h+=renderMatchAdmin(p,esUltima&&partidosDeRonda(r).length===1);
+    });
+  }
+
+  if(rondaCompleta(rMax)){
+    var ganadores=ganadoresDeRonda(rMax);
+    if(ganadores.length===1){
+      h+='<div class="card" style="text-align:center;border-color:rgba(212,230,10,.5)"><b style="color:var(--am)">Campeon definido: '+esc(nombreDe(ganadores[0]))+'</b><p class="sub" style="margin-bottom:0">Ya deberia aparecer en el perfil del jugador y en el sitio publico.</p></div>';
+    }else{
+      h+=renderAvanzarRonda(rMax,ganadores);
+    }
+  }
+  return h;
+}
+
+function renderMatchAdmin(p,esFinal){
+  var cls='match'+(esFinal?' final':'');
+  var h='<div class="'+cls+'">';
+  if(p.es_mejor_perdedor)h+='<span class="mp-badge">Mejor perdedor</span>';
+  if(p.es_bye){
+    h+='<div class="mplayers"><span class="win">'+esc(nombreDe(p.jugador1_id))+'</span><span class="bye-tag">Bye</span></div>';
+    h+='</div>';
+    return h;
+  }
+  var j1=p.jugador1_id,j2=p.jugador2_id;
+  h+='<div class="mplayers"><span class="'+(p.ganador_id===j1?'win':'')+'">'+esc(nombreDe(j1))+'</span>'
+    +'<span style="color:var(--gl);font-size:.72rem">vs</span>'
+    +'<span class="'+(p.ganador_id===j2?'win':'')+'">'+esc(nombreDe(j2))+'</span></div>';
+
+  if(p.ganador_id){
+    var score=[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':'');
+    h+='<div class="jugado">Resultado: '+esc(score)+' &middot; gano '+esc(nombreDe(p.ganador_id))+'</div>';
+    h+='<div style="margin-top:.4rem"><button class="btn ro" onclick="deshacerResultado(\''+jsAttr(p.id)+'\')">Deshacer resultado</button></div>';
+  }else{
+    h+='<div class="resform">'
+      +'<select id="gan-'+p.id+'"><option value="">Ganador...</option>'
+      +'<option value="'+esc(j1)+'">'+esc(nombreDe(j1))+'</option>'
+      +'<option value="'+esc(j2)+'">'+esc(nombreDe(j2))+'</option></select>'
+      +'<input type="text" id="s1-'+p.id+'" placeholder="Set 1 (6-4)">'
+      +'<input type="text" id="s2-'+p.id+'" placeholder="Set 2">'
+      +'<input type="text" id="s3-'+p.id+'" placeholder="Set 3 (opcional)">'
+      +'<label style="font-size:.75rem;color:var(--gl)"><input type="checkbox" id="wo-'+p.id+'"> W.O.</label>'
+      +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="guardarResultado(\''+jsAttr(p.id)+'\')">Guardar</button>'
+      +'</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function renderAvanzarRonda(rMax,ganadores){
+  var h='<div class="card">';
+  if(ganadores.length%2===0){
+    h+='<p style="margin-top:0">Todos los partidos de esta ronda tienen resultado. Puedes generar la siguiente ronda.</p>'
+      +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+(rMax+1)+'</button>';
+  }else{
+    h+='<p style="margin-top:0"><b>Cantidad impar de ganadores ('+ganadores.length+')</b>: segun el reglamento, hay que sumar al <b>mejor perdedor</b> de esta ronda para poder emparejar la siguiente.</p>';
+    var perdedores=perdedoresRealesDeRonda(rMax);
+    if(!perdedores.length){
+      h+='<p class="sub">No hay perdedores disponibles en esta ronda (revisa si hay demasiados byes). Ajusta manualmente si es necesario.</p>';
+    }else{
+      h+='<div class="mp-picker">';
+      perdedores.forEach(function(pl){
+        h+='<label class="mp-opt"><input type="radio" name="mpsel" value="'+esc(pl.id)+'" '+(mpSeleccion===pl.id?'checked':'')+' onchange="mpSeleccion=\''+jsAttr(pl.id)+'\';render()"> '
+          +esc(nombreDe(pl.id))+' <span class="sub" style="margin:0">(perdio '+esc(pl.score)+' vs '+esc(nombreDe(pl.rivalGanador))+')</span></label>';
+      });
+      h+='</div><button class="btn v" style="margin-top:.6rem" '+(guardando||!mpSeleccion?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+(rMax+1)+' con mejor perdedor</button>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+
+render();
+</script>
+</body>
+</html>
