@@ -168,6 +168,37 @@ section{padding:4rem 1.5rem}
   .rt{display:none}
   .rcards{display:flex}
 }
+/* === Fase 3: podio + racha inline === */
+.podio{display:flex;align-items:flex-end;justify-content:center;gap:.9rem;margin:0 0 1.8rem;flex-wrap:nowrap}
+.podio-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex:0 1 140px;transition:transform .15s}
+.podio-item:hover{transform:translateY(-3px)}
+.podio-avatar-wrap{position:relative}
+.podio-avatar{border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
+.podio-avatar-i{border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;color:var(--gl);box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
+.podio-medal{position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.85rem;border:2px solid var(--gd)}
+.podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:92px;height:92px;font-size:2rem;box-shadow:0 0 0 3px var(--am),0 0 22px rgba(212,230,10,.4),0 6px 18px rgba(0,0,0,.4)}
+.podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
+.podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
+.podio-item.p1{order:2}.podio-item.p2{order:1}.podio-item.p3{order:3}
+.podio-medal.gold{background:#FFD700;color:#3a2e00}
+.podio-medal.silver{background:#C0C0C0;color:#2a2a2a}
+.podio-medal.bronze{background:#CD7F32;color:#2a1400}
+.podio-name{font-weight:700;font-size:.86rem;margin-top:.6rem;text-align:center;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.podio-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--v);font-size:1rem;margin-top:1px}
+.podio-item.p1 .podio-pts{font-size:1.2rem;color:var(--am)}
+.podio-serie{margin-top:.3rem}
+@media(max-width:480px){
+  .podio{gap:.5rem}
+  .podio-item{flex-basis:100px}
+  .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
+  .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i,.podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:58px;height:58px;font-size:1.25rem}
+  .podio-name{font-size:.76rem;max-width:96px}
+}
+
+.rchamini{display:inline-flex;align-items:center;gap:2px;font-size:.68rem;font-weight:700;margin-left:.4rem;white-space:nowrap}
+.rchamini.W{color:var(--v)}
+.rchamini.L{color:var(--gl)}
+.rcard-name .rchamini{margin-left:0}
 .rp{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gl);width:40px}
 .rp.gold{color:#FFD700}.rp.silver{color:#C0C0C0}.rp.bronze{color:#CD7F32}
 .pn{font-weight:600;font-size:.92rem}
