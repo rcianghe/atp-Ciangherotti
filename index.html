@@ -142,6 +142,32 @@ section{padding:4rem 1.5rem}
 .pnwrap{display:flex;align-items:center;gap:.55rem}
 .rfoto{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
 .rfoto-i{width:28px;height:28px;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.72rem;color:var(--gl);flex-shrink:0}
+/* === Fase 2: tarjetas mobile === */
+.rcards{display:none;flex-direction:column;gap:.6rem}
+.rcard{display:flex;align-items:center;gap:.7rem;background:var(--g);border:1px solid rgba(255,255,255,.06);border-left:3px solid transparent;border-radius:10px;padding:.7rem .8rem;cursor:pointer;transition:background .15s}
+.rcard:active{background:rgba(91,191,42,.08)}
+.rcard.serieA{border-left-color:#C0392B}
+.rcard.serieB{border-left-color:#2E7DD1}
+.rcard.serieC{border-left-color:#5BBF2A}
+.rcard.miFila{background:rgba(91,191,42,.08);box-shadow:inset 0 0 0 1px rgba(91,191,42,.3)}
+.rcard.retirado{opacity:.45}
+.rcard-pos{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gl);width:26px;text-align:center;flex-shrink:0}
+.rcard-pos.gold{color:#FFD700}.rcard-pos.silver{color:#C0C0C0}.rcard-pos.bronze{color:#CD7F32}
+.rcard-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.rcard-avatar-i{width:40px;height:40px;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gl);flex-shrink:0}
+.rcard-main{flex:1;min-width:0}
+.rcard-name{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:.35rem}
+.rcard-stats{display:flex;gap:.6rem;margin-top:.2rem;font-size:.68rem;color:var(--gl)}
+.rcard-stats b{color:var(--bl);font-weight:600}
+.rcard-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:.2rem}
+.rcard-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;color:var(--v)}
+.rcard-win{font-size:.66rem;color:var(--gl)}
+.rcskel-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+
+@media(max-width:768px){
+  .rt{display:none}
+  .rcards{display:flex}
+}
 .rp{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gl);width:40px}
 .rp.gold{color:#FFD700}.rp.silver{color:#C0C0C0}.rp.bronze{color:#CD7F32}
 .pn{font-weight:600;font-size:.92rem}
