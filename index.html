@@ -737,6 +737,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       <button class="tb" onclick="showTab('ranking','B',this)">Serie B</button>
       <button class="tb" onclick="showTab('ranking','C',this)">Serie C</button>
     </div>
+    <div id="podio"></div>
     <table class="rt"><thead><tr><th>#</th><th>Jugador</th><th>Serie</th><th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>%Win</th><th>T</th></tr></thead>
     <tbody id="rb"></tbody></table>
     <div class="rcards" id="rcards"></div>
@@ -2136,6 +2137,37 @@ function rRanking(){
   }
   if(body)body.innerHTML=h;
   if(cardsEl)cardsEl.innerHTML=hc;
+  rPodio();
+}
+
+function rPodio(){
+  var el=document.getElementById('podio');
+  if(!el)return;
+  var pl=DATA.players.filter(function(p){return !p.retirado;});
+  if(cSF!=="all")pl=pl.filter(function(p){return p.serie===cSF;});
+  pl.sort(function(a,b){return b.pts-a.pts;});
+  var top3=pl.slice(0,3);
+  if(top3.length<3){el.innerHTML='';return;} // sin datos suficientes, no se fuerza el podio
+
+  var medallas=['gold','silver','bronze'],claves=['p1','p2','p3'],iconos=['🥇','🥈','🥉'];
+  var h='<div class="podio">';
+  for(var i=0;i<3;i++){
+    var p=top3[i];
+    var foto=FOTOS_JUGADORES[p.nombre];
+    var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
+    iniP=iniP.toUpperCase();
+    var avatarH=(foto&&foto.cara)
+      ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\">"
+      :"<div class=\"podio-avatar-i\">"+esc(iniP)+"</div>";
+    h+="<div class=\"podio-item "+claves[i]+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\">"+iconos[i]+"</div></div>"
+      +"<div class=\"podio-name\">"+esc(p.nombre)+"</div>"
+      +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
+      +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
+      +"</div>";
+  }
+  h+='</div>';
+  el.innerHTML=h;
 }
 
 function rRankingSkeleton(){
