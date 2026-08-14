@@ -126,6 +126,22 @@ section{padding:4rem 1.5rem}
 .rt tbody tr{border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s}
 .rt tbody tr:hover{background:rgba(91,191,42,.06)}
 .rt td{padding:.75rem .9rem;font-size:.88rem}
+/* === Fase 0: skeleton + banner de error === */
+.rankerr{max-width:640px;margin:0 auto 1rem;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.4);color:#ff8a7a;border-radius:8px;padding:.65rem .9rem;font-size:.82rem;text-align:center;display:none}
+.rankerr.show{display:block}
+.rt-skel{height:14px;border-radius:4px;background:linear-gradient(90deg,var(--gm) 25%,rgba(255,255,255,.08) 50%,var(--gm) 75%);background-size:200% 100%;animation:rtskel 1.3s ease-in-out infinite}
+@keyframes rtskel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* === Fase 1: foto + color de serie + fila propia === */
+.rt tbody tr{border-left:3px solid transparent}
+.rt tbody tr.serieA{border-left-color:#C0392B}
+.rt tbody tr.serieB{border-left-color:#2E7DD1}
+.rt tbody tr.serieC{border-left-color:#5BBF2A}
+.rt tbody tr.miFila{background:rgba(91,191,42,.08);box-shadow:inset 0 0 0 1px rgba(91,191,42,.3)}
+.rt tbody tr.miFila:hover{background:rgba(91,191,42,.12)}
+.pnwrap{display:flex;align-items:center;gap:.55rem}
+.rfoto{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.rfoto-i{width:28px;height:28px;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.72rem;color:var(--gl);flex-shrink:0}
 .rp{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gl);width:40px}
 .rp.gold{color:#FFD700}.rp.silver{color:#C0C0C0}.rp.bronze{color:#CD7F32}
 .pn{font-weight:600;font-size:.92rem}
@@ -657,6 +673,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="container">
     <div class="sh fi2"><div class="se">Temporada 2026</div><h2 class="st">Ranking por Series</h2><div class="sl"></div></div>
     <div class="gs" id="gs">Datos reales - Escalerilla 2026 - 37 jugadores activos - 148 partidos jugados</div>
+    <div class="rankerr" id="rankErr">No se pudo actualizar el ranking en vivo. Mostrando el último dato disponible.</div>
     <div class="tabs">
       <button class="tb active" onclick="showTab('ranking','all',this)">General</button>
       <button class="tb" onclick="showTab('ranking','A',this)">Serie A</button>
