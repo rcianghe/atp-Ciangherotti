@@ -1582,6 +1582,7 @@ async function cargarJugadoresYResultadosSupabase(){
     var resRes=await window.supabaseClient.from('resultados').select('serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha');
     if(jugRes.error||resRes.error){
       console.warn('Supabase (jugadores/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
+      toggleRankErr(true);
       return;
     }
     var jugadoresRaw=jugRes.data.map(function(j){
@@ -1617,11 +1618,13 @@ async function cargarJugadoresYResultadosSupabase(){
       return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie};
     });
 
+    toggleRankErr(false);
     jugadoresSupabaseListo=true;
     rAll();
     console.log('Jugadores y resultados cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length);
   }catch(err){
     console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
+    toggleRankErr(true);
   }finally{
     jugadoresSupabaseCargando=false;
   }
