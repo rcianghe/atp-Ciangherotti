@@ -456,6 +456,32 @@ span.diachip{cursor:default;display:inline-block}
 .h2hwi{font-family:'Bebas Neue',sans-serif;font-size:.82rem;width:55px}
 .h2hms{flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:600}
 .h2hmd{color:var(--gl);font-size:.7rem}
+#torneo-interno{background:var(--gd)}
+.tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
+.tint-estado b{color:var(--am)}
+.tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15)}
+.tint-campeon .ic{font-size:1.8rem}
+.tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
+.tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--am);margin-top:.15rem}
+.tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
+.tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
+.tint-ronda{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;min-width:190px;position:relative}
+.tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center;margin-bottom:.3rem}
+.tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
+.tint-match:hover{border-color:rgba(91,191,42,.4)}
+.tint-match.final{border-color:rgba(212,230,10,.5);box-shadow:0 0 14px rgba(212,230,10,.15)}
+.tint-slot{display:flex;align-items:center;justify-content:space-between;padding:.5rem .6rem;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.05)}
+.tint-slot:last-child{border-bottom:none}
+.tint-slot.win{background:rgba(91,191,42,.1)}
+.tint-slot .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tint-slot.win .nm{color:var(--v)}
+.tint-slot.tbd .nm{color:var(--gl);font-style:italic;font-weight:400}
+.tint-slot .sc{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);flex-shrink:0;margin-left:.4rem}
+.tint-bye{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--gl);text-align:center;padding:.35rem;font-style:italic}
+.tint-mp{position:absolute;top:-8px;right:8px;background:var(--az);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:.1rem .4rem;border-radius:8px;z-index:1}
+.tint-ronda:not(:first-child) .tint-match::before{content:"";position:absolute;left:-1.3rem;top:50%;width:1.3rem;height:1px;background:var(--gm)}
+@media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
 #galeria{background:var(--ng)}
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .galb{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.2rem}
@@ -539,7 +565,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .visnum{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:1px;color:var(--v);min-width:1.4em;text-align:left}
 .fi2{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
 .fi2.visible{opacity:1;transform:translateY(0)}
-.mn{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(14,14,14,.97);border-top:1px solid var(--v);padding:.38rem .15rem;z-index:100;grid-template-columns:repeat(7,1fr);gap:.08rem}
+.mn{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(14,14,14,.97);border-top:1px solid var(--v);padding:.38rem .15rem;z-index:100;grid-template-columns:repeat(8,1fr);gap:.08rem}
 .mni{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.32rem .08rem;border-radius:4px;cursor:pointer;transition:all .15s;text-decoration:none}
 .mni:hover,.mni.active{background:rgba(91,191,42,.1)}
 .mnio{font-size:1.05rem}
@@ -595,6 +621,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <a href="#resultados">Resultados</a>
     <a href="#perfil">Jugadores</a>
     <a href="#estadisticas">H2H</a>
+    <a href="#torneo-interno">Interno</a>
     <a href="#galeria">Galeria</a>
     <a href="#tienda" class="nt">Tienda</a>
   </nav>
@@ -687,6 +714,16 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   </div>
 </section>
 
+<section id="torneo-interno">
+  <div class="container">
+    <div class="sh fi2"><div class="se">Post Escalerilla 2026</div><h2 class="st">Torneo Interno por Series</h2><div class="sl"></div></div>
+    <div class="tabs" id="tintTabs"></div>
+    <div class="tint-estado" id="tintEstado"></div>
+    <div id="tintCampeon"></div>
+    <div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracket"></div></div>
+  </div>
+</section>
+
 <section id="galeria">
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
@@ -725,7 +762,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="fs">Escalerilla por Series 2026</div>
   <div class="fls">
     <a href="#ranking">Ranking</a><a href="#afiches">Afiches</a><a href="#resultados">Resultados</a>
-    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
+    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#torneo-interno">Interno</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
   </div>
   <div class="fc">Club de Tenis Estadio Quilicura 2026 v3.0</div>
   <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
@@ -737,6 +774,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <a class="mni" href="#resultados"><span class="mnio">✅</span><span class="mnil">Resultados</span></a>
   <a class="mni" href="#perfil"><span class="mnio">👤</span><span class="mnil">Jugador</span></a>
   <a class="mni" href="#estadisticas"><span class="mnio">⚔️</span><span class="mnil">H2H</span></a>
+  <a class="mni" href="#torneo-interno"><span class="mnio">🏆</span><span class="mnil">Interno</span></a>
   <a class="mni" href="#galeria"><span class="mnio">📸</span><span class="mnil">Galeria</span></a>
   <a class="mni" href="#tienda"><span class="mnio">🛒</span><span class="mnil">Tienda</span></a>
 </nav>
@@ -1681,6 +1719,148 @@ async function cargarDesafiosSupabase(){
   }
 }
 
+// ============================================================
+// TORNEO INTERNO POR SERIES (bracket)
+// ============================================================
+// TORNEOS_INTERNOS: {"A-Apertura-2026":{...}, "B-Unico-2026":{...}, ...}
+// La clave combina serie+periodo+temporada solo para poder tener
+// varias pestañas (una por serie) sin pisarse entre si. Si un torneo
+// no tiene periodo (caso actual, segun el acta: 1 solo al año), se usa
+// "Unico" como parte de la clave, pero NO se muestra en pantalla.
+var TORNEOS_INTERNOS={};
+var tintActual=null;
+
+function tintKeys(){return Object.keys(TORNEOS_INTERNOS);}
+function tintCambiar(k){tintActual=k;rTorneoInterno();}
+
+function rTintTabs(){
+  var el=document.getElementById('tintTabs');
+  if(!el)return;
+  var keys=tintKeys();
+  if(!keys.length){el.innerHTML='';return;}
+  var h='';
+  keys.forEach(function(k){
+    var t=TORNEOS_INTERNOS[k];
+    var etiqueta='Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):'');
+    h+='<button class="tb'+(k===tintActual?' active':'')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
+  });
+  el.innerHTML=h;
+}
+
+function rTintEstadoYCampeon(t){
+  var estados={armado:'Cuadro armado, sin iniciar',en_curso:'En curso',finalizado:'Finalizado',cancelado:'Cancelado'};
+  var elEstado=document.getElementById('tintEstado');
+  if(elEstado)elEstado.innerHTML='Temporada '+esc(t.temporada)+' \u00b7 <b>'+esc(estados[t.estado]||t.estado)+'</b>';
+  var camp=document.getElementById('tintCampeon');
+  if(!camp)return;
+  if(t.campeon){
+    camp.innerHTML='<div class="tint-campeon"><div class="ic">\ud83c\udfc6</div><div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
+  }else{
+    camp.innerHTML='';
+  }
+}
+
+function tintSlotHtml(nombre,esGanador,score,tbd){
+  if(tbd)return '<div class="tint-slot tbd"><span class="nm">Por definir</span></div>';
+  return '<div class="tint-slot'+(esGanador?' win':'')+'"><span class="nm">'+esc(nombre)+'</span>'+(score?'<span class="sc">'+esc(score)+'</span>':'')+'</div>';
+}
+
+function rTintBracket(t){
+  var el=document.getElementById('tintBracket');
+  if(!el)return;
+  var nombresRonda=['Primera ronda','Segunda ronda','Tercera ronda','Semifinal','Final'];
+  var totalRondas=t.rondas.length;
+  if(!totalRondas){el.innerHTML='<div class="tint-vacio">El cuadro de esta serie todav\u00eda no se ha armado.</div>';return;}
+  var h='';
+  t.rondas.forEach(function(matches,ri){
+    var esFinal=(ri===totalRondas-1);
+    var titulo=esFinal?'Final':(nombresRonda[ri]||('Ronda '+(ri+1)));
+    h+='<div class="tint-ronda"><div class="tint-rondatit">'+esc(titulo)+'</div>';
+    matches.forEach(function(m){
+      if(m.bye){
+        h+='<div class="tint-match">'+tintSlotHtml(m.j1,true,null,false)+'<div class="tint-bye">Bye \u2014 pasa directo</div></div>';
+        return;
+      }
+      var cls='tint-match'+(esFinal?' final':'');
+      h+='<div class="'+cls+'">';
+      if(m.mejorPerdedor)h+='<span class="tint-mp">Mejor perdedor</span>';
+      h+=tintSlotHtml(m.j1,!!(m.ganador&&m.ganador===m.j1),m.ganador?m.score:null,!m.j1);
+      h+=tintSlotHtml(m.j2,!!(m.ganador&&m.ganador===m.j2),m.ganador?m.score:null,!m.j2);
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function rTorneoInterno(){
+  var keys=tintKeys();
+  var elTabs=document.getElementById('tintTabs');
+  var elEstado=document.getElementById('tintEstado');
+  var elCamp=document.getElementById('tintCampeon');
+  var elBracket=document.getElementById('tintBracket');
+  if(!keys.length){
+    if(elTabs)elTabs.innerHTML='';
+    if(elEstado)elEstado.innerHTML='';
+    if(elCamp)elCamp.innerHTML='';
+    if(elBracket)elBracket.innerHTML='<div class="tint-vacio">A\u00fan no hay un Torneo Interno programado. Seg\u00fan lo acordado en la reuni\u00f3n de socios, se juega al t\u00e9rmino de la Escalerilla.</div>';
+    return;
+  }
+  if(!tintActual||!TORNEOS_INTERNOS[tintActual])tintActual=keys[0];
+  var t=TORNEOS_INTERNOS[tintActual];
+  rTintTabs();
+  rTintEstadoYCampeon(t);
+  rTintBracket(t);
+}
+
+// Carga real desde Supabase (torneos_internos + torneo_partidos), usando
+// DATA.players (ya con UUID reales) para traducir jugador_id -> nombre.
+// Por eso SIEMPRE debe llamarse despues de cargarJugadoresYResultadosSupabase().
+async function cargarTorneosInternos(){
+  if(!window.supabaseClient)return;
+  try{
+    var tRes=await window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
+    var pRes=await window.supabaseClient.from('torneo_partidos').select('*');
+    if(tRes.error||pRes.error){
+      console.warn('No se pudo cargar el Torneo Interno, se mantienen los datos previos.',tRes.error,pRes.error);
+      return;
+    }
+    var idANombre={};
+    (DATA.players||[]).forEach(function(j){idANombre[j.id]=j.nombre;});
+    var nuevo={};
+    tRes.data.forEach(function(t){
+      var key=t.serie+'-'+(t.periodo||'Unico')+'-'+t.temporada;
+      var partidosDelTorneo=pRes.data.filter(function(p){return p.torneo_id===t.id;});
+      var rondaMax=0;
+      partidosDelTorneo.forEach(function(p){if(p.ronda>rondaMax)rondaMax=p.ronda;});
+      var rondas=[];
+      for(var r=1;r<=rondaMax;r++){
+        var enRonda=partidosDelTorneo.filter(function(p){return p.ronda===r;}).sort(function(a,b){return a.posicion-b.posicion;});
+        rondas.push(enRonda.map(function(p){
+          return {
+            j1:p.jugador1_id?idANombre[p.jugador1_id]:null,
+            j2:p.jugador2_id?idANombre[p.jugador2_id]:null,
+            ganador:p.ganador_id?idANombre[p.ganador_id]:null,
+            score:[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':null),
+            bye:!!p.es_bye,
+            mejorPerdedor:!!p.es_mejor_perdedor
+          };
+        }));
+      }
+      var campeon=null;
+      if(rondaMax>0){
+        var finalPartido=partidosDelTorneo.filter(function(p){return p.ronda===rondaMax;})[0];
+        if(finalPartido&&finalPartido.ganador_id)campeon=idANombre[finalPartido.ganador_id];
+      }
+      nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:t.estado,campeon:campeon,rondas:rondas};
+    });
+    TORNEOS_INTERNOS=nuevo;
+    rTorneoInterno();
+  }catch(err){
+    console.warn('Sin conexion a Supabase para el Torneo Interno.',err);
+  }
+}
+
 var currentProfileName=null; // jugador actualmente mostrado en la seccion Perfil (evita que el auto-refresh lo resetee al #1 del ranking)
 var liveRefreshBusy=false;
 var splashOculto=false;
@@ -1727,6 +1907,7 @@ function startLiveRefresh(){
       cargarJugadoresYResultadosSupabase().then(function(){
         cargarFichasSupabase();
         cargarDesafiosSupabase();
+        cargarTorneosInternos();
       });
     }
   },LIVE_REFRESH_MS);
@@ -1735,6 +1916,7 @@ function startLiveRefresh(){
       cargarJugadoresYResultadosSupabase().then(function(){
         cargarFichasSupabase();
         cargarDesafiosSupabase();
+        cargarTorneosInternos();
       });
     }
   });
@@ -1753,6 +1935,7 @@ function init(){
   cargarJugadoresYResultadosSupabase().then(function(){
     cargarFichasSupabase();
     cargarDesafiosSupabase();
+    cargarTorneosInternos();
   });
   startLiveRefresh();
   initVisitas();
@@ -3668,7 +3851,7 @@ function sendWA(){
   window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
-var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","galeria","tienda"];
+var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","torneo-interno","galeria","tienda"];
 window.addEventListener("scroll",function(){
   var sy=window.scrollY||window.pageYOffset;
   for(var i=0;i<SECS.length;i++){
