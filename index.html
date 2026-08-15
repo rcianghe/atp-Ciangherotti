@@ -205,6 +205,9 @@ section{padding:4rem 1.5rem}
 }
 .rt tbody tr:focus-visible{outline-offset:-2px}
 
+/* === Fase 6: exportar ranking como imagen === */
+.exportando #btnExportRanking{opacity:.5;pointer-events:none}
+
 .rchamini{display:inline-flex;align-items:center;gap:2px;font-size:.68rem;font-weight:700;margin-left:.4rem;white-space:nowrap}
 .rchamini.W{color:var(--v)}
 .rchamini.L{color:var(--gl)}
@@ -685,6 +688,25 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .gg{grid-template-columns:repeat(2,1fr)}
   .rt th,.rt td{padding:.55rem .65rem;font-size:.8rem}
 }
+
+/* === Fase 6: impresion limpia === */
+@media print{
+  header,.mn,footer,.cfab,#hero,#afiches,#resultados,#estadisticas,#galeria,#tienda,
+  .tabs,#btnExportRanking,.splash,.gs,.rankerr,.hjm,#topMata,.rcards{display:none!important}
+  body{background:#fff;color:#111;padding:0}
+  #ranking,#torneo-interno{background:#fff;padding:1rem 0;page-break-inside:avoid}
+  .rt{display:table!important;width:100%;border:1px solid #999}
+  .rt th,.rt td{color:#111;border-bottom:1px solid #ccc;padding:.4rem .5rem;font-size:.78rem}
+  .rt thead tr{background:#eee;border-bottom:2px solid #333}
+  .sb{border:1px solid #333!important;color:#111!important;background:none!important}
+  #podio{display:none} /* el podio visual no aporta en blanco y negro/papel */
+  .tint-bracket-wrap{overflow:visible}
+  .tint-match{border:1px solid #999;background:#fff}
+  .tint-slot{color:#111;border-color:#ccc}.tint-slot.win{background:#f0f0f0;font-weight:700}
+  .sh .se{color:#555}
+  .sh .st{color:#111}
+  a[href]:after{content:""} /* evita que Chrome imprima las URLs completas al lado de cada link */
+}
 </style>
 </head>
 <body>
@@ -746,6 +768,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','A',this)">Serie A</button>
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','B',this)">Serie B</button>
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','C',this)">Serie C</button>
+    </div>
+    <div style="text-align:center;margin-bottom:1rem">
+      <button class="galbtn" id="btnExportRanking" onclick="exportarRankingImagen()"><span class="gi2">📸</span>Descargar Ranking como Imagen</button>
     </div>
     <div id="podio"></div>
     <table class="rt"><thead><tr><th scope="col">#</th><th scope="col">Jugador</th><th scope="col">Serie</th><th scope="col">Pts</th><th scope="col">PJ</th><th scope="col">PG</th><th scope="col">PP</th><th scope="col">%Win</th><th scope="col">T</th></tr></thead>
@@ -865,6 +890,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <a class="mni" href="#tienda"><span class="mnio">🛒</span><span class="mnil">Tienda</span></a>
 </nav>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
@@ -1850,6 +1876,38 @@ function rTintEstadoYCampeon(t){
   }
 }
 
+// Fase 6: Actualiza los meta og:title / og:description en caliente segun el
+// campeon vigente del Torneo Interno (si hay uno) o la serie activa
+// del ranking. No cambia og:image por defecto (requeriria generar una
+// imagen real por campeon, fuera de alcance de esta fase), pero deja
+// el title/description listos para cuando se comparta el link en ese
+// momento puntual.
+function actualizarMetaDinamico(){
+  var ogTitle=document.querySelector('meta[property="og:title"]');
+  var ogDesc=document.querySelector('meta[property="og:description"]');
+  var twTitle=document.querySelector('meta[name="twitter:title"]');
+  var twDesc=document.querySelector('meta[name="twitter:description"]');
+  if(!ogTitle)return;
+  var keys=tintKeys();
+  var campeonReciente=null;
+  for(var i=0;i<keys.length;i++){
+    var t=TORNEOS_INTERNOS[keys[i]];
+    if(t&&t.campeon){campeonReciente=t;break;}
+  }
+  var title,desc;
+  if(campeonReciente){
+    title='🏆 '+campeonReciente.campeon+' es el campeon de la Serie '+campeonReciente.serie+' — CTQ';
+    desc='Torneo Interno '+(campeonReciente.periodo?campeonReciente.periodo+' ':'')+campeonReciente.temporada+'. Revisa el bracket completo y el ranking en vivo del club.';
+  }else{
+    title='Club de Tenis Estadio Quilicura - Escalerilla 2026';
+    desc='Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.';
+  }
+  ogTitle.setAttribute('content',title);
+  if(ogDesc)ogDesc.setAttribute('content',desc);
+  if(twTitle)twTitle.setAttribute('content',title);
+  if(twDesc)twDesc.setAttribute('content',desc);
+}
+
 function tintSlotHtml(nombre,esGanador,score,tbd){
   if(tbd)return '<div class="tint-slot tbd"><span class="nm">Por definir</span></div>';
   return '<div class="tint-slot'+(esGanador?' win':'')+'"><span class="nm">'+esc(nombre)+'</span>'+(score?'<span class="sc">'+esc(score)+'</span>':'')+'</div>';
@@ -1946,6 +2004,7 @@ async function cargarTorneosInternos(){
     });
     TORNEOS_INTERNOS=nuevo;
     rTorneoInterno();
+    actualizarMetaDinamico();
   }catch(err){
     console.warn('Sin conexion a Supabase para el Torneo Interno.',err);
   }
@@ -2292,6 +2351,42 @@ function rRankingSkeleton(){
 function toggleRankErr(show){
   var el=document.getElementById('rankErr');
   if(el)el.classList.toggle('show',!!show);
+}
+
+// Fase 6: Captura el bloque podio+tabla (o tarjetas en mobile) como PNG y lo
+// descarga. Se agrega temporalmente una marca de club en la captura
+// para que la imagen exportada tenga identidad aunque se comparta
+// suelta fuera del sitio.
+function exportarRankingImagen(){
+  if(typeof html2canvas==='undefined'){alert('No se pudo cargar la herramienta de exportacion. Intenta de nuevo.');return;}
+  var btn=document.getElementById('btnExportRanking');
+  var origTxt=btn.innerHTML;
+  btn.innerHTML='<span class="gi2">⏳</span>Generando...';
+  document.body.classList.add('exportando');
+  var wrap=document.createElement('div');
+  wrap.style.cssText='background:#0e0e0e;padding:1.4rem 1.2rem;width:520px;font-family:Barlow,Arial,sans-serif';
+  var titulo=(cSF==='all'?'Ranking General':'Ranking Serie '+cSF);
+  wrap.innerHTML='<div style="text-align:center;margin-bottom:1rem">'+'<div style="font-family:Bebas Neue,sans-serif;color:#5BBF2A;font-size:.62rem;letter-spacing:3px;text-transform:uppercase">Club de Tenis Estadio Quilicura</div>'
+    +'<div style="font-family:Bebas Neue,sans-serif;color:#f5f5f0;font-size:1.8rem;letter-spacing:2px">'+titulo+'</div></div>';
+  var podioClone=document.getElementById('podio').cloneNode(true);
+  var tablaClone=document.getElementById('rb').closest('table').cloneNode(true);
+  wrap.appendChild(podioClone);
+  wrap.appendChild(tablaClone);
+  wrap.style.position='fixed';wrap.style.left='-9999px';wrap.style.top='0';
+  document.body.appendChild(wrap);
+  html2canvas(wrap,{backgroundColor:'#0e0e0e',scale:2}).then(function(canvas){
+    var link=document.createElement('a');
+    link.download='ranking-ctq-'+(cSF==='all'?'general':cSF)+'-'+new Date().toISOString().slice(0,10)+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }).catch(function(err){
+    console.warn('No se pudo generar la imagen.',err);
+    alert('No se pudo generar la imagen. Intenta de nuevo.');
+  }).finally(function(){
+    document.body.removeChild(wrap);
+    btn.innerHTML=origTxt;
+    document.body.classList.remove('exportando');
+  });
 }
 
 function filterMatches(v,el){
