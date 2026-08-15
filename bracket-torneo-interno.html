@@ -233,6 +233,30 @@ function rTorneoInterno(){
 
 rTorneoInterno();      // pinta el demo con MOCK_TORNEOS de inmediato (sin esperar red)
 cargarTorneosInternos(); // y en cuanto responda Supabase, reemplaza por datos reales
+
+/* ============================================================
+   REALTIME: refresca el bracket al instante cuando el admin guarda
+   un resultado o avanza una ronda, en vez de depender de un F5 manual
+   del espectador. Se suscribe a torneo_partidos (resultados/rondas) y
+   tambien a torneos_internos (cambios de estado: armado/en_curso/
+   finalizado), y reusa la MISMA cargarTorneosInternos() que ya existe.
+   ============================================================ */
+var realtimeChannels=[];
+function iniciarRealtime(){
+  if(!window.supabaseClient)return;
+  realtimeChannels.forEach(function(ch){window.supabaseClient.removeChannel(ch);});
+  realtimeChannels=[];
+  var chTorneo=window.supabaseClient.channel('rt-torneo-interno-bracket')
+    .on('postgres_changes',{event:'*',schema:'public',table:'torneo_partidos'},function(){
+      cargarTorneosInternos();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'torneos_internos'},function(){
+      cargarTorneosInternos();
+    })
+    .subscribe();
+  realtimeChannels.push(chTorneo);
+}
+iniciarRealtime();
 </script>
 </body>
 </html>
