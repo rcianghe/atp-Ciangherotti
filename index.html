@@ -1392,6 +1392,28 @@ function esc(s){
 function jsAttr(s){
   return esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'"));
 }
+
+// ============================================================
+// FALLBACK DE FOTOS DE JUGADORES
+// ============================================================
+// Si una foto (ranking, tarjetas, podio o perfil) falla al cargar
+// (503 de GitHub Pages, 404, etc.), en vez de quedar como imagen rota
+// se reemplaza al vuelo por el mismo circulo con iniciales que ya se
+// usa cuando el jugador no tiene foto cargada.
+function imgSwapInitials(img,ini,cls){
+  if(!img||img.dataset.fallbackDone)return;
+  img.dataset.fallbackDone="1";
+  var d=document.createElement("div");
+  d.className=cls;
+  d.textContent=ini;
+  if(img.parentElement)img.parentElement.replaceChild(d,img);
+}
+function pavImgFallback(img,ini){
+  if(!img||img.dataset.fallbackDone)return;
+  img.dataset.fallbackDone="1";
+  var box=img.parentElement;
+  if(box){box.classList.remove("foto");box.textContent=ini;}
+}
 var PRODS=[
   {id:1,nombre:"Pelotas de Tenis Speed",cat:"pelotas",img:"tienda/pelotas-tenis.jpg",desc:"Tubo x3 pressurizadas, extra durabilidad.",precio:6000,stock:"ok",badge:"hot"},
   {id:2,nombre:"Grip de Raqueta Zarsia",cat:"accesorios",img:"tienda/grip.jpg",desc:"Grip de reemplazo perforado, alta adherencia.",precio:6000,stock:"ok",badge:"new"},
@@ -2249,7 +2271,7 @@ function rRanking(){
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
     iniP=iniP.toUpperCase();
     var fotoH=(foto&&foto.cara)
-      ?"<img class=\"rfoto\" src=\""+foto.cara+"\" alt=\"\">"
+      ?"<img class=\"rfoto\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rfoto-i')\">"
       :"<div class=\"rfoto-i\">"+esc(iniP)+"</div>";
 
     // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
@@ -2280,7 +2302,7 @@ function rRanking(){
 
     // --- tarjeta (mobile) ---
     var fotoCardH=(foto&&foto.cara)
-      ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\">"
+      ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rcard-avatar-i')\">"
       :"<div class=\"rcard-avatar-i\">"+esc(iniP)+"</div>";
     hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
@@ -2347,7 +2369,7 @@ function rPodio(){
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
     iniP=iniP.toUpperCase();
     var avatarH=(foto&&foto.cara)
-      ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\">"
+      ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','podio-avatar-i')\">"
       :"<div class=\"podio-avatar-i\">"+esc(iniP)+"</div>";
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
     h+="<div class=\"podio-item "+claves[i]+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
@@ -3715,11 +3737,11 @@ async function showProfile(nombre,scroll){
   }
   var fotoJugador=FOTOS_JUGADORES[nombre];
   var avatarH="<div class=\"pavwrap\">"+((fotoJugador&&fotoJugador.cara)
-    ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+esc(nombre)+"\"></div>"
+    ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+esc(nombre)+"\" onerror=\"pavImgFallback(this,'"+jsAttr(ini)+"')\"></div>"
     :"<div class=\"pav\">"+esc(ini)+"</div>")
     +"<div class=\"pavrank\">#"+rp+"</div></div>";
   var heroFigH=(fotoJugador&&fotoJugador.cuerpo)
-    ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\">"
+    ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\" onerror=\"this.style.display='none'\">"
     :"";
   var tieneFigura=!!(fotoJugador&&fotoJugador.cuerpo);
   var dispFicha=getFicha(p.nombre).disponible;
