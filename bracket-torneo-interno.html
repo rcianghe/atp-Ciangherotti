@@ -48,15 +48,20 @@ body{margin:0;font-family:'Barlow',Arial,sans-serif;background:var(--ng);color:v
 
 .tint-admin-cta{max-width:420px;margin:1.8rem auto 0;text-align:center;font-size:.78rem;color:var(--gl)}
 @media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
+
+/* ---- banner de error (club no resuelto / falla de Supabase) ---- */
+.tint-err{max-width:520px;margin:0 auto 1.4rem;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.4);color:#ff8a7a;border-radius:8px;padding:.65rem .9rem;font-size:.8rem;text-align:center;display:none}
+.tint-err.show{display:block}
 </style>
 </head>
 <body>
 
 <div class="sh">
-  <div class="se">Club de Tenis Estadio Quilicura</div>
+  <div class="se" id="tintClubNombre">Club de Tenis Estadio Quilicura</div>
   <h2 class="st">Torneo Interno por Series</h2>
 </div>
 
+<div class="tint-err" id="tintErr"></div>
 <div class="tint-tabs" id="tintTabs"></div>
 <div class="tint-estado" id="tintEstado"></div>
 <div id="tintCampeon"></div>
@@ -80,6 +85,87 @@ window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
 /* ============================================================
+   MULTI-CLUB: de que club es este bracket
+   ============================================================
+   Este mismo archivo, con las mismas credenciales de Supabase, puede
+   servir el bracket de MAS DE UN CLUB si "ChileTenis PRO" se ofrece a
+   otros clubes ademas de Quilicura. El club se identifica por su
+   "slug" en la URL:
+
+     bracket-torneo-interno.html?club=quilicura
+     bracket-torneo-interno.html?club=otro-club
+
+   Si no viene "?club=" en la URL se usa DEFAULT_CLUB_SLUG, para que
+   los enlaces ya compartidos (sin el parametro) sigan apuntando al
+   club actual sin romperse.
+
+   Requisito en Supabase (una sola vez, ver multi_club_migration.sql):
+   columna club_id en "torneos_internos" y "jugadores", mas una fila
+   en "clubes" con slug='quilicura'. Mientras esa migracion no se
+   aplique, el codigo de abajo detecta el error de columna/tabla
+   faltante y cae de vuelta al comportamiento anterior (sin filtro),
+   para no romper el sitio en producción antes de correr el script.
+   ============================================================ */
+var DEFAULT_CLUB_SLUG='quilicura';
+function obtenerClubSlugDeURL(){
+  var params=new URLSearchParams(window.location.search);
+  var slug=(params.get('club')||'').trim().toLowerCase();
+  return slug||DEFAULT_CLUB_SLUG;
+}
+var CLUB_SLUG=obtenerClubSlugDeURL();
+var CLUB_ACTUAL=null;       // {id,slug,nombre} una vez resuelto
+var CLUB_FILTRO_DISPONIBLE=true; // false si la BD todavia no tiene club_id (migracion pendiente)
+
+function mostrarErrorClub(msg){
+  var el=document.getElementById('tintErr');
+  if(!el)return;
+  if(!msg){el.classList.remove('show');el.textContent='';return;}
+  el.textContent=msg;
+  el.classList.add('show');
+}
+function pintarNombreClub(nombre){
+  var el=document.getElementById('tintClubNombre');
+  if(el&&nombre)el.textContent=nombre;
+}
+
+// Codigos de error de PostgREST para "no existe la tabla" / "no existe la
+// columna" (42P01 / 42703): asi distinguimos "todavia no corriste la
+// migracion" de un fallo de red real, y en ese caso especifico
+// degradamos con elegancia en vez de mostrar un error al socio.
+function esErrorEsquemaFaltante(err){
+  return !!err&&(err.code==='42P01'||err.code==='42703');
+}
+
+async function resolverClubActual(){
+  try{
+    // clubes.activo existe en el esquema real (confirmado en el CSV):
+    // un club marcado como inactivo no debe mostrar su bracket publico.
+    var res=await window.supabaseClient.from('clubes').select('id,slug,nombre,activo').eq('slug',CLUB_SLUG).maybeSingle();
+    if(res.error){
+      if(esErrorEsquemaFaltante(res.error)){
+        console.warn('La tabla "clubes" (o su columna slug) todavia no existe. Corre multi_club_migration.sql en Supabase. Mostrando datos sin filtrar por club por ahora.',res.error);
+        CLUB_FILTRO_DISPONIBLE=false;
+        return null;
+      }
+      console.warn('No se pudo resolver el club actual.',res.error);
+      return null;
+    }
+    if(!res.data){
+      mostrarErrorClub('No se encontro el club "'+CLUB_SLUG+'". Revisa el link (?club=slug) o que exista esa fila en la tabla "clubes".');
+      return null;
+    }
+    if(res.data.activo===false){
+      mostrarErrorClub('El club "'+CLUB_SLUG+'" esta desactivado por ahora.');
+      return null;
+    }
+    return res.data;
+  }catch(err){
+    console.warn('Sin conexion al resolver el club.',err);
+    return null;
+  }
+}
+
+/* ============================================================
    CARGA REAL DESDE SUPABASE (reemplaza MOCK_TORNEOS)
    ============================================================
    Arma exactamente la misma forma que MOCK_TORNEOS (mismas claves:
@@ -89,13 +175,53 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
    directo sobre el mock). */
 async function cargarTorneosInternos(){
   try{
-    var tRes = await window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
-    var pRes = await window.supabaseClient.from('torneo_partidos').select('*');
-    var jRes = await window.supabaseClient.from('jugadores').select('id,nombre');
+    // Paso 1: resolver el club (una sola vez por carga de pagina).
+    if(CLUB_FILTRO_DISPONIBLE&&!CLUB_ACTUAL){
+      CLUB_ACTUAL=await resolverClubActual();
+      if(CLUB_ACTUAL){
+        pintarNombreClub(CLUB_ACTUAL.nombre);
+        mostrarErrorClub(null);
+      }else if(CLUB_FILTRO_DISPONIBLE){
+        // La tabla clubes existe pero no hay fila para este slug: no
+        // seguimos, para no mostrarle a un club el bracket de otro.
+        return;
+      }
+    }
+
+    // Paso 2: torneos_internos, filtrados por club si es posible.
+    var qTorneos=window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
+    if(CLUB_FILTRO_DISPONIBLE&&CLUB_ACTUAL)qTorneos=qTorneos.eq('club_id',CLUB_ACTUAL.id);
+    var tRes=await qTorneos;
+    if(tRes.error&&esErrorEsquemaFaltante(tRes.error)){
+      // club_id todavia no existe en torneos_internos: reintenta sin filtro
+      // (migracion pendiente) para no dejar el bracket vacio mientras tanto.
+      console.warn('"torneos_internos" todavia no tiene club_id. Corre multi_club_migration.sql en Supabase.',tRes.error);
+      CLUB_FILTRO_DISPONIBLE=false;
+      tRes=await window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
+    }
+
+    // Paso 3: partidos, solo de los torneos ya filtrados (evita traer el
+    // cuadro completo de otros clubes por accidente).
+    var idsTorneos=(tRes.data||[]).map(function(t){return t.id;});
+    var pRes=idsTorneos.length
+      ?await window.supabaseClient.from('torneo_partidos').select('*').in('torneo_id',idsTorneos)
+      :{data:[],error:null};
+
+    // Paso 4: jugadores, filtrados por club si es posible.
+    var qJug=window.supabaseClient.from('jugadores').select('id,nombre');
+    if(CLUB_FILTRO_DISPONIBLE&&CLUB_ACTUAL)qJug=qJug.eq('club_id',CLUB_ACTUAL.id);
+    var jRes=await qJug;
+    if(jRes.error&&esErrorEsquemaFaltante(jRes.error)){
+      console.warn('"jugadores" todavia no tiene club_id. Corre multi_club_migration.sql en Supabase.',jRes.error);
+      jRes=await window.supabaseClient.from('jugadores').select('id,nombre');
+    }
+
     if(tRes.error||pRes.error||jRes.error){
       console.warn('No se pudo cargar el torneo interno desde Supabase, se muestran datos de ejemplo.',tRes.error,pRes.error,jRes.error);
+      mostrarErrorClub('No se pudo actualizar el Torneo Interno en vivo. Mostrando el ultimo dato disponible.');
       return; // se queda con MOCK_TORNEOS
     }
+
     var idANombre={};
     jRes.data.forEach(function(j){idANombre[j.id]=j.nombre;});
 
@@ -135,6 +261,7 @@ async function cargarTorneosInternos(){
     rTorneoInterno();
   }catch(err){
     console.warn('Sin conexion a Supabase, se muestran datos de ejemplo.',err);
+    mostrarErrorClub('Sin conexion. Mostrando el ultimo dato disponible.');
   }
 }
 
@@ -233,30 +360,6 @@ function rTorneoInterno(){
 
 rTorneoInterno();      // pinta el demo con MOCK_TORNEOS de inmediato (sin esperar red)
 cargarTorneosInternos(); // y en cuanto responda Supabase, reemplaza por datos reales
-
-/* ============================================================
-   REALTIME: refresca el bracket al instante cuando el admin guarda
-   un resultado o avanza una ronda, en vez de depender de un F5 manual
-   del espectador. Se suscribe a torneo_partidos (resultados/rondas) y
-   tambien a torneos_internos (cambios de estado: armado/en_curso/
-   finalizado), y reusa la MISMA cargarTorneosInternos() que ya existe.
-   ============================================================ */
-var realtimeChannels=[];
-function iniciarRealtime(){
-  if(!window.supabaseClient)return;
-  realtimeChannels.forEach(function(ch){window.supabaseClient.removeChannel(ch);});
-  realtimeChannels=[];
-  var chTorneo=window.supabaseClient.channel('rt-torneo-interno-bracket')
-    .on('postgres_changes',{event:'*',schema:'public',table:'torneo_partidos'},function(){
-      cargarTorneosInternos();
-    })
-    .on('postgres_changes',{event:'*',schema:'public',table:'torneos_internos'},function(){
-      cargarTorneosInternos();
-    })
-    .subscribe();
-  realtimeChannels.push(chTorneo);
-}
-iniciarRealtime();
 </script>
 </body>
 </html>
