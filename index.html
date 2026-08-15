@@ -3783,6 +3783,33 @@ function evolucionJugador(nombre){
     return {fecha:corteTs,pts:pts,posicion:posicion};
   });
 }
+// Delta de posicion: compara el ranking de HOY vs. hace 7 dias, usando
+// los mismos puntos base que ya calcula _ptsHasta() (sin bonos, igual
+// que evolucionJugador/JugadorDelMes). Se calcula UNA vez por render
+// del ranking completo, no por jugador, para que sea liviano.
+function calcularDeltaSemanal(){
+  var ahora=Date.now();
+  var haceUnaSemana=ahora-7*24*60*60*1000;
+  var porSerie={A:[],B:[],C:[]};
+  DATA.players.forEach(function(p){if(!p.retirado&&porSerie[p.serie])porSerie[p.serie].push(p);});
+  var deltas={};
+  ['A','B','C'].forEach(function(serie){
+    var partidosSerie=DATA.results.filter(function(r){return r.serie===serie;});
+    var actual=porSerie[serie].map(function(p){return {nombre:p.nombre,pts:_ptsHasta(p.nombre,partidosSerie,ahora)};});
+    var anterior=porSerie[serie].map(function(p){return {nombre:p.nombre,pts:_ptsHasta(p.nombre,partidosSerie,haceUnaSemana)};});
+    actual.sort(function(a,b){return b.pts-a.pts;});
+    anterior.sort(function(a,b){return b.pts-a.pts;});
+    var posActual={},posAnterior={};
+    actual.forEach(function(f,i){posActual[f.nombre]=i+1;});
+    anterior.forEach(function(f,i){posAnterior[f.nombre]=i+1;});
+    porSerie[serie].forEach(function(p){
+      if(posActual[p.nombre]!=null&&posAnterior[p.nombre]!=null){
+        deltas[p.nombre]=posAnterior[p.nombre]-posActual[p.nombre]; // positivo = subio puestos
+      }
+    });
+  });
+  return deltas;
+}
 // Genera un mini sparkline SVG (puntos a lo largo de la temporada) para
 // insertar directo en el perfil. w/h en px.
 function sparklineSVG(evolucion,w,h){
