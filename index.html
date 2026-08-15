@@ -195,6 +195,10 @@ section{padding:4rem 1.5rem}
   .podio-name{font-size:.76rem;max-width:96px}
 }
 
+/* === Fase 4: stagger de entrada === */
+.rb-row-anim{opacity:0;animation:rowFadeIn .45s ease forwards}
+@keyframes rowFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
 .rchamini{display:inline-flex;align-items:center;gap:2px;font-size:.68rem;font-weight:700;margin-left:.4rem;white-space:nowrap}
 .rchamini.W{color:var(--v)}
 .rchamini.L{color:var(--gl)}
@@ -2127,7 +2131,8 @@ function rRanking(){
     }
 
     // --- fila de tabla (desktop) ---
-    h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
+    var animDelay=(Math.min(i,14)*0.035).toFixed(3);
+    h+="<tr class=\"rb-row-anim "+claseSerie+(esMio?" miFila":"")+"\" style=\"animation-delay:"+animDelay+"s\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
@@ -2139,7 +2144,7 @@ function rRanking(){
     var fotoCardH=(foto&&foto.cara)
       ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\">"
       :"<div class=\"rcard-avatar-i\">"+esc(iniP)+"</div>";
-    hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+    hc+="<div class=\"rb-row-anim rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" style=\"animation-delay:"+animDelay+"s\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
       +fotoCardH
       +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
