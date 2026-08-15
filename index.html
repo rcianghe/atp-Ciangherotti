@@ -2097,6 +2097,9 @@ function rRanking(){
   if(!pl.length){rRankingSkeleton();return;}
   if(cSF!=="all"){var f=[];for(var i=0;i<pl.length;i++){if(pl[i].serie===cSF)f.push(pl[i]);}pl=f;}
   pl.sort(function(a,b){return b.pts-a.pts;});
+
+  var historialTodos=construirHistorialPorJugador(); // una sola vez, se reusa por jugador
+
   var h="",hc="";
   for(var i=0;i<pl.length;i++){
     var p=pl[i],pos=i+1;
@@ -2106,36 +2109,45 @@ function rRanking(){
     var ret=p.retirado?" <span class=\"ret\">RET</span>":"";
     var rs=p.retirado?" style=\"opacity:0.4;\"":"";
     var esMio=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
-    var claseFila="serie"+esc(p.serie)+(esMio?" miFila":"");
+    var claseSerie="serie"+esc(p.serie);
     var foto=FOTOS_JUGADORES[p.nombre];
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
+    iniP=iniP.toUpperCase();
     var fotoH=(foto&&foto.cara)
       ?"<img class=\"rfoto\" src=\""+foto.cara+"\" alt=\"\">"
-      :"<div class=\"rfoto-i\">"+esc(iniP.toUpperCase())+"</div>";
-    h+="<tr class=\""+claseFila+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
+      :"<div class=\"rfoto-i\">"+esc(iniP)+"</div>";
+
+    // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
+    var rachaMini="";
+    if(!p.retirado){
+      var racha=calcularRachaActual(historialTodos[p.nombre]||[]);
+      if(racha.tipo&&racha.cantidad>=2){
+        rachaMini="<span class=\"rchamini "+racha.tipo+"\">"+(racha.tipo==='W'?"🔥":"❄️")+racha.cantidad+"</span>";
+      }
+    }
+
+    // --- fila de tabla (desktop) ---
+    h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
     h+="<td class=\"pb\">"+p.pts+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
-    h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span></div></td>";
+    h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+"</div></td>";
     h+="<td>"+tr+"</td></tr>";
 
-    // Tarjeta mobile (misma fila de datos, otro layout)
-    var fotoHc=(foto&&foto.cara)
+    // --- tarjeta (mobile) ---
+    var fotoCardH=(foto&&foto.cara)
       ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\">"
-      :"<div class=\"rcard-avatar-i\">"+esc(iniP.toUpperCase())+"</div>";
-    var cardCls="rcard serie"+esc(p.serie)+(esMio?" miFila":"")+(p.retirado?" retirado":"");
-    hc+="<div class=\""+cardCls+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+      :"<div class=\"rcard-avatar-i\">"+esc(iniP)+"</div>";
+    hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
-      +fotoHc
-      +"<div class=\"rcard-main\">"
-      +"<div class=\"rcard-name\">"+esc(p.nombre)+ret+" <span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.05rem .35rem\">"+esc(p.serie)+"</span></div>"
-      +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span></div>"
-      +"</div>"
-      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+" pts</div><div class=\"rcard-win\">"+wr+"% win</div></div>"
+      +fotoCardH
+      +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
+      +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span></div></div>"
+      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div></div>"
       +"</div>";
   }
-  if(body)body.innerHTML=h;
+  body.innerHTML=h;
   if(cardsEl)cardsEl.innerHTML=hc;
   rPodio();
 }
