@@ -2103,13 +2103,13 @@ function rRanking(){
   pl.sort(function(a,b){return b.pts-a.pts;});
 
   var historialTodos=construirHistorialPorJugador(); // una sola vez, se reusa por jugador
+  var deltaSemanal=calcularDeltaSemanal();
 
   var h="",hc="";
   for(var i=0;i<pl.length;i++){
     var p=pl[i],pos=i+1;
     var pc=pos===1?"gold":pos===2?"silver":pos===3?"bronze":"";
     var wr=p.pj>0?Math.round(p.pg/p.pj*100):0;
-    var tr=p.trend>0?"<span class=\"tu\">+</span>":p.trend<0?"<span class=\"td\">-</span>":"<span class=\"tn\">-</span>";
     var ret=p.retirado?" <span class=\"ret\">RET</span>":"";
     var rs=p.retirado?" style=\"opacity:0.4;\"":"";
     var esMio=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
@@ -2130,31 +2130,58 @@ function rRanking(){
       }
     }
 
+    // --- delta de posicion (reemplaza el trend estatico que nunca cambiaba) ---
+    var d=p.retirado?null:deltaSemanal[p.nombre];
+    var trH;
+    if(d>0)trH="<span class=\"tu\">▲"+d+"</span>";
+    else if(d<0)trH="<span class=\"td\">▼"+Math.abs(d)+"</span>";
+    else trH="<span class=\"tn\">–</span>";
+
     // --- fila de tabla (desktop) ---
-    var animDelay=(Math.min(i,14)*0.035).toFixed(3);
-    h+="<tr class=\"rb-row-anim "+claseSerie+(esMio?" miFila":"")+"\" style=\"animation-delay:"+animDelay+"s\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
+    h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
     h+="<td class=\"pb\">"+p.pts+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
     h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+"</div></td>";
-    h+="<td>"+tr+"</td></tr>";
+    h+="<td>"+trH+"</td></tr>";
 
     // --- tarjeta (mobile) ---
     var fotoCardH=(foto&&foto.cara)
       ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\">"
       :"<div class=\"rcard-avatar-i\">"+esc(iniP)+"</div>";
-    hc+="<div class=\"rb-row-anim rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" style=\"animation-delay:"+animDelay+"s\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+    hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
       +fotoCardH
       +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
-      +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span></div></div>"
+      +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span><span>"+trH+"</span></div></div>"
       +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div></div>"
       +"</div>";
   }
   body.innerHTML=h;
   if(cardsEl)cardsEl.innerHTML=hc;
   rPodio();
+  activarStaggerRanking();
+}
+
+// Fase 4: activa la animacion de entrada (rb-row-anim, definida en el CSS)
+// solo sobre las filas/tarjetas recien pintadas por rRanking(), con un
+// pequeno delay escalonado por posicion. Se hace aca (post-render) en vez
+// de al armar el HTML para no acoplar el string-building con el efecto
+// visual, y para poder limitarlo facil a las primeras N filas.
+function activarStaggerRanking(){
+  var filas=document.querySelectorAll("#rb tr");
+  var tarjetas=document.querySelectorAll("#rcards .rcard");
+  var LIMITE=14;
+  function aplicar(el,i){
+    if(i>=LIMITE)return;
+    el.classList.remove("rb-row-anim");
+    void el.offsetWidth; // fuerza reflow para poder re-disparar la animacion
+    el.style.animationDelay=(i*0.035).toFixed(3)+"s";
+    el.classList.add("rb-row-anim");
+  }
+  for(var i=0;i<filas.length;i++)aplicar(filas[i],i);
+  for(var j=0;j<tarjetas.length;j++)aplicar(tarjetas[j],j);
 }
 
 function rPodio(){
