@@ -199,6 +199,12 @@ section{padding:4rem 1.5rem}
 .rb-row-anim{opacity:0;animation:rowFadeIn .45s ease forwards}
 @keyframes rowFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
+/* === Fase 5: accesibilidad === */
+.tb:focus-visible,.rt tbody tr:focus-visible,.rcard:focus-visible,.podio-item:focus-visible{
+  outline:2px solid var(--v);outline-offset:2px
+}
+.rt tbody tr:focus-visible{outline-offset:-2px}
+
 .rchamini{display:inline-flex;align-items:center;gap:2px;font-size:.68rem;font-weight:700;margin-left:.4rem;white-space:nowrap}
 .rchamini.W{color:var(--v)}
 .rchamini.L{color:var(--gl)}
@@ -735,14 +741,14 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="sh fi2"><div class="se">Temporada 2026</div><h2 class="st">Ranking por Series</h2><div class="sl"></div></div>
     <div class="gs" id="gs">Datos reales - Escalerilla 2026 - 37 jugadores activos - 148 partidos jugados</div>
     <div class="rankerr" id="rankErr">No se pudo actualizar el ranking en vivo. Mostrando el último dato disponible.</div>
-    <div class="tabs">
-      <button class="tb active" onclick="showTab('ranking','all',this)">General</button>
-      <button class="tb" onclick="showTab('ranking','A',this)">Serie A</button>
-      <button class="tb" onclick="showTab('ranking','B',this)">Serie B</button>
-      <button class="tb" onclick="showTab('ranking','C',this)">Serie C</button>
+    <div class="tabs" role="tablist" aria-label="Filtrar ranking por serie">
+      <button class="tb active" role="tab" aria-selected="true" onclick="showTab('ranking','all',this)">General</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','A',this)">Serie A</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','B',this)">Serie B</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','C',this)">Serie C</button>
     </div>
     <div id="podio"></div>
-    <table class="rt"><thead><tr><th>#</th><th>Jugador</th><th>Serie</th><th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>%Win</th><th>T</th></tr></thead>
+    <table class="rt"><thead><tr><th scope="col">#</th><th scope="col">Jugador</th><th scope="col">Serie</th><th scope="col">Pts</th><th scope="col">PJ</th><th scope="col">PG</th><th scope="col">PP</th><th scope="col">%Win</th><th scope="col">T</th></tr></thead>
     <tbody id="rb"></tbody></table>
     <div class="rcards" id="rcards"></div>
     <div id="topMata"></div>
@@ -775,7 +781,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <section id="perfil">
   <div class="container">
     <div class="sh fi2"><div class="se">Estadisticas individuales</div><h2 class="st">Perfil de Jugador</h2><div class="sl"></div></div>
-    <div class="psi"><input type="text" class="si" id="psi" placeholder="Buscar jugador..." oninput="filterPS(this.value)"></div>
+    <div class="psi"><input type="text" class="si" id="psi" placeholder="Buscar jugador..." aria-label="Buscar jugador por nombre" oninput="filterPS(this.value)"></div>
     <div id="psr" style="max-width:460px;margin:0 auto 1.1rem;display:none;"><div id="pss" style="background:var(--g);border:1px solid var(--gm);border-radius:6px;overflow:hidden;"></div></div>
     <div id="pcc"></div>
   </div>
@@ -797,7 +803,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <section id="torneo-interno">
   <div class="container">
     <div class="sh fi2"><div class="se">Post Escalerilla 2026</div><h2 class="st">Torneo Interno por Series</h2><div class="sl"></div></div>
-    <div class="tabs" id="tintTabs"></div>
+    <div class="tabs" id="tintTabs" role="tablist" aria-label="Filtrar Torneo Interno por serie"></div>
     <div class="tint-estado" id="tintEstado"></div>
     <div id="tintCampeon"></div>
     <div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracket"></div></div>
@@ -818,11 +824,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <section id="tienda">
   <div class="container">
     <div class="sh fi2"><div class="se">Entrega en metro</div><h2 class="st">El Efecto TopSpin</h2><div class="sl"></div></div>
-    <div class="tabs">
-      <button class="tb active" onclick="filterStore('todos',this)">Todos</button>
-      <button class="tb" onclick="filterStore('pelotas',this)">Pelotas</button>
-      <button class="tb" onclick="filterStore('accesorios',this)">Accesorios</button>
-      <button class="tb" onclick="filterStore('otros',this)">Otros</button>
+    <div class="tabs" role="tablist" aria-label="Filtrar productos de la tienda">
+      <button class="tb active" role="tab" aria-selected="true" onclick="filterStore('todos',this)">Todos</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="filterStore('pelotas',this)">Pelotas</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="filterStore('accesorios',this)">Accesorios</button>
+      <button class="tb" role="tab" aria-selected="false" onclick="filterStore('otros',this)">Otros</button>
     </div>
     <div class="sg" id="sg"></div>
   </div>
@@ -1825,7 +1831,8 @@ function rTintTabs(){
   keys.forEach(function(k){
     var t=TORNEOS_INTERNOS[k];
     var etiqueta='Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):'');
-    h+='<button class="tb'+(k===tintActual?' active':'')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
+    var esActiva=(k===tintActual);
+    h+='<button class="tb'+(esActiva?' active':'')+'" role="tab" aria-selected="'+(esActiva?'true':'false')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
   });
   el.innerHTML=h;
 }
@@ -2091,9 +2098,33 @@ function hayEdicionAbiertaPara(nombre){
 function showTab(s,v,el){
   cSF=v;
   var b=document.querySelectorAll("#"+s+" .tb");
-  for(var i=0;i<b.length;i++)b[i].classList.remove("active");
-  if(el)el.classList.add("active");
+  for(var i=0;i<b.length;i++){b[i].classList.remove("active");b[i].setAttribute("aria-selected","false");}
+  if(el){el.classList.add("active");el.setAttribute("aria-selected","true");}
   rRanking();
+}
+
+// Fase 5: Flechas izquierda/derecha se mueven entre tabs de un mismo
+// tablist, como espera cualquier lector de pantalla o usuario de teclado.
+document.addEventListener('keydown',function(e){
+  if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+  var activo=document.activeElement;
+  if(!activo||activo.getAttribute('role')!=='tab')return;
+  var grupo=activo.closest('[role="tablist"]');
+  if(!grupo)return;
+  var tabs=Array.prototype.slice.call(grupo.querySelectorAll('[role="tab"]'));
+  var idx=tabs.indexOf(activo);
+  if(idx===-1)return;
+  var siguiente=e.key==='ArrowRight'?(idx+1)%tabs.length:(idx-1+tabs.length)%tabs.length;
+  tabs[siguiente].focus();
+  tabs[siguiente].click();
+  e.preventDefault();
+});
+
+// Fase 5: convierte cualquier onclick="showProfile(...)" en algo operable
+// con teclado: Enter o Espacio disparan el mismo click. Se usa como string
+// inyectado en el onkeydown de filas, tarjetas y podio.
+function kbActivate(handlerStr){
+  return "if(event.key==='Enter'||event.key===' '){event.preventDefault();"+handlerStr+"}";
 }
 
 function rRanking(){
@@ -2140,7 +2171,8 @@ function rRanking(){
     else trH="<span class=\"tn\">–</span>";
 
     // --- fila de tabla (desktop) ---
-    h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\""+rs+">";
+    var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
+    h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
@@ -2152,7 +2184,7 @@ function rRanking(){
     var fotoCardH=(foto&&foto.cara)
       ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\">"
       :"<div class=\"rcard-avatar-i\">"+esc(iniP)+"</div>";
-    hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+    hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
       +fotoCardH
       +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
@@ -2219,7 +2251,8 @@ function rPodio(){
     var avatarH=(foto&&foto.cara)
       ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\">"
       :"<div class=\"podio-avatar-i\">"+esc(iniP)+"</div>";
-    h+="<div class=\"podio-item "+claves[i]+"\" onclick=\"showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});\">"
+    var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
+    h+="<div class=\"podio-item "+claves[i]+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\">"+iconos[i]+"</div></div>"
       +"<div class=\"podio-name\">"+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
@@ -4001,8 +4034,8 @@ function toggleStock(id){
 function filterStore(v,el){
   sf=v;
   var b=document.querySelectorAll("#tienda .tb");
-  for(var i=0;i<b.length;i++)b[i].classList.remove("active");
-  if(el)el.classList.add("active");
+  for(var i=0;i<b.length;i++){b[i].classList.remove("active");b[i].setAttribute("aria-selected","false");}
+  if(el){el.classList.add("active");el.setAttribute("aria-selected","true");}
   rStore();
 }
 
