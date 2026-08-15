@@ -2022,6 +2022,8 @@ function init(){
   });
   startLiveRefresh();
   initVisitas();
+  var rankingSectionEl=document.getElementById('ranking');
+  if(rankingSectionEl)rankingObs.observe(rankingSectionEl);
 }
 
 function rHeroStats(){
@@ -2165,24 +2167,38 @@ function rRanking(){
 }
 
 // Fase 4: activa la animacion de entrada (rb-row-anim, definida en el CSS)
-// solo sobre las filas/tarjetas recien pintadas por rRanking(), con un
-// pequeno delay escalonado por posicion. Se hace aca (post-render) en vez
-// de al armar el HTML para no acoplar el string-building con el efecto
-// visual, y para poder limitarlo facil a las primeras N filas.
+// solo sobre las primeras N filas/tarjetas, con un pequeno delay escalonado
+// por posicion. A diferencia de la version anterior, esto se llama en CADA
+// render de rRanking() pero solo aplica la clase la PRIMERA vez que la
+// seccion #ranking entra realmente en pantalla (ver rankingObs mas abajo):
+// asi el refresco automatico cada 5 min no vuelve a "saltar" el ranking
+// entero cada vez que se repinta.
+var rankingListoParaAnimar=false;
 function activarStaggerRanking(){
-  var filas=document.querySelectorAll("#rb tr");
-  var tarjetas=document.querySelectorAll("#rcards .rcard");
-  var LIMITE=14;
-  function aplicar(el,i){
-    if(i>=LIMITE)return;
-    el.classList.remove("rb-row-anim");
-    void el.offsetWidth; // fuerza reflow para poder re-disparar la animacion
-    el.style.animationDelay=(i*0.035).toFixed(3)+"s";
-    el.classList.add("rb-row-anim");
+  if(!rankingListoParaAnimar)return;
+  var body=document.getElementById('rb');
+  if(body){
+    var rows=body.querySelectorAll('tr');
+    for(var i=0;i<rows.length&&i<20;i++){
+      rows[i].style.animationDelay=(i*35)+'ms';
+      rows[i].classList.add('rb-row-anim');
+    }
   }
-  for(var i=0;i<filas.length;i++)aplicar(filas[i],i);
-  for(var j=0;j<tarjetas.length;j++)aplicar(tarjetas[j],j);
+  var cards=document.querySelectorAll('#rcards .rcard');
+  for(var j=0;j<cards.length&&j<20;j++){
+    cards[j].style.animationDelay=(j*35)+'ms';
+    cards[j].classList.add('rb-row-anim');
+  }
 }
+var rankingObs=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      rankingListoParaAnimar=true;
+      activarStaggerRanking();
+      rankingObs.disconnect(); // una sola vez: evita que el refresco cada 5 min re-anime todo
+    }
+  });
+},{threshold:0.15});
 
 function rPodio(){
   var el=document.getElementById('podio');
