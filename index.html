@@ -1508,6 +1508,21 @@ var FIXTURE_SIZE_ACTUAL={A:9,B:9,C:22};
 function numSets(m){var n=0;if(m.set1)n++;if(m.set2)n++;if(m.set3)n++;return n;}
 function esBagel(setStr,ganadorEsJ1){if(!setStr)return false;var p=setStr.split('-');var a=parseInt(p[0],10),b=parseInt(p[1],10);if(isNaN(a)||isNaN(b))return false;return ganadorEsJ1?(a===6&&b===0):(b===6&&a===0);}
 function parseFechaDDMMYYYY(f){var p=f.split('-');return new Date(Number(p[2]),Number(p[1])-1,Number(p[0])).getTime();}
+// El marcador se guarda tal cual se cargo en el admin: "jugador1-jugador2"
+// por set, sin relacion con quien gano ni con quien se este mirando. Eso
+// hacia que en el perfil de un jugador el marcador a veces saliera "al
+// reves" (numero del rival primero), segun quien haya quedado como
+// jugador1 al cargar ESE resultado puntual. Esta funcion invierte cada
+// set cuando el jugador que se esta viendo no fue jugador1, para que el
+// perfil de CUALQUIER jugador siempre muestre "mis games - games del
+// rival", de forma consistente en todos los partidos.
+function scorePerspectiva(score,jugador1,nombre){
+  if(!score||score==='W.O.'||jugador1===nombre)return score;
+  return score.split(' ').map(function(set){
+    var partes=set.split('-');
+    return partes.length===2?(partes[1]+'-'+partes[0]):set;
+  }).join(' ');
+}
 
 function calcularRanking(jugadores,resultados,fixtureSize){
   fixtureSize=fixtureSize||{A:9,B:9,C:22};
@@ -1805,7 +1820,7 @@ async function cargarJugadoresYResultadosSupabase(){
     });
     DATA.results=resultadosRaw.map(function(r){
       var score=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
-      return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie};
+      return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1};
     });
 
     toggleRankErr(false);
@@ -3770,15 +3785,21 @@ async function _showProfileImpl(nombre,scroll){
   var sa=[];for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].serie===p.serie)sa.push(DATA.players[i]);}
   sa.sort(function(a,b){return b.pts-a.pts;});
   var sp=1;for(var i=0;i<sa.length;i++){if(sa[i].nombre===nombre){sp=i+1;break;}}
+  // --- Ultimos resultados: antes se tomaban los ultimos 5 del array tal
+  // como vienen de Supabase (orden de carga, no de fecha real), lo que
+  // podia mostrarlos desordenados si algun resultado se cargo despues de
+  // otro mas nuevo. Ahora se juntan TODOS los partidos del jugador y se
+  // ordenan por fecha real antes de cortar los 5 mas recientes.
   var rec=[];
-  for(var i=DATA.results.length-1;i>=0;i--){
+  for(var i=0;i<DATA.results.length;i++){
     if(DATA.results[i].ganador===nombre||DATA.results[i].perdedor===nombre)rec.push(DATA.results[i]);
-    if(rec.length>=5)break;
   }
+  rec.sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
+  rec=rec.slice(0,5);
   var rH="";
   for(var i=0;i<rec.length;i++){
     var r=rec[i],won=r.ganador===nombre,opp=won?r.perdedor:r.ganador;
-    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+"</span><span class=\"rmsc\">"+esc(r.score)+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
+    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+"</span><span class=\"rmsc\">"+esc(scorePerspectiva(r.score,r.jugador1,nombre))+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
   }
   if(!rH)rH="<p style=\"color:var(--gl);font-size:.8rem;padding:.38rem 0\">Sin partidos registrados</p>";
   var rv=getRivalStats(nombre);
