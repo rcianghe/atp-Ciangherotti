@@ -86,6 +86,59 @@ var mensaje=null; // {tipo:'ok'|'err', texto}
 var mpSeleccion=null; // jugador_id elegido como "mejor perdedor" al avanzar de ronda
 var guardando=false;
 
+// ---- Visibilidad publica del Torneo Interno (interruptor activo/inactivo) ----
+// Controla si la seccion "Interno" aparece en el menu y la pagina publica
+// (index.html). Vive en la tabla "configuracion_sitio" (clave/valor), asi
+// que el interruptor es global y persiste para todos los visitantes.
+var torneoInternoVisible=true; // por defecto visible, hasta que se confirme lo contrario
+var visibilidadCargando=false;
+var visibilidadTablaDisponible=true; // false si "configuracion_sitio" aun no existe (falta correr la migracion)
+
+// Codigos de error de PostgREST para "no existe la tabla"/"no existe la
+// columna" (42P01 / 42703): asi distinguimos "falta correr la migracion"
+// de un fallo de red real.
+function esErrorEsquemaFaltante(err){
+  return !!err&&(err.code==='42P01'||err.code==='42703');
+}
+
+async function cargarVisibilidadTorneoInterno(){
+  try{
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').maybeSingle();
+    if(res.error){
+      if(esErrorEsquemaFaltante(res.error)){
+        console.warn('La tabla "configuracion_sitio" todavia no existe. Corre la migracion en Supabase.',res.error);
+        visibilidadTablaDisponible=false;
+      }
+      return;
+    }
+    visibilidadTablaDisponible=true;
+    torneoInternoVisible=res.data?(res.data.valor!==false):true;
+  }catch(err){
+    console.warn('Sin conexion al cargar la visibilidad del Torneo Interno.',err);
+  }
+}
+
+async function toggleVisibilidadTorneoInterno(){
+  if(visibilidadCargando||!visibilidadTablaDisponible)return;
+  var nuevo=!torneoInternoVisible;
+  visibilidadCargando=true;render();
+  try{
+    var res=await window.supabaseClient.from('configuracion_sitio').upsert({clave:'torneo_interno_visible',valor:nuevo},{onConflict:'clave'});
+    if(res.error){
+      visibilidadCargando=false;
+      setMsg('err','No se pudo cambiar la visibilidad: '+res.error.message);
+      return;
+    }
+    torneoInternoVisible=nuevo;
+    visibilidadCargando=false;
+    setMsg('ok',nuevo?'Torneo Interno ACTIVADO: ya aparece en el menu del sitio.':'Torneo Interno DESACTIVADO: se oculto del menu y la pagina del sitio.');
+  }catch(err){
+    console.warn('Sin conexion al cambiar la visibilidad.',err);
+    visibilidadCargando=false;
+    setMsg('err','Sin conexion. Intenta de nuevo.');
+  }
+}
+
 function setMsg(tipo,texto){mensaje={tipo:tipo,texto:texto};render();}
 
 function loginConGoogle(){
@@ -115,6 +168,7 @@ async function chequearAdmin(){
   if(esAdmin){
     await cargarJugadoresClub();
     await cargarTorneosDeSerie(serieActual);
+    await cargarVisibilidadTorneoInterno();
   }
   render();
 }
@@ -345,6 +399,8 @@ function render(){
     +'<span class="sub" style="margin:0">Conectado como <b style="color:var(--bl)">'+esc(usuarioActual.nombre||usuarioActual.email)+'</b></span>'
     +'<button class="btn gl" onclick="logout()">Salir</button></div>';
 
+  h+=renderVisibilidadTorneoInterno();
+
   if(mensaje){
     h+='<div class="msg '+(mensaje.tipo==='ok'?'ok':'err')+'">'+esc(mensaje.texto)+'</div>';
   }
@@ -355,6 +411,23 @@ function render(){
     h+=renderSelectorYListado();
   }
   el.innerHTML=h;
+}
+
+function renderVisibilidadTorneoInterno(){
+  var activo=torneoInternoVisible;
+  var pillEstilo=activo?'':'style="background:rgba(192,57,43,.2);color:#ff8a7a"';
+  var h='<div class="card" style="border-color:'+(activo?'rgba(91,191,42,.4)':'rgba(192,57,43,.4)')+'">'
+    +'<div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.7rem">'
+    +'<div><b>Visibilidad publica del Torneo Interno</b>'
+    +'<p class="sub" style="margin:.25rem 0 0">Controla si la seccion "Interno" aparece en el menu y la pagina del sitio publico. Util para esconderla cuando termina el campeonato y volver a mostrarla cuando arranca el siguiente.</p></div>'
+    +'<div class="row" style="gap:.6rem;align-items:center;flex-shrink:0">'
+    +'<span class="estado-pill '+(activo?'finalizado':'')+'" '+pillEstilo+'>'+(activo?'Activo':'Inactivo')+'</span>'
+    +'<button class="btn '+(activo?'ro':'v')+'" '+((visibilidadCargando||!visibilidadTablaDisponible)?'disabled':'')+' onclick="toggleVisibilidadTorneoInterno()">'
+    +(visibilidadCargando?'Guardando...':(!visibilidadTablaDisponible?'No disponible':(activo?'Desactivar':'Activar')))+'</button>'
+    +'</div></div>'
+    +(!visibilidadTablaDisponible?'<p class="sub" style="color:#ff8a7a;margin-bottom:0">Falta correr la migracion de Supabase (tabla "configuracion_sitio") para poder usar este control.</p>':'')
+    +'</div>';
+  return h;
 }
 
 function renderSelectorYListado(){
