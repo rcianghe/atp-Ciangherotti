@@ -29,6 +29,16 @@
 :root{--v:#5BBF2A;--vd:#3d8a1a;--vl:#7ed44a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#888;--bl:#f5f5f0}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scrollbar-width:auto;scrollbar-color:var(--v) var(--gd)}
+/* === Motion V2: View Transitions API ===
+   Cross-fade nativo del navegador entre estados (cambio de serie en el
+   ranking, apertura de perfil). Se activa solo si el navegador soporta
+   startViewTransition() y el usuario no pidio "reduced motion" (ver JS). */
+@media(prefers-reduced-motion:no-preference){
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.42s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
+}
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}
 body{font-family:'Barlow',sans-serif;background:var(--ng);color:var(--bl);overflow-x:hidden}
 .splash{position:fixed;inset:0;z-index:9999;background:var(--ng);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;transition:opacity .35s ease}
 .splash-logo{width:84px;height:84px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--v)}
@@ -651,6 +661,18 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .visnum{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:1px;color:var(--v);min-width:1.4em;text-align:left}
 .fi2{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
 .fi2.visible{opacity:1;transform:translateY(0)}
+/* === Motion V2: scroll-driven reveal nativo (progressive enhancement) ===
+   Donde el navegador soporta animation-timeline:view(), el reveal queda
+   ligado directamente a la posicion de scroll (mas fluido, cero JS extra
+   en cada frame). Donde no, el mecanismo original (IntersectionObserver +
+   .visible) sigue funcionando sin cambios: esto es aditivo, no rompe nada. */
+@supports (animation-timeline:view()){
+  .fi2{opacity:1;transform:none;transition:none;animation:fi2Reveal linear both;animation-timeline:view();animation-range:entry 0% cover 35%}
+}
+@keyframes fi2Reveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+  .fi2,.fi2.visible{opacity:1!important;transform:none!important;transition:none!important;animation:none!important}
+}
 .mn{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(14,14,14,.97);border-top:1px solid var(--v);padding:.38rem .15rem;z-index:100;grid-template-columns:repeat(8,1fr);gap:.08rem}
 .mni{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.32rem .08rem;border-radius:4px;cursor:pointer;transition:all .15s;text-decoration:none}
 .mni:hover,.mni.active{background:rgba(91,191,42,.1)}
@@ -2215,12 +2237,29 @@ function hayEdicionAbiertaPara(nombre){
   return false;
 }
 
+// === Motion V2: helper de View Transitions ===
+// Envuelve un cambio de DOM en document.startViewTransition() cuando el
+// navegador lo soporta y el usuario no pidio "reduced motion"; si no,
+// simplemente ejecuta la funcion tal cual (fallback identico al
+// comportamiento actual, sin animacion extra).
+function prefiereReducedMotion(){
+  return window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function conViewTransition(fn){
+  if(document.startViewTransition&&!prefiereReducedMotion()){
+    return document.startViewTransition(fn);
+  }
+  return fn();
+}
+
 function showTab(s,v,el){
   cSF=v;
-  var b=document.querySelectorAll("#"+s+" .tb");
-  for(var i=0;i<b.length;i++){b[i].classList.remove("active");b[i].setAttribute("aria-selected","false");}
-  if(el){el.classList.add("active");el.setAttribute("aria-selected","true");}
-  rRanking();
+  conViewTransition(function(){
+    var b=document.querySelectorAll("#"+s+" .tb");
+    for(var i=0;i<b.length;i++){b[i].classList.remove("active");b[i].setAttribute("aria-selected","false");}
+    if(el){el.classList.add("active");el.setAttribute("aria-selected","true");}
+    rRanking();
+  });
 }
 
 // Fase 5: Flechas izquierda/derecha se mueven entre tabs de un mismo
@@ -3650,7 +3689,20 @@ function refrescarPerfilActual(){
   if(currentProfileName)showProfile(currentProfileName,false);
 }
 
-async function showProfile(nombre,scroll){
+// === Motion V2: showProfile con View Transition ===
+// showProfile se llama muy seguido para re-renders silenciosos internos
+// (guardando ficha, enviando desafio, etc. -> scroll===false). Solo
+// envolvemos en View Transition la navegacion real del usuario hacia un
+// perfil (scroll!==false), para no generar un flash de transicion en
+// cada actualizacion de fondo.
+function showProfile(nombre,scroll){
+  if(scroll!==false){
+    return conViewTransition(function(){return _showProfileImpl(nombre,scroll);});
+  }
+  return _showProfileImpl(nombre,scroll);
+}
+
+async function _showProfileImpl(nombre,scroll){
   currentProfileName=nombre;
   document.getElementById("psr").style.display="none";
   document.getElementById("psi").value=nombre;
