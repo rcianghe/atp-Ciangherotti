@@ -1778,20 +1778,52 @@ function transformLiveData(json){
 // matagigantes, etc seguir funcionando identico sin tocar esa logica.
 var jugadoresSupabaseCargando=false;
 var jugadoresSupabaseListo=false; // true recien cuando DATA.players tiene los UUID reales (no el array estatico viejo con IDs numericos)
+
+// Se resuelve UNA vez por sesion y se cachea. Cuando existan varios
+// clubes con temporadas propias, esto pasa a filtrar tambien por
+// club_id -- por ahora solo hay una temporada activa (CTQ 2026).
+var TEMPORADA_ACTIVA_ID=null;
+async function obtenerTemporadaActivaId(){
+  if(TEMPORADA_ACTIVA_ID)return TEMPORADA_ACTIVA_ID;
+  var res=await window.supabaseClient.from('temporadas').select('id').eq('activa',true).limit(1).maybeSingle();
+  if(res.error||!res.data){
+    console.warn('No se pudo resolver la temporada activa.',res.error);
+    return null;
+  }
+  TEMPORADA_ACTIVA_ID=res.data.id;
+  return TEMPORADA_ACTIVA_ID;
+}
+
 async function cargarJugadoresYResultadosSupabase(){
   if(!window.supabaseClient)return; // Supabase no esta inicializado, se mantienen los datos previos
   if(jugadoresSupabaseCargando)return; // evita refrescos superpuestos
   jugadoresSupabaseCargando=true;
   try{
-    var jugRes=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado');
-    var resRes=await window.supabaseClient.from('resultados').select('serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha');
-    if(jugRes.error||resRes.error){
-      console.warn('Supabase (jugadores/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
+    var temporadaId=await obtenerTemporadaActivaId();
+    if(!temporadaId){
+      console.warn('Sin temporada activa resuelta, se mantienen los datos previos.');
       toggleRankErr(true);
       return;
     }
-    var jugadoresRaw=jugRes.data.map(function(j){
-      return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo'};
+    // La serie YA NO se lee de jugadores.serie (columna legacy que se
+    // va a deprecar) sino de inscripciones, que es donde vive la
+    // participacion del jugador en ESTA temporada especifica. Esto es
+    // lo que permite, a futuro, que un jugador cambie de serie entre
+    // temporadas o participe en la escalerilla de otro club sin que su
+    // perfil base (jugadores) se vea afectado.
+    var jugRes=await window.supabaseClient
+      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado)')
+      .eq('temporada_id',temporadaId);
+    var resRes=await window.supabaseClient.from('resultados')
+      .select('serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha')
+      .eq('temporada_id',temporadaId);
+    if(jugRes.error||resRes.error){
+      console.warn('Supabase (inscripciones/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
+      toggleRankErr(true);
+      return;
+    }
+    var jugadoresRaw=jugRes.data.map(function(i){
+      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo'};
     });
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
@@ -1826,7 +1858,7 @@ async function cargarJugadoresYResultadosSupabase(){
     toggleRankErr(false);
     jugadoresSupabaseListo=true;
     rAll();
-    console.log('Jugadores y resultados cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length);
+    console.log('Jugadores y resultados cargados desde Supabase (via inscripciones):',jugadoresRaw.length,resultadosRaw.length);
   }catch(err){
     console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
     toggleRankErr(true);
