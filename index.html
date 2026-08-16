@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-title" content="CTQ Escalerilla">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--v:#5BBF2A;--vd:#3d8a1a;--vl:#7ed44a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#888;--bl:#f5f5f0}
+:root{--v:#5BBF2A;--vd:#3d8a1a;--vl:#7ed44a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#9a9a9a;--bl:#f5f5f0}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scrollbar-width:auto;scrollbar-color:var(--v) var(--gd)}
 /* === Motion V2: View Transitions API ===
@@ -130,6 +130,12 @@ section{padding:4rem 1.5rem}
 .bo{border:1px solid rgba(245,245,240,.3);color:var(--bl);background:transparent;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:.75rem 1.7rem;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
 .bo:hover{border-color:var(--v);color:var(--v)}
 #ranking{background:var(--gd)}
+/* === Container queries: ranking/podio responden al ancho de su propio
+   contenedor, no solo al viewport. Progressive enhancement: los @media
+   de mas abajo siguen intactos como fallback para navegadores sin
+   soporte de container queries; en los que si soportan, ambas reglas
+   coinciden en valor asi que no hay conflicto, solo redundancia inocua. */
+#ranking .container{container-type:inline-size;container-name:ranking-cq}
 .rt{width:100%;border-collapse:collapse;background:var(--g);border-radius:8px;overflow:hidden}
 .rt thead tr{background:var(--ng);border-bottom:2px solid var(--v)}
 .rt th{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gl);padding:.75rem .9rem;text-align:left}
@@ -173,8 +179,18 @@ section{padding:4rem 1.5rem}
 .rcard-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;color:var(--v)}
 .rcard-win{font-size:.66rem;color:var(--gl)}
 .rcskel-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+/* === Data viz: mini "forma reciente" (ultimos partidos, W/L) ===
+   Barras compactas tipo sparkline: verde alto = victoria, rojo bajo =
+   derrota. Da una lectura visual instantanea de la racha sin tener que
+   abrir el perfil completo. */
+.formspark{display:inline-block;vertical-align:middle;margin-left:.4rem;flex-shrink:0}
+.rcard-right .formspark{margin:.25rem 0 0}
 
 @media(max-width:768px){
+  .rt{display:none}
+  .rcards{display:flex}
+}
+@container ranking-cq (max-width:768px){
   .rt{display:none}
   .rcards{display:flex}
 }
@@ -198,6 +214,13 @@ section{padding:4rem 1.5rem}
 .podio-item.p1 .podio-pts{font-size:1.2rem;color:var(--am)}
 .podio-serie{margin-top:.3rem}
 @media(max-width:480px){
+  .podio{gap:.5rem}
+  .podio-item{flex-basis:100px}
+  .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
+  .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i,.podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:58px;height:58px;font-size:1.25rem}
+  .podio-name{font-size:.76rem;max-width:96px}
+}
+@container ranking-cq (max-width:480px){
   .podio{gap:.5rem}
   .podio-item{flex-basis:100px}
   .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
@@ -2342,12 +2365,13 @@ function rRanking(){
       :"<div class=\"rfoto-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
 
     // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
-    var rachaMini="";
+    var rachaMini="",formaH="";
     if(!p.retirado){
       var racha=calcularRachaActual(historialTodos[p.nombre]||[]);
       if(racha.tipo&&racha.cantidad>=2){
         rachaMini="<span class=\"rchamini "+racha.tipo+"\">"+(racha.tipo==='W'?"🔥":"❄️")+racha.cantidad+"</span>";
       }
+      formaH=formaSVG(historialTodos[p.nombre]||[]);
     }
 
     // --- delta de posicion (reemplaza el trend estatico que nunca cambiaba) ---
@@ -2364,7 +2388,7 @@ function rRanking(){
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
     h+="<td class=\"pb\">"+p.pts+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
-    h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+"</div></td>";
+    h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+formaH+"</div></td>";
     h+="<td>"+trH+"</td></tr>";
 
     // --- tarjeta (mobile) ---
@@ -2376,7 +2400,7 @@ function rRanking(){
       +fotoCardH
       +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
       +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span><span>"+trH+"</span></div></div>"
-      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div></div>"
+      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div>"+formaH+"</div>"
       +"</div>";
   }
   body.innerHTML=h;
@@ -3955,6 +3979,30 @@ function calcularRachaActual(h){
 function ultimosN(h,n){
   if(!h)return [];
   return h.slice(-(n||5)).map(function(p){return p.resultado;});
+}
+// === Data viz: mini bar-chart de forma reciente ===
+// Recibe el historial de un jugador (array de {resultado:'W'|'L',...})
+// y devuelve un SVG compacto de barras: verde alto = victoria, rojo
+// bajo = derrota. Casillas vacias (sin partido aun) quedan como barra
+// gris tenue. Se usa en la fila y la tarjeta del ranking.
+function formaSVG(hist,n,w,h){
+  n=n||6;w=w||46;h=h||16;
+  var ultimos=(hist||[]).slice(-n);
+  if(!ultimos.length)return '';
+  var faltan=n-ultimos.length;
+  var bw=w/n,gap=1.6;
+  var bars='';
+  for(var i=0;i<n;i++){
+    var x=i*bw;
+    if(i<faltan){
+      bars+='<rect x="'+(x+gap/2).toFixed(1)+'" y="'+(h-3).toFixed(1)+'" width="'+(bw-gap).toFixed(1)+'" height="3" rx="1.2" fill="rgba(255,255,255,.1)"/>';
+      continue;
+    }
+    var r=ultimos[i-faltan],win=r.resultado==='W';
+    var bh=win?h:h*0.4,y=h-bh;
+    bars+='<rect x="'+(x+gap/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(bw-gap).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="1.2" fill="'+(win?'#5BBF2A':'#C0392B')+'"/>';
+  }
+  return '<svg class="formspark" viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="Forma reciente, ultimos '+ultimos.length+' partidos">'+bars+'</svg>';
 }
 // {nombre: posicion en su serie} usando pts actuales, excluye retirados.
 function rankingPorSerieDesdeDATA(){
