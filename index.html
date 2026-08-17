@@ -585,7 +585,8 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--am);margin-top:.15rem}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
-.tint-ronda{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;min-width:190px;position:relative}
+.tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
+.tint-ronda-matches{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;flex:1}
 .tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center;margin-bottom:.3rem}
 .tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
 .tint-match:hover{border-color:rgba(91,191,42,.4)}
@@ -2110,7 +2111,7 @@ function rTintBracket(t){
   t.rondas.forEach(function(matches,ri){
     var esFinal=(ri===totalRondas-1);
     var titulo=esFinal?'Final':(nombresRonda[ri]||('Ronda '+(ri+1)));
-    h+='<div class="tint-ronda"><div class="tint-rondatit">'+esc(titulo)+'</div>';
+    h+='<div class="tint-ronda"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
     matches.forEach(function(m){
       if(m.bye){
         h+='<div class="tint-match">'+tintSlotHtml(m.j1,true,null,false)+'<div class="tint-bye">Bye \u2014 pasa directo</div></div>';
