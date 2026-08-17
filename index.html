@@ -2154,7 +2154,7 @@ function rTorneoInterno(){
 async function cargarTorneosInternos(){
   if(!window.supabaseClient)return;
   try{
-    var tRes=await window.supabaseClient.from('torneos_internos').select('*').order('temporada',{ascending:false});
+    var tRes=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').order('temporada',{ascending:false});
     var pRes=await window.supabaseClient.from('torneo_partidos').select('*');
     if(tRes.error||pRes.error){
       console.warn('No se pudo cargar el Torneo Interno, se mantienen los datos previos.',tRes.error,pRes.error);
@@ -2291,7 +2291,7 @@ function iniciarRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'torneo_partidos'},function(){
       cargarTorneosInternos();
     })
-    .on('postgres_changes',{event:'*',schema:'public',table:'torneos_internos'},function(){
+    .on('postgres_changes',{event:'*',schema:'public',table:'competiciones'},function(){
       cargarTorneosInternos();
     })
     .subscribe();
