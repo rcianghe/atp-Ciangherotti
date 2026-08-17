@@ -2109,7 +2109,7 @@ function rTintBracket(t){
   if(!totalRondas){el.innerHTML='<div class="tint-vacio">El cuadro de esta serie todav\u00eda no se ha armado.</div>';return;}
   var h='';
   t.rondas.forEach(function(matches,ri){
-    var esFinal=(ri===totalRondas-1);
+    var esFinal=(matches.length===1);
     var titulo=esFinal?'Final':(nombresRonda[ri]||('Ronda '+(ri+1)));
     h+='<div class="tint-ronda"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
     matches.forEach(function(m){
