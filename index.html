@@ -2149,7 +2149,7 @@ function rTorneoInterno(){
   rTintBracket(t);
 }
 
-// Carga real desde Supabase (torneos_internos + torneo_partidos), usando
+// Carga real desde Supabase (competiciones tipo 'interno' + torneo_partidos), usando
 // DATA.players (ya con UUID reales) para traducir jugador_id -> nombre.
 // Por eso SIEMPRE debe llamarse despues de cargarJugadoresYResultadosSupabase().
 async function cargarTorneosInternos(){
