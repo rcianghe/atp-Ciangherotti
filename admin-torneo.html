@@ -179,7 +179,7 @@ async function cargarJugadoresClub(){
 }
 
 async function cargarTorneosDeSerie(serie){
-  var res=await window.supabaseClient.from('torneos_internos').select('*').eq('serie',serie).order('temporada',{ascending:false});
+  var res=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').eq('serie',serie).order('temporada',{ascending:false});
   torneosSerie=res.error?[]:res.data;
 }
 
@@ -216,7 +216,11 @@ async function crearTorneo(){
   var periodo=(document.getElementById('inPeriodo').value||'').trim()||null;
   if(!temporada){setMsg('err','Ingresa la temporada (año).');return;}
   guardando=true;render();
-  var res=await window.supabaseClient.from('torneos_internos').insert({serie:serieActual,temporada:temporada,periodo:periodo}).select().maybeSingle();
+  var res=await window.supabaseClient.from('competiciones').insert({
+  tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,
+  club_id:'00647d2d-f3fc-4148-bf9c-a6ac40c3fbee',
+  temporada_id:'ee5d0142-dabf-49bf-8ff8-220ec05ec1ba'
+}).select().maybeSingle();
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
   await cargarTorneosDeSerie(serieActual);
@@ -279,7 +283,7 @@ async function generarRonda1(){
   }
   guardando=true;render();
   var res=await window.supabaseClient.from('torneo_partidos').insert(filas);
-  if(!res.error)await window.supabaseClient.from('torneos_internos').update({estado:'en_curso'}).eq('id',torneoAbierto.id);
+  if(!res.error)await window.supabaseClient.from('competiciones').update({estado:'en_curso'}).eq('id',torneoAbierto.id);
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear la Ronda 1: '+res.error.message);return;}
   await cargarPartidos(torneoAbierto.id);
@@ -308,7 +312,7 @@ async function guardarResultado(partidoId,jugador1Id,jugador2Id){
   guardando=false;
   if(res.error){setMsg('err','No se pudo guardar el resultado: '+res.error.message);return;}
   await cargarPartidos(torneoAbierto.id);
-  var tRes=await window.supabaseClient.from('torneos_internos').select('*').eq('id',torneoAbierto.id).maybeSingle();
+  var tRes=await window.supabaseClient.from('competiciones').select('*').eq('id',torneoAbierto.id).maybeSingle();
   if(!tRes.error&&tRes.data)torneoAbierto=tRes.data;
   setMsg('ok','Resultado guardado.');
 }
