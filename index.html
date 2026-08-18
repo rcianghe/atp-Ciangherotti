@@ -2240,8 +2240,8 @@ async function cargarTorneosInternos(){
       }
       var campeon=null;
       if(rondaMax>0){
-        var finalPartido=partidosDelTorneo.filter(function(p){return p.ronda===rondaMax;})[0];
-        if(finalPartido&&finalPartido.ganador_id)campeon=idANombre[finalPartido.ganador_id];
+        var partidosFinal=partidosDelTorneo.filter(function(p){return p.ronda===rondaMax;});
+        if(partidosFinal.length===1&&partidosFinal[0].ganador_id)campeon=idANombre[partidosFinal[0].ganador_id];
       }
       nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:t.estado,campeon:campeon,rondas:rondas};
     });
