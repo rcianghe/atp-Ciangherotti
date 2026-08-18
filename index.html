@@ -583,22 +583,27 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon:hover{transform:translateY(-2px)}
 .tint-campeon:active{transform:scale(.97)}
 .tint-campeon .ic{font-size:1.8rem}
-.tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto}
+.tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out infinite}
+.tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
+@media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic{animation:none}}
+@keyframes trofeoLatido{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px rgba(212,230,10,.35)) drop-shadow(0 0 8px rgba(212,230,10,.2))}
+  50%{transform:scale(1.06);filter:drop-shadow(0 0 10px rgba(212,230,10,.85)) drop-shadow(0 0 22px rgba(212,230,10,.5))}
+}
 .tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
 .tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--am);margin-top:.15rem}
 .tint-campeon.tint-campeon-pendiente{border-color:rgba(255,255,255,.15);box-shadow:none}
-.tint-campeon.tint-campeon-pendiente .trofeo-ic{opacity:.45;filter:grayscale(1)}
 .tint-campeon .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gl)}
 .tint-campeon-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;animation:tcmFade .2s ease}
 .tint-campeon-modal.activo{display:flex}
 @keyframes tcmFade{from{opacity:0}to{opacity:1}}
 .tint-campeon-modal-card{max-width:440px;width:100%;background:linear-gradient(135deg,rgba(212,230,10,.18),rgba(91,191,42,.12));border:2px solid rgba(212,230,10,.55);border-radius:22px;padding:2.2rem 1.6rem 1.8rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 70px rgba(212,230,10,.3);animation:tcmPop .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes tcmPop{0%{transform:perspective(900px) rotateX(28deg) scale(.5);opacity:0}55%{transform:perspective(900px) rotateX(-5deg) scale(1.06);opacity:1}100%{transform:perspective(900px) rotateX(0) scale(1);opacity:1}}
-.tint-campeon-modal-card .trofeo-ic{width:150px;height:150px;object-fit:contain;display:block;margin:0 auto 1rem;filter:drop-shadow(0 14px 26px rgba(212,230,10,.4))}
+.tint-campeon-modal-card .trofeo-ic{width:150px;height:150px;object-fit:contain;display:block;margin:0 auto 1rem;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out .4s infinite}
+.tint-campeon-modal-card.pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
 .tint-campeon-modal-card .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:4px;text-transform:uppercase;color:var(--gl)}
 .tint-campeon-modal-card .nom{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:1px;color:var(--am);margin-top:.3rem;text-shadow:0 0 20px rgba(212,230,10,.5)}
 .tint-campeon-modal-card .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gl);margin-top:.4rem}
-.tint-campeon-modal-card.pendiente .trofeo-ic{opacity:.45;filter:grayscale(1)}
 .tint-campeon-modal-close{margin-top:1.5rem;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:.78rem;padding:.55rem 1.3rem;border-radius:8px;cursor:pointer}
 .tint-campeon-modal-close:hover{border-color:rgba(212,230,10,.5);color:var(--am)}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
