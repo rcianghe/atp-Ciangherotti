@@ -2299,7 +2299,15 @@ async function cargarTorneosInternos(){
         var partidosFinal=partidosDelTorneo.filter(function(p){return p.ronda===rondaMax;});
         if(partidosFinal.length===1&&partidosFinal[0].ganador_id)campeon=idANombre[partidosFinal[0].ganador_id];
       }
-      nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:t.estado,campeon:campeon,rondas:rondas};
+      // t.estado viene tal cual de la columna 'estado' en Supabase, que se
+      // marca 'finalizado' a mano al cerrar el torneo. Si alguien deshace
+      // el resultado de la final (error de tipeo, etc.) y ya no hay un
+      // campeon valido, no seguimos mostrando 'Finalizado' con la tarjeta
+      // en "Por definir": se corrige a 'en_curso' automaticamente aca,
+      // sin necesidad de que alguien vuelva a tocar esa columna a mano.
+      var estadoMostrado=t.estado;
+      if(estadoMostrado==='finalizado'&&!campeon)estadoMostrado='en_curso';
+      nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:estadoMostrado,campeon:campeon,rondas:rondas};
     });
     TORNEOS_INTERNOS=nuevo;
     rTorneoInterno();
@@ -2456,6 +2464,7 @@ function rHeroStats(){
   rJugadorDelMes();
 }
 
+var perfilInicialRenderizado=false;
 function rAll(){
   rHeroStats();
   rRanking();rMatches();rResults();rStore();populateH2H();rTopMatagigantes();rAfichesGrandes();
@@ -2464,12 +2473,21 @@ function rAll(){
     // ya hay un jugador seleccionado (por el usuario o por una carga previa): lo mantenemos
     for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].nombre===currentProfileName){nombreAMostrar=currentProfileName;break;}}
   }
-  if(!nombreAMostrar){
+  if(!nombreAMostrar&&!perfilInicialRenderizado){
+    // El jugador #1 del ranking solo se usa como perfil por defecto en el
+    // primer render de la pagina (para que la seccion Perfil no aparezca
+    // vacia). Refrescos posteriores en segundo plano -cada 5 min, eventos
+    // realtime, o volver de otra app en el celular (dispara
+    // visibilitychange)- NO deben volver a elegir un jugador por defecto:
+    // eso era lo que hacia que, sin haber abierto ningun perfil, la
+    // persona terminara viendo el perfil del jugador #1 del ranking
+    // (ej. Diego Ugarte) en vez de quedarse donde estaba navegando.
     var top=null;
     var sorted=DATA.players.slice().sort(function(a,b){return b.pts-a.pts;});
     for(var i=0;i<sorted.length;i++){if(!sorted[i].retirado){top=sorted[i];break;}}
     if(top)nombreAMostrar=top.nombre;
   }
+  perfilInicialRenderizado=true;
   // Si el jugador que se esta mostrando tiene algo abierto para editar
   // (ficha tecnica, link en vivo de un desafio, o el formulario para
   // desafiar), NO tocamos ese perfil: un refresco de fondo (cada 5 min,
