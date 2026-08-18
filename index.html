@@ -581,8 +581,12 @@ span.diachip{cursor:default;display:inline-block}
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
 .tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15)}
 .tint-campeon .ic{font-size:1.8rem}
+.tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto}
 .tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
 .tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--am);margin-top:.15rem}
+.tint-campeon.tint-campeon-pendiente{border-color:rgba(255,255,255,.15);box-shadow:none}
+.tint-campeon.tint-campeon-pendiente .trofeo-ic{opacity:.45;filter:grayscale(1)}
+.tint-campeon .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gl)}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
 .tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
@@ -2074,10 +2078,11 @@ function rTintEstadoYCampeon(t){
   if(elEstado)elEstado.innerHTML='Temporada '+esc(t.temporada)+' \u00b7 <b>'+esc(estados[t.estado]||t.estado)+'</b>';
   var camp=document.getElementById('tintCampeon');
   if(!camp)return;
+  var img='<img class="trofeo-ic" src="trofeo-torneo-interno-quilicura.PNG" alt="Trofeo Torneo Interno Quilicura" loading="lazy">';
   if(t.campeon){
-    camp.innerHTML='<div class="tint-campeon"><div class="ic">\ud83c\udfc6</div><div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
+    camp.innerHTML='<div class="tint-campeon">'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
   }else{
-    camp.innerHTML='';
+    camp.innerHTML='<div class="tint-campeon tint-campeon-pendiente">'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom nom-pendiente">Por definir</div></div>';
   }
 }
 
