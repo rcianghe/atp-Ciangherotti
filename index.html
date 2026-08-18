@@ -579,7 +579,9 @@ span.diachip{cursor:default;display:inline-block}
 .tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
 .tint-estado b{color:var(--am)}
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
-.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15)}
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15);cursor:pointer;transition:transform .15s ease}
+.tint-campeon:hover{transform:translateY(-2px)}
+.tint-campeon:active{transform:scale(.97)}
 .tint-campeon .ic{font-size:1.8rem}
 .tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto}
 .tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
@@ -587,6 +589,18 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon.tint-campeon-pendiente{border-color:rgba(255,255,255,.15);box-shadow:none}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{opacity:.45;filter:grayscale(1)}
 .tint-campeon .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gl)}
+.tint-campeon-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;animation:tcmFade .2s ease}
+.tint-campeon-modal.activo{display:flex}
+@keyframes tcmFade{from{opacity:0}to{opacity:1}}
+.tint-campeon-modal-card{max-width:440px;width:100%;background:linear-gradient(135deg,rgba(212,230,10,.18),rgba(91,191,42,.12));border:2px solid rgba(212,230,10,.55);border-radius:22px;padding:2.2rem 1.6rem 1.8rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 70px rgba(212,230,10,.3);animation:tcmPop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes tcmPop{0%{transform:perspective(900px) rotateX(28deg) scale(.5);opacity:0}55%{transform:perspective(900px) rotateX(-5deg) scale(1.06);opacity:1}100%{transform:perspective(900px) rotateX(0) scale(1);opacity:1}}
+.tint-campeon-modal-card .trofeo-ic{width:150px;height:150px;object-fit:contain;display:block;margin:0 auto 1rem;filter:drop-shadow(0 14px 26px rgba(212,230,10,.4))}
+.tint-campeon-modal-card .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:4px;text-transform:uppercase;color:var(--gl)}
+.tint-campeon-modal-card .nom{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:1px;color:var(--am);margin-top:.3rem;text-shadow:0 0 20px rgba(212,230,10,.5)}
+.tint-campeon-modal-card .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gl);margin-top:.4rem}
+.tint-campeon-modal-card.pendiente .trofeo-ic{opacity:.45;filter:grayscale(1)}
+.tint-campeon-modal-close{margin-top:1.5rem;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:.78rem;padding:.55rem 1.3rem;border-radius:8px;cursor:pointer}
+.tint-campeon-modal-close:hover{border-color:rgba(212,230,10,.5);color:var(--am)}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
 .tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
@@ -906,6 +920,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="tabs" id="tintTabs" role="tablist" aria-label="Filtrar Torneo Interno por serie"></div>
     <div class="tint-estado" id="tintEstado"></div>
     <div id="tintCampeon"></div>
+    <div class="tint-campeon-modal" id="tintCampeonModal" onclick="cerrarCampeonModal()">
+      <div class="tint-campeon-modal-card" id="tintCampeonModalCard" onclick="event.stopPropagation()"></div>
+    </div>
     <div class="tint-rondanav" id="tintRondaNav">
       <button class="tint-rondanav-btn" id="tintRondaPrev" onclick="cambiarRondaMostrada(-1)">&larr; Anterior</button>
       <div class="tint-rondanav-tit" id="tintRondaTit"></div>
@@ -2072,18 +2089,47 @@ function rTintTabs(){
   el.innerHTML=h;
 }
 
+var TINT_CAMPEON_ACTUAL=null;
 function rTintEstadoYCampeon(t){
   var estados={armado:'Cuadro armado, sin iniciar',en_curso:'En curso',finalizado:'Finalizado',cancelado:'Cancelado'};
   var elEstado=document.getElementById('tintEstado');
   if(elEstado)elEstado.innerHTML='Temporada '+esc(t.temporada)+' \u00b7 <b>'+esc(estados[t.estado]||t.estado)+'</b>';
   var camp=document.getElementById('tintCampeon');
   if(!camp)return;
+  TINT_CAMPEON_ACTUAL=t;
   var img='<img class="trofeo-ic" src="trofeo-torneo-interno-quilicura.PNG" alt="Trofeo Torneo Interno Quilicura" loading="lazy">';
+  var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="abrirCampeonModal()" onkeydown="'+kbActivate('abrirCampeonModal()')+'"';
   if(t.campeon){
-    camp.innerHTML='<div class="tint-campeon">'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
+    camp.innerHTML='<div class="tint-campeon" '+attrs+'>'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
   }else{
-    camp.innerHTML='<div class="tint-campeon tint-campeon-pendiente">'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom nom-pendiente">Por definir</div></div>';
+    camp.innerHTML='<div class="tint-campeon tint-campeon-pendiente" '+attrs+'>'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom nom-pendiente">Por definir</div></div>';
   }
+}
+
+// Muestra el trofeo del torneo interno en grande, con animacion 3D,
+// usando los mismos datos ya renderizados en la tarjeta chica
+// (TINT_CAMPEON_ACTUAL, seteado por rTintEstadoYCampeon).
+function abrirCampeonModal(){
+  var t=TINT_CAMPEON_ACTUAL;
+  if(!t)return;
+  var modal=document.getElementById('tintCampeonModal');
+  var card=document.getElementById('tintCampeonModalCard');
+  if(!modal||!card)return;
+  var img='<img class="trofeo-ic" src="trofeo-torneo-interno-quilicura.PNG" alt="Trofeo Torneo Interno Quilicura">';
+  if(t.campeon){
+    card.className='tint-campeon-modal-card';
+    card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
+  }else{
+    card.className='tint-campeon-modal-card pendiente';
+    card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom-pendiente">Por definir</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
+  }
+  modal.classList.add('activo');
+  document.body.style.overflow='hidden';
+}
+function cerrarCampeonModal(){
+  var modal=document.getElementById('tintCampeonModal');
+  if(modal)modal.classList.remove('activo');
+  document.body.style.overflow='';
 }
 
 // Fase 6: Actualiza los meta og:title / og:description en caliente segun el
@@ -2491,6 +2537,13 @@ document.addEventListener('keydown',function(e){
   tabs[siguiente].focus();
   tabs[siguiente].click();
   e.preventDefault();
+});
+
+// Cierra el modal del trofeo del Torneo Interno con Escape.
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  var modal=document.getElementById('tintCampeonModal');
+  if(modal&&modal.classList.contains('activo'))cerrarCampeonModal();
 });
 
 // Fase 5: convierte cualquier onclick="showProfile(...)" en algo operable
