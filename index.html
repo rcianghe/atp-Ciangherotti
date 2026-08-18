@@ -587,6 +587,18 @@ span.diachip{cursor:default;display:inline-block}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
 .tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
 .tint-ronda-matches{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;flex:1}
+.tint-rondanav{display:none}
+.tint-rondanav-btn{background:var(--g);border:1px solid rgba(255,255,255,.15);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;padding:.5rem 1rem;border-radius:8px;cursor:pointer}
+.tint-rondanav-btn:disabled{opacity:.35;cursor:default}
+.tint-rondanav-tit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
+@media(max-width:640px){
+.tint-rondanav{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.8rem}
+.tint-bracket-wrap{overflow-x:visible}
+.tint-bracket{display:block}
+.tint-ronda{display:none!important;width:100%;min-width:0}
+.tint-ronda.activa{display:flex!important}
+.tint-ronda:not(:first-child) .tint-match::before{display:none}
+}
 .tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center;margin-bottom:.3rem}
 .tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
 .tint-match:hover{border-color:rgba(91,191,42,.4)}
@@ -890,6 +902,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="tabs" id="tintTabs" role="tablist" aria-label="Filtrar Torneo Interno por serie"></div>
     <div class="tint-estado" id="tintEstado"></div>
     <div id="tintCampeon"></div>
+    <div class="tint-rondanav" id="tintRondaNav">
+      <button class="tint-rondanav-btn" id="tintRondaPrev" onclick="cambiarRondaMostrada(-1)">&larr; Anterior</button>
+      <div class="tint-rondanav-tit" id="tintRondaTit"></div>
+      <button class="tint-rondanav-btn" id="tintRondaNext" onclick="cambiarRondaMostrada(1)">Siguiente &rarr;</button>
+    </div>
     <div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracket"></div></div>
   </div>
 </section>
@@ -2101,17 +2118,22 @@ function tintSlotHtml(nombre,esGanador,score,tbd){
   return '<div class="tint-slot'+(esGanador?' win':'')+'"><span class="nm">'+esc(nombre)+'</span>'+(score?'<span class="sc">'+esc(score)+'</span>':'')+'</div>';
 }
 
+var tintRondaMostrada=0;
 function rTintBracket(t){
   var el=document.getElementById('tintBracket');
   if(!el)return;
   var nombresRonda=['Primera ronda','Segunda ronda','Tercera ronda','Semifinal','Final'];
   var totalRondas=t.rondas.length;
-  if(!totalRondas){el.innerHTML='<div class="tint-vacio">El cuadro de esta serie todav\u00eda no se ha armado.</div>';return;}
+  if(!totalRondas){
+    el.innerHTML='<div class="tint-vacio">El cuadro de esta serie todav\u00eda no se ha armado.</div>';
+    var navVacio=document.getElementById('tintRondaNav');if(navVacio)navVacio.style.display='none';
+    return;
+  }
   var h='';
   t.rondas.forEach(function(matches,ri){
-    var esFinal=(matches.length===1);
+    var esFinal=(ri===totalRondas-1);
     var titulo=esFinal?'Final':(nombresRonda[ri]||('Ronda '+(ri+1)));
-    h+='<div class="tint-ronda"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
+    h+='<div class="tint-ronda" data-ri="'+ri+'"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
     matches.forEach(function(m){
       if(m.bye){
         h+='<div class="tint-match">'+tintSlotHtml(m.j1,true,null,false)+'<div class="tint-bye">Bye \u2014 pasa directo</div></div>';
@@ -2127,6 +2149,39 @@ function rTintBracket(t){
     h+='</div></div>';
   });
   el.innerHTML=h;
+  // Ronda por defecto en mobile: la ultima jugada (o la Final si el
+  // torneo ya termino), no siempre la primera.
+  var rondaDefault=totalRondas-1;
+  if(t.estado!=='finalizado'){
+    for(var ri=0;ri<totalRondas;ri++){
+      var pendiente=t.rondas[ri].some(function(m){return !m.bye&&!m.ganador;});
+      if(pendiente){rondaDefault=ri;break;}
+    }}
+  tintRondaMostrada=Math.min(rondaDefault,totalRondas-1);
+  aplicarRondaMostrada(t);
+}
+function aplicarRondaMostrada(t){
+  var totalRondas=t.rondas.length;
+  var rondas=document.querySelectorAll('#tintBracket .tint-ronda');
+  rondas.forEach(function(r){r.classList.toggle('activa',parseInt(r.dataset.ri,10)===tintRondaMostrada);});
+  var nav=document.getElementById('tintRondaNav');
+  if(nav)nav.style.display=totalRondas>1?'flex':'none';
+  var tit=document.getElementById('tintRondaTit');
+  if(tit&&rondas[tintRondaMostrada]){
+    var titEl=rondas[tintRondaMostrada].querySelector('.tint-rondatit');
+    tit.textContent=titEl?titEl.textContent:'';
+  }
+  var prevBtn=document.getElementById('tintRondaPrev');
+  var nextBtn=document.getElementById('tintRondaNext');
+  if(prevBtn)prevBtn.disabled=(tintRondaMostrada<=0);
+  if(nextBtn)nextBtn.disabled=(tintRondaMostrada>=totalRondas-1);
+}
+function cambiarRondaMostrada(delta){
+  var t=TORNEOS_INTERNOS[tintActual];
+  if(!t)return;
+  var totalRondas=t.rondas.length;
+  tintRondaMostrada=Math.max(0,Math.min(totalRondas-1,tintRondaMostrada+delta));
+  aplicarRondaMostrada(t);
 }
 
 function rTorneoInterno(){
