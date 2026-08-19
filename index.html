@@ -210,14 +210,14 @@ section{padding:4rem 1.5rem}
 @keyframes podioPulseP1{0%,100%{transform:scale(.96);opacity:.42}50%{transform:scale(1.14);opacity:.75}}
 .podio-avatar{position:relative;z-index:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
 .podio-avatar-i{position:relative;z-index:1;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;color:var(--gl);box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
-.podio-medal{position:absolute;bottom:-12px;right:-12px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;background:transparent;border:none;box-shadow:none;overflow:visible;perspective:200px}
+.podio-medal{position:absolute;bottom:-16px;right:-16px;width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;background:transparent;border:none;box-shadow:none;overflow:visible;perspective:200px}
 .podio-medal img{width:100%;height:100%;object-fit:contain;display:block;transform:rotateX(12deg) rotateZ(-4deg);transform-origin:center 65%;filter:drop-shadow(0 2px 1px rgba(255,255,255,.35)) drop-shadow(0 5px 3px rgba(0,0,0,.55)) drop-shadow(0 9px 10px rgba(0,0,0,.4));transition:transform .25s ease}
 .podio-item:hover .podio-medal img{transform:rotateX(4deg) rotateZ(0deg) scale(1.06)}
 .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:104px;height:104px;font-size:2.2rem;box-shadow:0 0 0 4px var(--podio-glow),0 0 26px color-mix(in srgb,var(--podio-glow) 55%,transparent),0 8px 22px rgba(0,0,0,.45)}
 .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
 .podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
 .podio-item.p1{order:2}.podio-item.p2{order:1}.podio-item.p3{order:3}
-.podio-item.p1 .podio-medal{width:58px;height:58px}
+.podio-item.p1 .podio-medal{width:82px;height:82px;bottom:-18px;right:-18px}
 .podio-name{font-weight:700;font-size:.86rem;margin-top:.6rem;text-align:center;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .podio-item.p1 .podio-name{font-size:1.02rem;color:var(--am)}
 .podio-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--v);font-size:1rem;margin-top:1px}
@@ -229,8 +229,8 @@ section{padding:4rem 1.5rem}
   .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
   .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i,.podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:58px;height:58px;font-size:1.25rem}
   .podio-name{font-size:.76rem;max-width:96px}
-  .podio-medal{width:36px;height:36px;bottom:-9px;right:-9px}
-  .podio-item.p1 .podio-medal{width:44px;height:44px;bottom:-10px;right:-10px}
+  .podio-medal{width:52px;height:52px;bottom:-13px;right:-13px}
+  .podio-item.p1 .podio-medal{width:64px;height:64px;bottom:-15px;right:-15px}
 }
 @container ranking-cq (max-width:480px){
   .podio{gap:.5rem}
@@ -238,8 +238,8 @@ section{padding:4rem 1.5rem}
   .podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
   .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i,.podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:58px;height:58px;font-size:1.25rem}
   .podio-name{font-size:.76rem;max-width:96px}
-  .podio-medal{width:36px;height:36px;bottom:-9px;right:-9px}
-  .podio-item.p1 .podio-medal{width:44px;height:44px;bottom:-10px;right:-10px}
+  .podio-medal{width:52px;height:52px;bottom:-13px;right:-13px}
+  .podio-item.p1 .podio-medal{width:64px;height:64px;bottom:-15px;right:-15px}
 }
 
 /* === Fase 4: stagger de entrada === */
@@ -2785,7 +2785,7 @@ function rPodio(){
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
     var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
     h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", Serie "+esc(p.serie)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
-      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"this.parentNode.innerHTML='"+["🥇","🥈","🥉"][i]+"';this.parentNode.style.fontSize='1.7rem';this.parentNode.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
+      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"this.parentNode.innerHTML='"+["🥇","🥈","🥉"][i]+"';this.parentNode.style.fontSize='2.4rem';this.parentNode.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
       +"<div class=\"podio-name\">"+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
       +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
