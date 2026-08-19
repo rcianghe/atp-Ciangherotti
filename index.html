@@ -1063,6 +1063,20 @@ var usuarioActual=null;    // {uid, nombre, foto, email} de la sesion de Google,
 var jugadorVinculado=null; // fila de "jugadores" ya vinculada a esta sesion, o null si falta reclamar
 var reclamandoPerfil=false;
 
+// Resguardo generico para cualquier accion que requiera sesion (con o sin
+// perfil vinculado, segun el caso). La mayoria de las acciones de escritura
+// ya se auto-protegen chequeando jugadorVinculado directamente (ver
+// toggleDesafioForm, saveFichaTecnica, etc.); esta funcion es para las que
+// no tenian ningun resguardo y solo necesitan bloquear a quien no inicio
+// sesion en absoluto (ej: exportar el ranking como imagen).
+function requiereSesion(mensaje){
+  if(!usuarioActual){
+    alert(mensaje||"Debes iniciar sesion con Google para usar esta funcion.");
+    return false;
+  }
+  return true;
+}
+
 function loginConGoogle(){
   if(!window.supabaseClient){alert("El login no esta disponible en este momento.");return;}
   // OJO: nunca usar window.location.href tal cual como redirectTo. Si la
@@ -1386,6 +1400,7 @@ function initVisitas(){
 
 function enviarChatMsg(desafioId){
   if(!chatDb)return;
+  if(!jugadorVinculado)return; // resguardo: sin sesion vinculada, no se puede enviar
   var elId=domSafe(desafioId);
   var input=document.getElementById('chatinput-'+elId);
   if(!input)return;
@@ -2754,6 +2769,7 @@ function toggleRankErr(show){
 // del ranking se acomoda en 2 columnas para que el poster quede mas
 // equilibrado y sirva para imprimir/compartir.
 function exportarRankingImagen(){
+  if(!requiereSesion("Inicia sesion con Google para descargar el ranking como imagen."))return;
   if(typeof html2canvas==='undefined'){alert('No se pudo cargar la herramienta de exportacion. Intenta de nuevo.');return;}
   var btn=document.getElementById('btnExportRanking');
   var origTxt=btn.innerHTML;
@@ -3731,6 +3747,7 @@ async function enviarDesafio(paraNombre){
 }
 
 async function responderDesafioUI(id,nuevoEstado,nombrePerfil){
+  if(!jugadorVinculado||jugadorVinculado.nombre!==nombrePerfil)return; // resguardo: solo el dueño del perfil puede responder
   // Ya NO se bloquea por "ya tienes un Aceptado vigente": un jugador puede
   // tener varios duelos Aceptados a la vez (hoy, mañana, la otra semana),
   // siempre que no se solapen en horario. El unico que decide si hay
