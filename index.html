@@ -863,6 +863,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','B',this)">Serie B</button>
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','C',this)">Serie C</button>
     </div>
+    <div id="rankCriterioGeneral" style="display:none;text-align:center;font-size:.78rem;color:var(--gl);max-width:620px;margin:0 auto 1rem;line-height:1.5;padding:0 .8rem;"></div>
     <div style="text-align:center;margin-bottom:1rem">
       <button class="galbtn" id="btnExportRanking" onclick="exportarRankingImagen()"><span class="gi2">📸</span>Descargar Ranking como Imagen</button>
     </div>
@@ -2635,6 +2636,17 @@ function rRanking(){
   if(cSF!=="all"){var f=[];for(var i=0;i<pl.length;i++){if(pl[i].serie===cSF)f.push(pl[i]);}pl=f;}
   if(cSF==="all")ordenarRankingGeneral(pl);else pl.sort(function(a,b){return b.pts-a.pts;});
 
+  var notaCriterio=document.getElementById('rankCriterioGeneral');
+  if(notaCriterio){
+    if(cSF==="all"){
+      notaCriterio.style.display="block";
+      notaCriterio.innerHTML="ℹ️ El General se ordena por <b>promedio de puntos por partido jugado</b> (no por puntaje acumulado), para que ninguna serie quede en ventaja solo por tener más jugadores/partidos disponibles. Se requiere un mínimo de "+MIN_PARTIDOS_GENERAL+" partidos jugados para entrar en esta tabla.";
+    } else {
+      notaCriterio.style.display="none";
+      notaCriterio.innerHTML="";
+    }
+  }
+
   var historialTodos=construirHistorialPorJugador(); // una sola vez, se reusa por jugador
   var deltaSemanal=calcularDeltaSemanal();
 
@@ -2738,7 +2750,7 @@ function rPodio(){
   if(!el)return;
   var pl=DATA.players.filter(function(p){return !p.retirado;});
   if(cSF!=="all")pl=pl.filter(function(p){return p.serie===cSF;});
-  pl.sort(function(a,b){return b.pts-a.pts;});
+  if(cSF==="all")ordenarRankingGeneral(pl);else pl.sort(function(a,b){return b.pts-a.pts;});
   var top3=pl.slice(0,3);
   if(top3.length<3){el.innerHTML='';return;} // sin datos suficientes, no se fuerza el podio
 
