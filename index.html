@@ -900,7 +900,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <section id="perfil">
   <div class="container">
     <div class="sh fi2"><div class="se">Estadisticas individuales</div><h2 class="st">Perfil de Jugador</h2><div class="sl"></div></div>
-    <div class="psi"><input type="text" class="si" id="psi" placeholder="Buscar jugador..." aria-label="Buscar jugador por nombre" oninput="filterPS(this.value)"></div>
+    <div class="psi"><input type="text" class="si" id="psi" placeholder="Buscar jugador..." aria-label="Buscar jugador por nombre" onfocus="if(!requiereSesion('Inicia sesion con Google para buscar jugadores.'))this.blur();" oninput="filterPS(this.value)"></div>
     <div id="psr" style="max-width:460px;margin:0 auto 1.1rem;display:none;"><div id="pss" style="background:var(--g);border:1px solid var(--gm);border-radius:6px;overflow:hidden;"></div></div>
     <div id="pcc"></div>
   </div>
@@ -941,9 +941,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
     <div class="galb">
-      <a class="galbtn" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener"><span class="gi2">📸</span>Ver album CTQ Afiches</a>
-      <a class="galbtn" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
-      <a class="galbtn" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
+      <a class="galbtn" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album CTQ Afiches</a>
+      <a class="galbtn" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
+      <a class="galbtn" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
     </div>
   </div>
 </section>
@@ -1072,6 +1072,18 @@ var reclamandoPerfil=false;
 function requiereSesion(mensaje){
   if(!usuarioActual){
     alert(mensaje||"Debes iniciar sesion con Google para usar esta funcion.");
+    return false;
+  }
+  return true;
+}
+
+// Bloquea la apertura de los albumes de Google Fotos de la galeria si no
+// hay sesion activa. Se usa como onclick="return abrirAlbumGaleria(event)"
+// en los <a> de la seccion #galeria: si no hay sesion, cancela la
+// navegacion (return false / preventDefault) y pide iniciar sesion.
+function abrirAlbumGaleria(ev){
+  if(!requiereSesion("Inicia sesion con Google para ver los albumes de fotos.")){
+    if(ev&&ev.preventDefault)ev.preventDefault();
     return false;
   }
   return true;
@@ -3101,6 +3113,7 @@ function rResults(){
 
 function filterPS(val){
   var d=document.getElementById("psr"),s=document.getElementById("pss");
+  if(!usuarioActual){d.style.display="none";return;} // resguardo: sin sesion, no se ejecuta la busqueda
   if(!val||val.length<2){d.style.display="none";return;}
   var m=[];
   for(var i=0;i<DATA.players.length;i++){
