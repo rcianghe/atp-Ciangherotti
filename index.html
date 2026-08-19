@@ -196,20 +196,29 @@ section{padding:4rem 1.5rem}
 }
 /* === Fase 3: podio + racha inline === */
 .podio{display:flex;align-items:flex-end;justify-content:center;gap:.9rem;margin:0 0 1.8rem;flex-wrap:nowrap}
-.podio-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex:0 1 140px;transition:transform .15s}
+.podio-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex:0 1 140px;transition:transform .15s;--podio-glow:var(--v)}
 .podio-item:hover{transform:translateY(-3px)}
-.podio-avatar-wrap{position:relative}
-.podio-avatar{border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
-.podio-avatar-i{border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;color:var(--gl);box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
-.podio-medal{position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.85rem;border:2px solid var(--gd)}
-.podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:92px;height:92px;font-size:2rem;box-shadow:0 0 0 3px var(--am),0 0 22px rgba(212,230,10,.4),0 6px 18px rgba(0,0,0,.4)}
+.podio-item.p1:hover{transform:translateY(-5px) scale(1.03)}
+.podio-avatar-wrap{position:relative;border-radius:50%}
+/* Glow pulsante detras de la foto, con el tono de la SERIE del jugador
+   (rojo Serie A, azul Serie B, verde Serie C), fijado via --podio-glow
+   inline por rPodio(). El 1er lugar tiene un anillo mas grande e intenso
+   para destacarlo por sobre 2do y 3ro. */
+.podio-avatar-wrap::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:var(--podio-glow);opacity:.35;filter:blur(10px);z-index:0;animation:podioPulse 2.4s ease-in-out infinite}
+.podio-item.p1 .podio-avatar-wrap::before{inset:-10px;opacity:.55;filter:blur(16px);animation:podioPulseP1 2.2s ease-in-out infinite}
+@keyframes podioPulse{0%,100%{transform:scale(.94);opacity:.28}50%{transform:scale(1.08);opacity:.5}}
+@keyframes podioPulseP1{0%,100%{transform:scale(.96);opacity:.42}50%{transform:scale(1.14);opacity:.75}}
+.podio-avatar{position:relative;z-index:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
+.podio-avatar-i{position:relative;z-index:1;border-radius:50%;background:var(--gm);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;color:var(--gl);box-shadow:0 0 0 3px var(--gd),0 6px 18px rgba(0,0,0,.4)}
+.podio-medal{position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;background:var(--ng);border:2px solid var(--gd);box-shadow:0 2px 6px rgba(0,0,0,.5);overflow:hidden}
+.podio-medal img{width:100%;height:100%;object-fit:contain;display:block}
+.podio-item.p1 .podio-avatar,.podio-item.p1 .podio-avatar-i{width:104px;height:104px;font-size:2.2rem;box-shadow:0 0 0 4px var(--am),0 0 26px rgba(212,230,10,.55),0 8px 22px rgba(0,0,0,.45)}
 .podio-item.p2 .podio-avatar,.podio-item.p2 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
 .podio-item.p3 .podio-avatar,.podio-item.p3 .podio-avatar-i{width:74px;height:74px;font-size:1.6rem}
 .podio-item.p1{order:2}.podio-item.p2{order:1}.podio-item.p3{order:3}
-.podio-medal.gold{background:#FFD700;color:#3a2e00}
-.podio-medal.silver{background:#C0C0C0;color:#2a2a2a}
-.podio-medal.bronze{background:#CD7F32;color:#2a1400}
+.podio-item.p1 .podio-medal{width:36px;height:36px;border-color:var(--am)}
 .podio-name{font-weight:700;font-size:.86rem;margin-top:.6rem;text-align:center;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.podio-item.p1 .podio-name{font-size:1.02rem;color:var(--am)}
 .podio-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--v);font-size:1rem;margin-top:1px}
 .podio-item.p1 .podio-pts{font-size:1.2rem;color:var(--am)}
 .podio-serie{margin-top:.3rem}
@@ -2640,7 +2649,7 @@ function rRanking(){
   if(notaCriterio){
     if(cSF==="all"){
       notaCriterio.style.display="block";
-      notaCriterio.innerHTML="ℹ️ El Ranking General se ordena por <b>promedio de puntos por partido jugado</b> (no por puntaje acumulado), para que ninguna serie quede en ventaja solo por tener más jugadores/partidos disponibles. Se requiere un mínimo de "+MIN_PARTIDOS_GENERAL+" partidos jugados para entrar en esta tabla.";
+      notaCriterio.innerHTML="ℹ️ El General se ordena por <b>promedio de puntos por partido jugado</b> (no por puntaje acumulado), para que ninguna serie quede en ventaja solo por tener más jugadores/partidos disponibles. Se requiere un mínimo de "+MIN_PARTIDOS_GENERAL+" partidos jugados para entrar en esta tabla.";
     } else {
       notaCriterio.style.display="none";
       notaCriterio.innerHTML="";
@@ -2754,7 +2763,11 @@ function rPodio(){
   var top3=pl.slice(0,3);
   if(top3.length<3){el.innerHTML='';return;} // sin datos suficientes, no se fuerza el podio
 
-  var medallas=['gold','silver','bronze'],claves=['p1','p2','p3'],iconos=['🥇','🥈','🥉'];
+  var medallas=['gold','silver','bronze'],claves=['p1','p2','p3'],archivosMedalla=['gold.PNG','silver.PNG','bronze.PNG'];
+  // Tono de glow pulsante segun la serie del jugador (no segun su posicion
+  // en el podio): Serie A rojo, Serie B azul, Serie C verde. Mismos tonos
+  // que ya se usan en los chips .sb.A/.sb.B/.sb.C del resto del sitio.
+  var colorSerieGlow={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a'};
   var h='<div class="podio">';
   for(var i=0;i<3;i++){
     var p=top3[i];
@@ -2765,8 +2778,9 @@ function rPodio(){
       ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','podio-avatar-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"podio-avatar-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
-    h+="<div class=\"podio-item "+claves[i]+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
-      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\">"+iconos[i]+"</div></div>"
+    var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
+    h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", Serie "+esc(p.serie)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
+      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"this.parentNode.innerHTML='"+["🥇","🥈","🥉"][i]+"';this.parentNode.style.fontSize='.85rem';this.parentNode.style.fontFamily='\\'Bebas Neue\\',sans-serif';\"></div></div>"
       +"<div class=\"podio-name\">"+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
       +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
