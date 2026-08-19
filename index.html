@@ -910,9 +910,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="container">
     <div class="sh fi2"><div class="se">Face to Face</div><h2 class="st">Estadisticas H2H</h2><div class="sl"></div></div>
     <div class="h2hs">
-      <select class="h2hsel" id="h1"><option value="">Jugador 1...</option></select>
+      <select class="h2hsel" id="h1" onfocus="if(!requiereSesion('Inicia sesion con Google para ver el cruce H2H entre jugadores.'))this.blur();"><option value="">Jugador 1...</option></select>
       <div class="h2hvs">VS</div>
-      <select class="h2hsel" id="h2"><option value="">Jugador 2...</option></select>
+      <select class="h2hsel" id="h2" onfocus="if(!requiereSesion('Inicia sesion con Google para ver el cruce H2H entre jugadores.'))this.blur();"><option value="">Jugador 2...</option></select>
       <button class="bsearch" onclick="calcH2H()">Ver H2H</button>
     </div>
     <div id="hr" class="h2hr"></div>
@@ -1593,6 +1593,30 @@ function scorePerspectiva(score,jugador1,nombre){
     var partes=set.split('-');
     return partes.length===2?(partes[1]+'-'+partes[0]):set;
   }).join(' ');
+}
+
+// Ordena jugadores para la vista GENERAL (todas las series mezcladas,
+// cSF==="all"). NO se ordena por puntaje acumulado: la serie con mas
+// jugadores tiene mas rivales posibles y por puro volumen de partidos
+// termina acumulando mas puntos, sin que eso signifique mejor nivel.
+// Se ordena por PROMEDIO de puntos por partido jugado, que normaliza esa
+// diferencia de tamaño entre series reutilizando el mismo motor de
+// puntos de siempre (calcularRanking/PUNTOS), sin tocarlo. Exige un
+// minimo de partidos jugados para que nadie llegue arriba con 1-2
+// partidos y 100% de efectividad por pura casualidad.
+// Las tablas de cada serie individual (A/B/C) NO usan esto: siguen
+// ordenadas por puntaje acumulado como siempre, sin cambios.
+var MIN_PARTIDOS_GENERAL=4;
+function ordenarRankingGeneral(pl){
+  pl.forEach(function(p){p._prom=p.pj>0?p.pts/p.pj:0;});
+  pl.sort(function(a,b){
+    var aCalifica=a.pj>=MIN_PARTIDOS_GENERAL,bCalifica=b.pj>=MIN_PARTIDOS_GENERAL;
+    if(aCalifica!==bCalifica)return aCalifica?-1:1; // sin el minimo de partidos, al final
+    if(b._prom!==a._prom)return b._prom-a._prom;    // 1. promedio pts/partido
+    if(b.pj!==a.pj)return b.pj-a.pj;                 // 2. desempate: mas partidos jugados
+    return b.pts-a.pts;                              // 3. desempate final: puntaje total
+  });
+  return pl;
 }
 
 function calcularRanking(jugadores,resultados,fixtureSize){
@@ -2510,7 +2534,7 @@ function rAll(){
     // persona terminara viendo el perfil del jugador #1 del ranking
     // (ej. Diego Ugarte) en vez de quedarse donde estaba navegando.
     var top=null;
-    var sorted=DATA.players.slice().sort(function(a,b){return b.pts-a.pts;});
+    var sorted=ordenarRankingGeneral(DATA.players.slice());
     for(var i=0;i<sorted.length;i++){if(!sorted[i].retirado){top=sorted[i];break;}}
     if(top)nombreAMostrar=top.nombre;
   }
@@ -2609,7 +2633,7 @@ function rRanking(){
   var pl=DATA.players.slice();
   if(!pl.length){rRankingSkeleton();return;}
   if(cSF!=="all"){var f=[];for(var i=0;i<pl.length;i++){if(pl[i].serie===cSF)f.push(pl[i]);}pl=f;}
-  pl.sort(function(a,b){return b.pts-a.pts;});
+  if(cSF==="all")ordenarRankingGeneral(pl);else pl.sort(function(a,b){return b.pts-a.pts;});
 
   var historialTodos=construirHistorialPorJugador(); // una sola vez, se reusa por jugador
   var deltaSemanal=calcularDeltaSemanal();
@@ -2788,7 +2812,7 @@ function exportarRankingImagen(){
 
   var pl=DATA.players.filter(function(p){return !p.retirado;});
   if(cSF!=="all")pl=pl.filter(function(p){return p.serie===cSF;});
-  pl.sort(function(a,b){return b.pts-a.pts;});
+  if(cSF==="all")ordenarRankingGeneral(pl);else pl.sort(function(a,b){return b.pts-a.pts;});
   if(pl.length<3){alert('No hay suficientes jugadores para generar el poster.');return;}
 
   btn.innerHTML='<span class="gi2">⏳</span>Generando...';
@@ -4087,7 +4111,7 @@ async function _showProfileImpl(nombre,scroll){
   var parts=nombre.split(" ");
   var ini="";for(var i=0;i<parts.length&&ini.length<2;i++){if(parts[i])ini+=parts[i][0];}
   ini=ini.toUpperCase();
-  var sorted=DATA.players.slice().sort(function(a,b){return b.pts-a.pts;});
+  var sorted=ordenarRankingGeneral(DATA.players.slice());
   var rp=1;for(var i=0;i<sorted.length;i++){if(sorted[i].nombre===nombre){rp=i+1;break;}}
   var sa=[];for(var i=0;i<DATA.players.length;i++){if(DATA.players[i].serie===p.serie)sa.push(DATA.players[i]);}
   sa.sort(function(a,b){return b.pts-a.pts;});
@@ -4583,6 +4607,7 @@ function generarPrevia(p1,p2,serie){
   return frase;
 }
 async function calcH2H(){
+  if(!requiereSesion("Inicia sesion con Google para ver el cruce H2H entre jugadores."))return;
   var p1=document.getElementById("h1").value,p2=document.getElementById("h2").value;
   var con=document.getElementById("hr");
   if(!p1||!p2||p1===p2){con.innerHTML="<p style=\"text-align:center;color:var(--gl);padding:2rem\">Selecciona dos jugadores distintos</p>";return;}
