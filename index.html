@@ -109,8 +109,42 @@ section{padding:4rem 1.5rem}
 .ht{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,12vw,8rem);letter-spacing:4px;line-height:.9}
 .ht .g{color:var(--v)}.ht .y{color:var(--am)}
 .hs{font-size:.9rem;font-weight:300;color:var(--gl);letter-spacing:2px;margin-top:.9rem;text-transform:uppercase}
-.hst{display:flex;gap:2.2rem;justify-content:center;margin-top:2.2rem;flex-wrap:wrap}
-.hsn{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--v);line-height:1}
+/* === Estadisticas del hero: grid 2x2 de tarjetas "en vivo" ===
+   Reemplaza la fila plana de numeros por tarjetas con icono, acento de
+   color propio por metrica y vidrio esmerilado (mismo lenguaje visual
+   que el resto de overlays del sitio: header, modales, etc). El badge
+   "EN VIVO" con punto pulsante reusa el patron ya establecido en
+   .tint-live-dot del Torneo Interno, para que la idea de "esto se
+   actualiza solo" sea consistente en todo el sitio. */
+.hstats{display:flex;flex-direction:column;align-items:center;gap:.85rem;margin-top:2.2rem}
+.hstats-live{display:inline-flex;align-items:center;gap:.5rem;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gl)}
+.hstats-dot{width:7px;height:7px;border-radius:50%;background:var(--v);box-shadow:0 0 6px var(--v),0 0 12px rgba(91,191,42,.5);animation:hstatsPulse 1.6s ease-in-out infinite;flex-shrink:0}
+@keyframes hstatsPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.hstGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;width:100%;max-width:320px}
+.hstCard{position:relative;display:flex;align-items:center;gap:.65rem;padding:.9rem .85rem;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);text-align:left;transition:transform .2s ease,border-color .2s ease,background .2s ease;--accent:var(--v);overflow:hidden}
+@supports((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .hstCard{background:rgba(255,255,255,.045);backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%)}
+}
+.hstCard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.85}
+.hstCard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:rgba(255,255,255,.07)}
+.hstIcwrap{flex-shrink:0;width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--accent) 18%,transparent);display:flex;align-items:center;justify-content:center}
+.hstIcwrap svg{width:18px;height:18px;color:var(--accent);display:block}
+.hstBody{min-width:0}
+.hstCard .hsn{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--bl);line-height:1}
+.hstCard .hsl{font-family:'Barlow Condensed',sans-serif;font-size:.56rem;font-weight:600;letter-spacing:1.3px;text-transform:uppercase;color:var(--gl);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hst-blue{--accent:var(--az)}
+.hst-amber{--accent:var(--am)}
+.hst-green{--accent:var(--v)}
+.hst-red{--accent:var(--ro)}
+@media(min-width:480px){
+  .hstGrid{max-width:420px;gap:.85rem}
+  .hstCard{padding:1.1rem 1rem;gap:.8rem}
+  .hstIcwrap{width:40px;height:40px}
+  .hstIcwrap svg{width:21px;height:21px}
+  .hstCard .hsn{font-size:2.1rem}
+  .hstCard .hsl{font-size:.62rem}
+}
+@media(prefers-reduced-motion:reduce){.hstats-dot{animation:none}}
 @keyframes fxIn{from{opacity:0;transform:translateY(28px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fxBreathe{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.02) rotate(.3deg)}}
 @keyframes fxGlow{0%,100%{filter:drop-shadow(0 0 10px rgba(91,191,42,.45)) drop-shadow(0 0 24px rgba(91,191,42,.25)) drop-shadow(0 14px 20px rgba(0,0,0,.5))}50%{filter:drop-shadow(0 0 16px rgba(91,191,42,.7)) drop-shadow(0 0 34px rgba(91,191,42,.4)) drop-shadow(0 14px 20px rgba(0,0,0,.5))}}
@@ -132,7 +166,6 @@ section{padding:4rem 1.5rem}
     transition:transform .35s ease}
   .herofig:hover{transform:rotate(-3deg) translateY(-10px) scale(1.05)}
 }
-.hsl{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-top:2px}
 .hcta{display:flex;gap:.9rem;justify-content:center;margin-top:2.2rem;flex-wrap:wrap}
 .mprevia{margin-top:.7rem;padding:.65rem .85rem;background:rgba(212,230,10,.05);border-left:2px solid var(--am);border-radius:0 6px 6px 0;font-size:.76rem;line-height:1.45;color:var(--bl);font-style:italic}
 .mprevia b{font-style:normal;color:var(--am);font-weight:700}
@@ -875,11 +908,26 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="htag">Temporada 2026</div>
     <h1 class="ht"><span class="g">TENIS</span><br><span class="y">QUILICURA</span></h1>
     <p class="hs">Escalerilla por Series - Ranking en Vivo</p>
-    <div class="hst">
-      <div><div class="hsn" id="sp">37</div><div class="hsl">Competidores</div></div>
-      <div><div class="hsn" id="sm">83</div><div class="hsl">Game Pendientes</div></div>
-      <div><div class="hsn" id="ss">3</div><div class="hsl">Series</div></div>
-      <div><div class="hsn" id="sr">148</div><div class="hsl">Game Jugados</div></div>
+    <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
+      <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
+      <div class="hstGrid">
+        <div class="hstCard hst-blue">
+          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg></div>
+          <div class="hstBody"><div class="hsn" id="sp">37</div><div class="hsl">Competidores</div></div>
+        </div>
+        <div class="hstCard hst-amber">
+          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
+          <div class="hstBody"><div class="hsn" id="sm">83</div><div class="hsl">Game Pendientes</div></div>
+        </div>
+        <div class="hstCard hst-red">
+          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
+          <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div></div>
+        </div>
+        <div class="hstCard hst-green">
+          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></div>
+          <div class="hstBody"><div class="hsn" id="sr">148</div><div class="hsl">Game Jugados</div></div>
+        </div>
+      </div>
     </div>
     <img class="heroMascot" id="heroMascotImg" alt="Ricardo Ciangherotti" style="display:none">
     <div class="hjm" id="hjm" onclick="showProfile(document.getElementById('hjm').dataset.nombre,true)">
