@@ -589,11 +589,11 @@ span.diachip{cursor:default;display:inline-block}
 .h2hwi{font-family:'Bebas Neue',sans-serif;font-size:.82rem;width:55px}
 .h2hms{flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:600}
 .h2hmd{color:var(--gl);font-size:.7rem}
-#torneo-interno{background:var(--gd)}
+#torneo-interno{background:var(--gd);--serie-color:var(--v)}
 .tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
-.tint-estado b{color:var(--am)}
+.tint-estado b{color:var(--serie-color)}
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
-.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,rgba(212,230,10,.1),rgba(91,191,42,.08));border:1.5px solid rgba(212,230,10,.45);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px rgba(212,230,10,.15);cursor:pointer;transition:transform .15s ease}
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
 .tint-campeon:hover{transform:translateY(-2px)}
 .tint-campeon:active{transform:scale(.97)}
 .tint-campeon .ic{font-size:1.8rem}
@@ -601,25 +601,25 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
 @media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic{animation:none}}
 @keyframes trofeoLatido{
-  0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px rgba(212,230,10,.35)) drop-shadow(0 0 8px rgba(212,230,10,.2))}
-  50%{transform:scale(1.06);filter:drop-shadow(0 0 10px rgba(212,230,10,.85)) drop-shadow(0 0 22px rgba(212,230,10,.5))}
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--serie-color) 35%,transparent)) drop-shadow(0 0 8px color-mix(in srgb,var(--serie-color) 20%,transparent))}
+  50%{transform:scale(1.06);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--serie-color) 85%,transparent)) drop-shadow(0 0 22px color-mix(in srgb,var(--serie-color) 50%,transparent))}
 }
 .tint-campeon .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gl);margin-top:.3rem}
-.tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--am);margin-top:.15rem}
+.tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--serie-color);margin-top:.15rem}
 .tint-campeon.tint-campeon-pendiente{border-color:rgba(255,255,255,.15);box-shadow:none}
 .tint-campeon .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gl)}
 .tint-campeon-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;animation:tcmFade .2s ease}
 .tint-campeon-modal.activo{display:flex}
 @keyframes tcmFade{from{opacity:0}to{opacity:1}}
-.tint-campeon-modal-card{max-width:440px;width:100%;background:linear-gradient(135deg,rgba(212,230,10,.18),rgba(91,191,42,.12));border:2px solid rgba(212,230,10,.55);border-radius:22px;padding:2.2rem 1.6rem 1.8rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 70px rgba(212,230,10,.3);animation:tcmPop .4s cubic-bezier(.34,1.56,.64,1)}
+.tint-campeon-modal-card{max-width:440px;width:100%;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 20%,transparent),color-mix(in srgb,var(--serie-color) 12%,transparent));border:2px solid color-mix(in srgb,var(--serie-color) 65%,transparent);border-radius:22px;padding:2.2rem 1.6rem 1.8rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 70px color-mix(in srgb,var(--serie-color) 35%,transparent);animation:tcmPop .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes tcmPop{0%{transform:perspective(900px) rotateX(28deg) scale(.5);opacity:0}55%{transform:perspective(900px) rotateX(-5deg) scale(1.06);opacity:1}100%{transform:perspective(900px) rotateX(0) scale(1);opacity:1}}
 .tint-campeon-modal-card .trofeo-ic{width:150px;height:150px;object-fit:contain;display:block;margin:0 auto 1rem;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out .4s infinite}
 .tint-campeon-modal-card.pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
 .tint-campeon-modal-card .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:4px;text-transform:uppercase;color:var(--gl)}
-.tint-campeon-modal-card .nom{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:1px;color:var(--am);margin-top:.3rem;text-shadow:0 0 20px rgba(212,230,10,.5)}
+.tint-campeon-modal-card .nom{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:1px;color:var(--serie-color);margin-top:.3rem;text-shadow:0 0 20px color-mix(in srgb,var(--serie-color) 50%,transparent)}
 .tint-campeon-modal-card .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gl);margin-top:.4rem}
-.tint-campeon-modal-close{margin-top:1.5rem;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:.78rem;padding:.55rem 1.3rem;border-radius:8px;cursor:pointer}
-.tint-campeon-modal-close:hover{border-color:rgba(212,230,10,.5);color:var(--am)}
+.tint-campeon-modal-close{margin-top:1.5rem;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:.78rem;padding:.55rem 1.3rem;border-radius:8px;cursor:pointer;transition:border-color .2s,color .2s}
+.tint-campeon-modal-close:hover{border-color:color-mix(in srgb,var(--serie-color) 50%,transparent);color:var(--serie-color)}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
 .tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
@@ -627,7 +627,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-rondanav{display:none}
 .tint-rondanav-btn{background:var(--g);border:1px solid rgba(255,255,255,.15);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;padding:.5rem 1rem;border-radius:8px;cursor:pointer}
 .tint-rondanav-btn:disabled{opacity:.35;cursor:default}
-.tint-rondanav-tit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
+.tint-rondanav-tit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:1px;text-transform:uppercase;color:var(--serie-color)}
 @media(max-width:640px){
 .tint-rondanav{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.8rem}
 .tint-bracket-wrap{overflow-x:visible}
@@ -636,21 +636,22 @@ span.diachip{cursor:default;display:inline-block}
 .tint-ronda.activa{display:flex!important}
 .tint-ronda:not(:first-child) .tint-match::before{display:none}
 }
-.tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v);text-align:center;margin-bottom:.3rem}
+.tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--serie-color);text-align:center;margin-bottom:.3rem}
 .tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
-.tint-match:hover{border-color:rgba(91,191,42,.4)}
-.tint-match.final{border-color:rgba(212,230,10,.5);box-shadow:0 0 14px rgba(212,230,10,.15)}
+.tint-match:hover{border-color:color-mix(in srgb,var(--serie-color) 40%,transparent)}
+.tint-match.final{border-color:color-mix(in srgb,var(--serie-color) 50%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 15%,transparent)}
 .tint-slot{display:flex;align-items:center;justify-content:space-between;padding:.5rem .6rem;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.05)}
 .tint-slot:last-child{border-bottom:none}
-.tint-slot.win{background:rgba(91,191,42,.1)}
+.tint-slot.win{background:color-mix(in srgb,var(--serie-color) 10%,transparent)}
 .tint-slot .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tint-slot.win .nm{color:var(--v)}
+.tint-slot.win .nm{color:var(--serie-color)}
 .tint-slot.tbd .nm{color:var(--gl);font-style:italic;font-weight:400}
 .tint-slot .sc{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--gl);flex-shrink:0;margin-left:.4rem}
 .tint-bye{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--gl);text-align:center;padding:.35rem;font-style:italic}
-.tint-mp{display:block;background:var(--az);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:.15rem .5rem;margin:.3rem .5rem 0;border-radius:.25rem;width:fit-content}
+.tint-mp{display:block;background:var(--serie-color);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:.15rem .5rem;margin:.3rem .5rem 0;border-radius:.25rem;width:fit-content}
 .tint-ronda:not(:first-child) .tint-match::before{content:"";position:absolute;left:-1.3rem;top:50%;width:1.3rem;height:1px;background:var(--gm)}
 @media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
+#tintTabs.tabs .tb.active,#tintTabs.tabs .tb:hover{background:var(--serie-color);border-color:var(--serie-color)}
 #galeria{background:var(--ng)}
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .galb{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.2rem}
@@ -2096,6 +2097,10 @@ async function cargarDesafiosSupabase(){
 // "Unico" como parte de la clave, pero NO se muestra en pantalla.
 var TORNEOS_INTERNOS={};
 var tintActual=null;
+// Colores de marca por serie (mismos tonos que .sb.A/.sb.B/.sb.C y el glow
+// del podio): Serie A = rojo, Serie B = azul, Serie C = verde. Se usan para
+// personalizar el diseno del Torneo Interno segun la serie que se esta viendo.
+var SERIE_COLORES={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a'};
 
 // ---- Visibilidad publica del Torneo Interno (interruptor activo/inactivo) ----
 // El admin controla esto desde admin-torneo.html. Vive en la tabla
@@ -2308,11 +2313,13 @@ function cambiarRondaMostrada(delta){
 
 function rTorneoInterno(){
   var keys=tintKeys();
+  var elSec=document.getElementById('torneo-interno');
   var elTabs=document.getElementById('tintTabs');
   var elEstado=document.getElementById('tintEstado');
   var elCamp=document.getElementById('tintCampeon');
   var elBracket=document.getElementById('tintBracket');
   if(!keys.length){
+    if(elSec)elSec.style.removeProperty('--serie-color');
     if(elTabs)elTabs.innerHTML='';
     if(elEstado)elEstado.innerHTML='';
     if(elCamp)elCamp.innerHTML='';
@@ -2321,6 +2328,7 @@ function rTorneoInterno(){
   }
   if(!tintActual||!TORNEOS_INTERNOS[tintActual])tintActual=keys[0];
   var t=TORNEOS_INTERNOS[tintActual];
+  if(elSec)elSec.style.setProperty('--serie-color',SERIE_COLORES[t.serie]||SERIE_COLORES.C);
   rTintTabs();
   rTintEstadoYCampeon(t);
   rTintBracket(t);
