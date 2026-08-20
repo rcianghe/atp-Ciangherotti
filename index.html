@@ -107,7 +107,17 @@ section{padding:4rem 1.5rem}
 .hc{position:relative;z-index:2;text-align:center;padding:2rem 1.5rem}
 .htag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--am);border:1px solid rgba(212,230,10,.4);padding:.28rem .9rem;border-radius:2px;margin-bottom:1.4rem}
 .ht{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,12vw,8rem);letter-spacing:4px;line-height:.9}
-.ht .g{color:var(--v)}.ht .y{color:var(--am)}
+.ht .g{color:var(--v);animation:htGlowVerde 1.8s ease-in-out infinite}
+.ht .y{color:var(--am);animation:htGlowAmarillo 1.8s ease-in-out infinite}
+@keyframes htGlowVerde{
+  0%,100%{text-shadow:0 0 5px rgba(91,191,42,.6),0 0 12px rgba(91,191,42,.3)}
+  50%{text-shadow:0 0 12px rgba(91,191,42,.95),0 0 28px rgba(91,191,42,.6),0 0 42px rgba(91,191,42,.3)}
+}
+@keyframes htGlowAmarillo{
+  0%,100%{text-shadow:0 0 5px rgba(212,230,10,.6),0 0 12px rgba(212,230,10,.3)}
+  50%{text-shadow:0 0 12px rgba(212,230,10,.95),0 0 28px rgba(212,230,10,.6),0 0 42px rgba(212,230,10,.3)}
+}
+@media(prefers-reduced-motion:reduce){.ht .g,.ht .y{animation:none}}
 .hs{font-size:.9rem;font-weight:300;color:var(--gl);letter-spacing:2px;margin-top:.9rem;text-transform:uppercase}
 /* === Estadisticas del hero: grid 2x2 de tarjetas "en vivo" ===
    Reemplaza la fila plana de numeros por tarjetas con icono, acento de
