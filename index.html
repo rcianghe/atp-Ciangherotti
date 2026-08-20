@@ -591,7 +591,11 @@ span.diachip{cursor:default;display:inline-block}
 .h2hmd{color:var(--gl);font-size:.7rem}
 #torneo-interno{background:var(--gd);--serie-color:var(--v)}
 .tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
-.tint-estado b{color:var(--serie-color)}
+.tint-estado b{color:var(--serie-color);animation:estadoGlow 1.8s ease-in-out infinite}
+@keyframes estadoGlow{
+  0%,100%{text-shadow:0 0 5px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 12px color-mix(in srgb,var(--serie-color) 30%,transparent)}
+  50%{text-shadow:0 0 12px color-mix(in srgb,var(--serie-color) 95%,transparent),0 0 28px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 42px color-mix(in srgb,var(--serie-color) 30%,transparent)}
+}
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
 .tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
 .tint-campeon:hover{transform:translateY(-2px)}
@@ -599,7 +603,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon .ic{font-size:1.8rem}
 .tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out infinite}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
-@media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic{animation:none}}
+@media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic,.tint-estado b{animation:none}}
 @keyframes trofeoLatido{
   0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--serie-color) 35%,transparent)) drop-shadow(0 0 8px color-mix(in srgb,var(--serie-color) 20%,transparent))}
   50%{transform:scale(1.06);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--serie-color) 85%,transparent)) drop-shadow(0 0 22px color-mix(in srgb,var(--serie-color) 50%,transparent))}
@@ -651,7 +655,9 @@ span.diachip{cursor:default;display:inline-block}
 .tint-mp{display:block;background:var(--serie-color);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:.15rem .5rem;margin:.3rem .5rem 0;border-radius:.25rem;width:fit-content}
 .tint-ronda:not(:first-child) .tint-match::before{content:"";position:absolute;left:-1.3rem;top:50%;width:1.3rem;height:1px;background:var(--gm)}
 @media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
-#tintTabs.tabs .tb.active,#tintTabs.tabs .tb:hover{background:var(--serie-color);border-color:var(--serie-color)}
+#tintTabs.tabs .tb{background:color-mix(in srgb,var(--serie-color) 25%,transparent);color:var(--serie-color);border:1px solid color-mix(in srgb,var(--serie-color) 45%,transparent);font-weight:700;letter-spacing:1.8px;border-radius:7px;padding:.32rem .9rem}
+#tintTabs.tabs .tb:hover{background:color-mix(in srgb,var(--serie-color) 35%,transparent);color:var(--serie-color)}
+#tintTabs.tabs .tb.active{background:color-mix(in srgb,var(--serie-color) 32%,transparent);color:var(--serie-color);border-color:var(--serie-color);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 40%,transparent)}
 #galeria{background:var(--ng)}
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .galb{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.2rem}
@@ -2160,7 +2166,8 @@ function rTintTabs(){
     var t=TORNEOS_INTERNOS[k];
     var etiqueta='Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):'');
     var esActiva=(k===tintActual);
-    h+='<button class="tb'+(esActiva?' active':'')+'" role="tab" aria-selected="'+(esActiva?'true':'false')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
+    var color=SERIE_COLORES[t.serie]||SERIE_COLORES.C;
+    h+='<button class="tb'+(esActiva?' active':'')+'" style="--serie-color:'+color+'" role="tab" aria-selected="'+(esActiva?'true':'false')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
   });
   el.innerHTML=h;
 }
