@@ -592,6 +592,8 @@ span.diachip{cursor:default;display:inline-block}
 #torneo-interno{background:var(--gd);--serie-color:var(--v)}
 .tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
 .tint-estado b{color:var(--serie-color);animation:estadoGlow 1.8s ease-in-out infinite}
+.tint-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--serie-color);margin-right:.4rem;vertical-align:middle;box-shadow:0 0 6px var(--serie-color),0 0 12px color-mix(in srgb,var(--serie-color) 60%,transparent);animation:tintLiveDot 1.4s ease-in-out infinite}
+@keyframes tintLiveDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
 @keyframes estadoGlow{
   0%,100%{text-shadow:0 0 5px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 12px color-mix(in srgb,var(--serie-color) 30%,transparent)}
   50%{text-shadow:0 0 12px color-mix(in srgb,var(--serie-color) 95%,transparent),0 0 28px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 42px color-mix(in srgb,var(--serie-color) 30%,transparent)}
@@ -603,7 +605,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon .ic{font-size:1.8rem}
 .tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out infinite}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
-@media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic,.tint-estado b{animation:none}}
+@media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic,.tint-estado b,.tint-live-dot{animation:none}}
 @keyframes trofeoLatido{
   0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--serie-color) 35%,transparent)) drop-shadow(0 0 8px color-mix(in srgb,var(--serie-color) 20%,transparent))}
   50%{transform:scale(1.06);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--serie-color) 85%,transparent)) drop-shadow(0 0 22px color-mix(in srgb,var(--serie-color) 50%,transparent))}
@@ -2176,7 +2178,8 @@ var TINT_CAMPEON_ACTUAL=null;
 function rTintEstadoYCampeon(t){
   var estados={armado:'Cuadro armado, sin iniciar',en_curso:'En curso',finalizado:'Finalizado',cancelado:'Cancelado'};
   var elEstado=document.getElementById('tintEstado');
-  if(elEstado)elEstado.innerHTML='Temporada '+esc(t.temporada)+' \u00b7 <b>'+esc(estados[t.estado]||t.estado)+'</b>';
+  var dotH=(t.estado==='en_curso')?'<span class="tint-live-dot" aria-hidden="true"></span>':'';
+  if(elEstado)elEstado.innerHTML='Temporada '+esc(t.temporada)+' \u00b7 '+dotH+'<b>'+esc(estados[t.estado]||t.estado)+'</b>';
   var camp=document.getElementById('tintCampeon');
   if(!camp)return;
   TINT_CAMPEON_ACTUAL=t;
