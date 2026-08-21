@@ -51,8 +51,14 @@ body{font-family:'Barlow',sans-serif;background:var(--ng);color:var(--bl);overfl
 ::-webkit-scrollbar-thumb{background:var(--v);border-radius:7px;border:3px solid var(--gd)}
 ::-webkit-scrollbar-thumb:hover{background:var(--vl)}
 header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(14,14,14,0.97);border-bottom:2px solid var(--v);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:58px}
-.lw{display:flex;align-items:center;gap:10px}
-.lc{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 2px var(--am);flex-shrink:0}
+.lw{display:flex;align-items:center;gap:16px;overflow:visible}
+.lc{width:68px;height:68px;border-radius:50%;object-fit:cover;background:#fff;flex-shrink:0;position:relative;z-index:2;border:2px solid rgba(255,255,255,.92);transform:translateX(-32px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);animation:logoAura 3.2s ease-in-out infinite}
+.lc:hover{transform:translateX(-32px) scale(1.06) rotate(-2deg)}
+@keyframes logoAura{
+  0%,100%{box-shadow:0 0 0 3px rgba(8,8,8,.92),0 0 0 5px color-mix(in srgb,var(--v) 60%,var(--am) 40%),0 0 0 6px rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.6),0 0 16px color-mix(in srgb,var(--v) 30%,transparent)}
+  50%{box-shadow:0 0 0 3px rgba(8,8,8,.92),0 0 0 5px color-mix(in srgb,var(--v) 72%,var(--am) 50%),0 0 0 6px rgba(255,255,255,.14),0 8px 22px rgba(0,0,0,.6),0 0 28px color-mix(in srgb,var(--v) 55%,transparent)}
+}
+@media(prefers-reduced-motion:reduce){.lc{animation:none}}
 .lt{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;line-height:1.1;color:var(--bl)}
 .lt span{color:var(--v)}
 nav a{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl);text-decoration:none;padding:0 .7rem;height:58px;display:inline-flex;align-items:center;border-bottom:3px solid transparent;transition:all .2s}
@@ -1110,6 +1116,27 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
 <script>
 var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i].isIntersecting)e[i].target.classList.add("visible");}},{threshold:0.1});
+// Los refrescos automaticos en segundo plano (cada 5 min, eventos Realtime,
+// o volver de otra app en el celular) reconstruyen partes del HTML de la
+// pagina. Si esas partes cambian de alto mientras la persona esta
+// scrolleando mas abajo, el navegador mantiene el mismo scrollTop en
+// pixeles pero el contenido que hay ahi cambio, dando la sensacion de que
+// "te saca" de donde estabas mirando. conScrollPreservado() mide el alto
+// total de la pagina justo antes y despues de la mutacion (que es
+// sincronica) y corrige scrollY por la diferencia, para que la persona se
+// quede viendo exactamente lo mismo que tenia en pantalla. Si la persona
+// esta arriba del todo (scrollY===0, por ejemplo recien entrando al
+// sitio) no se toca nada.
+function conScrollPreservado(fn){
+  var yAntes=window.scrollY;
+  var altoAntes=document.documentElement.scrollHeight;
+  fn();
+  if(yAntes>0){
+    var altoDespues=document.documentElement.scrollHeight;
+    var delta=altoDespues-altoAntes;
+    if(delta!==0)window.scrollTo(0,Math.max(0,yAntes+delta));
+  }
+}
 var WA="56974723654";
 var METRO=["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
 
@@ -2053,7 +2080,7 @@ async function cargarJugadoresYResultadosSupabase(){
 
     toggleRankErr(false);
     jugadoresSupabaseListo=true;
-    rAll();
+    conScrollPreservado(function(){rAll();});
     console.log('Jugadores y resultados cargados desde Supabase (via inscripciones):',jugadoresRaw.length,resultadosRaw.length);
   }catch(err){
     console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
@@ -2099,7 +2126,7 @@ async function cargarFichasSupabase(){
     // reconstruia el HTML de la ficha con los valores viejos y borraba
     // lo que la persona estuviera escribiendo/seleccionando en ese
     // momento, dando la sensacion de "no me deja cambiar nada".
-    if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))showProfile(currentProfileName,false);
+    if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))conScrollPreservado(function(){showProfile(currentProfileName,false);});
   }catch(err){
     console.warn('Sin conexion a Supabase para fichas tecnicas.',err);
   }
@@ -2166,7 +2193,7 @@ async function cargarDesafiosSupabase(){
       });
     }
 
-    rAll();
+    conScrollPreservado(function(){rAll();});
   }catch(err){
     console.warn('Sin conexion a Supabase para desafios.',err);
   }
@@ -2226,7 +2253,7 @@ async function cargarVisibilidadTorneoInterno(){
       return;
     }
     torneoInternoVisible=res.data?(res.data.valor!==false):true;
-    aplicarVisibilidadTorneoInterno();
+    conScrollPreservado(function(){aplicarVisibilidadTorneoInterno();});
   }catch(err){
     console.warn('Sin conexion al cargar la visibilidad del Torneo Interno.',err);
   }
@@ -2471,7 +2498,7 @@ async function cargarTorneosInternos(){
       nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:estadoMostrado,campeon:campeon,rondas:rondas};
     });
     TORNEOS_INTERNOS=nuevo;
-    rTorneoInterno();
+    conScrollPreservado(function(){rTorneoInterno();});
     actualizarMetaDinamico();
   }catch(err){
     console.warn('Sin conexion a Supabase para el Torneo Interno.',err);
@@ -2493,7 +2520,7 @@ function loadLiveData(){
   liveRefreshBusy=true;
   fetch(APPS_SCRIPT_URL+(APPS_SCRIPT_URL.indexOf('?')===-1?'?':'&')+'_t='+Date.now(),{cache:'no-store'}).then(function(res){return res.json();}).then(function(json){
     transformLiveData(json);
-    rAll();
+    conScrollPreservado(function(){rAll();});
     console.log('Datos en vivo cargados desde Google Sheets:',json.actualizado);
   }).catch(function(err){
     console.warn('No se pudo cargar datos en vivo, usando datos estaticos embebidos.',err);
