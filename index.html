@@ -4381,7 +4381,11 @@ async function _showProfileImpl(nombre,scroll){
   var rH="";
   for(var i=0;i<rec.length;i++){
     var r=rec[i],won=r.ganador===nombre,opp=won?r.perdedor:r.ganador;
-    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+"</span><span class=\"rmsc\">"+esc(scorePerspectiva(r.score,r.jugador1,nombre))+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
+    // r.score ya viene siempre en orden ganador-perdedor (normalizado al
+    // cargar DATA.results). Antes se volvia a pasar por scorePerspectiva
+    // comparando contra el Jugador1 crudo original, lo que la invertia
+    // de nuevo cada vez que el ganador no era Jugador1 en la carga.
+    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+"</span><span class=\"rmsc\">"+esc(r.score)+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
   }
   if(!rH)rH="<p style=\"color:var(--gl);font-size:.8rem;padding:.38rem 0\">Sin partidos registrados</p>";
   var rv=getRivalStats(nombre);
