@@ -1730,7 +1730,6 @@ var PRODS=[
 /* ============================================================
    FASE 1 — RANKING AUTOMÁTICO (motor + conexión a Google Sheets)
    ============================================================ */
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwutZxQIvWM4Yqu-VyAHKTaQ9QdSBtM6SA1-fnB2ar5jEO8kEo18lvZvMPjVj_er0a44Q/exec"; // reemplazar tras desplegar
 
 var PUNTOS = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0,bonoTodosGanados:500,bonoTodosJugados:150,bonoBagelBagel:100};
 // Tamaño de fixture por serie (partidos totales de la temporada), usado
@@ -2011,53 +2010,6 @@ function rJugadorDelMes(){
   el.classList.add('show');
 }
 
-// Transforma el JSON de Google Sheets al formato que usa la app y
-// reemplaza DATA en el sitio (sin tocar código, solo datos en vivo).
-function transformLiveData(json){
-  var jugadores=json.jugadores.map(function(j){return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado||'Activo',encargado:j.encargado||'',linkCancha:j.linkCancha||''};});
-  var pendientesCrudos=json.resultados.filter(function(r){return !r.ganador;}); // sin ganador aun
-
-  // Fichas tecnicas: ya NO se leen desde Google Sheets. La fuente de
-  // verdad es la tabla "fichas_tecnicas" de Supabase (cargarFichasSupabase()).
-  // Si esta linea volviera a sobreescribir SERVER_FICHAS con json.fichas,
-  // cada refresco automatico (cada 90s) borraria cualquier cambio guardado
-  // por el usuario mientras Supabase tardaba mas que Sheets en responder.
-
-  FIXTURE_SIZE_ACTUAL=json.fixtureSize||FIXTURE_SIZE_ACTUAL; // se reusa en cargarJugadoresYResultadosSupabase()
-
-  // OJO: DATA.players YA NO se sobreescribe completo desde aca. Los IDs
-  // de la hoja de Google Sheets son numeros viejos (ej: "33"), y Supabase
-  // necesita UUID reales para de_id/para_id al crear un desafio. Si esta
-  // funcion pisaba DATA.players despues de que cargarJugadoresYResultadosSupabase()
-  // ya habia puesto los UUID correctos, un jugador terminaba con
-  // p.id="33" y crear un desafio fallaba con "invalid input syntax for
-  // type uuid: '33'". Encargado y link de cancha SI siguen viviendo solo
-  // en la Sheet por ahora, asi que se "pegan" al jugador ya existente
-  // (matcheado por nombre) sin tocar id/pts/pj/pg/pp/retirado.
-  var porNombreDATA={};
-  (DATA.players||[]).forEach(function(p){porNombreDATA[p.nombre]=p;});
-  jugadores.forEach(function(j){
-    var p=porNombreDATA[j.nombre];
-    if(p){p.encargado=j.encargado||'';p.linkCancha=j.linkCancha||'';}
-  });
-
-  // DATA.results: idem, ya viene completo de Supabase (cargarJugadoresYResultadosSupabase).
-
-  DATA.matches=pendientesCrudos.map(function(r,i){
-    return {id:i+1,p1:r.jugador1||null,p2:r.jugador2||null,serie:r.serie,fecha:r.fecha,hora:r.hora||'',cancha:r.cancha||'',status:'pending',score:null};
-  });
-
-  // Titulos: hoja opcional "Titulos" con columnas Jugador | Serie | Temporada
-  // (esto es solo respaldo: getTitulos() consulta Supabase directo primero)
-  DATA.titulos=(json.titulos||[]).map(function(t){
-    return {nombre:t.jugador||t.nombre,serie:t.serie,temporada:t.temporada,periodo:t.periodo||''};
-  });
-
-  // DATA.desafios: idem que players/results -- ya viene completo de Supabase
-  // (cargarDesafiosSupabase). Los IDs viejos de la hoja "Desafios" ("D172...")
-  // tampoco son UUID validos, mismo problema que con los jugadores.
-}
-
 // ============================================================
 // JUGADORES Y RESULTADOS DESDE SUPABASE
 // ============================================================
@@ -2091,8 +2043,8 @@ async function obtenerTemporadaActivaId(){
 }
 
 async function cargarJugadoresYResultadosSupabase(){
-  if(!window.supabaseClient)return; // Supabase no esta inicializado, se mantienen los datos previos
-  if(jugadoresSupabaseCargando)return; // evita refrescos superpuestos
+  if(!window.supabaseClient)return;
+  if(jugadoresSupabaseCargando)return;
   jugadoresSupabaseCargando=true;
   try{
     var temporadaId=await obtenerTemporadaActivaId();
@@ -2101,17 +2053,11 @@ async function cargarJugadoresYResultadosSupabase(){
       toggleRankErr(true);
       return;
     }
-    // La serie YA NO se lee de jugadores.serie (columna legacy que se
-    // va a deprecar) sino de inscripciones, que es donde vive la
-    // participacion del jugador en ESTA temporada especifica. Esto es
-    // lo que permite, a futuro, que un jugador cambie de serie entre
-    // temporadas o participe en la escalerilla de otro club sin que su
-    // perfil base (jugadores) se vea afectado.
     var jugRes=await window.supabaseClient
-      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado)')
+      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha)')
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
-      .select('serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha')
+      .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha,hora,cancha')
       .eq('temporada_id',temporadaId);
     if(jugRes.error||resRes.error){
       console.warn('Supabase (inscripciones/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
@@ -2119,19 +2065,24 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugadoresRaw=jugRes.data.map(function(i){
-      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo'};
+      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||''};
     });
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
 
-    var resultadosRaw=resRes.data.map(function(r){
-      // Supabase entrega la fecha como 'YYYY-MM-DD'; el motor de
-      // ranking (parseFechaDDMMYYYY) espera 'DD-MM-YYYY', asi que se
-      // convierte aca antes de usarla.
-      var p=(r.fecha||'').split('-');
-      var fechaDDMMYYYY=p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):r.fecha;
+    // Partidos con ganador_id -> ya se jugaron (ranking + DATA.results).
+    // Partidos sin ganador_id -> pendientes (DATA.matches, ex hoja "Partidos").
+    var jugadosRaw=resRes.data.filter(function(r){return r.ganador_id;});
+    var pendientesRaw=resRes.data.filter(function(r){return !r.ganador_id;});
+
+    function fechaDDMMYYYY(f){
+      var p=(f||'').split('-');
+      return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):f;
+    }
+
+    var resultadosRaw=jugadosRaw.map(function(r){
       return {
-        fecha:fechaDDMMYYYY,serie:r.serie,
+        fecha:fechaDDMMYYYY(r.fecha),serie:r.serie,
         jugador1:idANombre[r.jugador1_id],jugador2:idANombre[r.jugador2_id],
         set1:r.set1,set2:r.set2,set3:r.set3,
         ganador:idANombre[r.ganador_id],tipo:r.tipo
@@ -2144,23 +2095,26 @@ async function cargarJugadoresYResultadosSupabase(){
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha};
     });
     DATA.results=resultadosRaw.map(function(r){
       var scoreCrudo=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
-      // El marcador se guarda en Supabase en orden jugador1-jugador2, no
-      // ganador-perdedor. Si el ganador quedo cargado como jugador2, hay
-      // que invertir cada set (6-1 -> 1-6) para que el texto siempre
-      // muestre "Ganador venció a Perdedor" con el marcador del ganador
-      // primero (scorePerspectiva ya hace exactamente este ajuste).
       var score=scorePerspectiva(scoreCrudo,r.jugador1,r.ganador);
       return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1};
+    });
+
+    DATA.matches=pendientesRaw.map(function(r){
+      return {
+        id:r.id,p1:idANombre[r.jugador1_id]||null,p2:idANombre[r.jugador2_id]||null,
+        serie:r.serie,fecha:fechaDDMMYYYY(r.fecha),hora:r.hora?r.hora.substring(0,5):'',
+        cancha:r.cancha||'',status:'pending',score:null
+      };
     });
 
     toggleRankErr(false);
     jugadoresSupabaseListo=true;
     conScrollPreservado(function(){rAll();});
-    console.log('Jugadores y resultados cargados desde Supabase (via inscripciones):',jugadoresRaw.length,resultadosRaw.length);
+    console.log('Jugadores, resultados y fixture cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length,DATA.matches.length);
   }catch(err){
     console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
     toggleRankErr(true);
@@ -2335,6 +2289,20 @@ async function cargarVisibilidadTorneoInterno(){
     conScrollPreservado(function(){aplicarVisibilidadTorneoInterno();});
   }catch(err){
     console.warn('Sin conexion al cargar la visibilidad del Torneo Interno.',err);
+  }
+}
+
+async function cargarFixtureSizeSupabase(){
+  if(!window.supabaseClient)return;
+  try{
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','fixture_size').maybeSingle();
+    if(res.error){
+      console.warn('No se pudo cargar el tamaño de fixture, se usa el valor por defecto.',res.error);
+      return;
+    }
+    if(res.data&&res.data.valor)FIXTURE_SIZE_ACTUAL=res.data.valor;
+  }catch(err){
+    console.warn('Sin conexion al cargar el tamaño de fixture.',err);
   }
 }
 
@@ -2593,54 +2561,28 @@ function ocultarSplash(){
   var sp=document.getElementById('splash');
   if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},400);}
 }
-function loadLiveData(){
-  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('PEGA_AQUI')===0){ocultarSplash();return;} // sin desplegar aun, se usan datos estaticos
-  if(liveRefreshBusy)return; // evita refrescos superpuestos si el anterior no termino
-  liveRefreshBusy=true;
-  fetch(APPS_SCRIPT_URL+(APPS_SCRIPT_URL.indexOf('?')===-1?'?':'&')+'_t='+Date.now(),{cache:'no-store'}).then(function(res){return res.json();}).then(function(json){
-    transformLiveData(json);
-    conScrollPreservado(function(){rAll();});
-    console.log('Datos en vivo cargados desde Google Sheets:',json.actualizado);
-  }).catch(function(err){
-    console.warn('No se pudo cargar datos en vivo, usando datos estaticos embebidos.',err);
-  }).then(function(){
-    liveRefreshBusy=false;
-    ocultarSplash(); // recien aca: exito o fracaso, pero ya sabemos que no va a cambiar mas por ahora
-  });
-}
-
-// Refresco automatico: reconsulta Google Sheets cada 90s mientras la pestana este visible,
-// asi los cambios de resultados se reflejan solos sin necesidad de recargar (F5).
 var LIVE_REFRESH_MS=300000;
 function startLiveRefresh(){
-  if(APPS_SCRIPT_URL&&APPS_SCRIPT_URL.indexOf('PEGA_AQUI')!==0){
-    setInterval(function(){
-      if(document.visibilityState==='visible')loadLiveData();
-    },LIVE_REFRESH_MS);
-    document.addEventListener('visibilitychange',function(){
-      if(document.visibilityState==='visible')loadLiveData(); // refresca al volver a la pestana
-    });
-  }
-  // Jugadores/Resultados ya migrados: refresco independiente contra
-  // Supabase, para que siga funcionando aunque el día de mañana se
-  // retire Apps Script por completo. Fichas y desafios se encadenan
-  // despues porque necesitan DATA.players ya actualizado.
   setInterval(function(){
     if(document.visibilityState==='visible'){
-      cargarJugadoresYResultadosSupabase().then(function(){
-        cargarFichasSupabase();
-        cargarDesafiosSupabase();
-        cargarTorneosInternos();
+      cargarFixtureSizeSupabase().then(function(){
+        cargarJugadoresYResultadosSupabase().then(function(){
+          cargarFichasSupabase();
+          cargarDesafiosSupabase();
+          cargarTorneosInternos();
+        });
       });
       cargarVisibilidadTorneoInterno();
     }
   },LIVE_REFRESH_MS);
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='visible'){
-      cargarJugadoresYResultadosSupabase().then(function(){
-        cargarFichasSupabase();
-        cargarDesafiosSupabase();
-        cargarTorneosInternos();
+      cargarFixtureSizeSupabase().then(function(){
+        cargarJugadoresYResultadosSupabase().then(function(){
+          cargarFichasSupabase();
+          cargarDesafiosSupabase();
+          cargarTorneosInternos();
+        });
       });
       cargarVisibilidadTorneoInterno();
     }
@@ -2687,6 +2629,7 @@ function iniciarRealtime(){
   var chConfig=window.supabaseClient.channel('rt-configuracion-sitio')
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracion_sitio'},function(){
       cargarVisibilidadTorneoInterno();
+      cargarFixtureSizeSupabase().then(function(){cargarJugadoresYResultadosSupabase();});
     })
     .subscribe();
   realtimeChannels.push(chConfig);
@@ -2701,14 +2644,16 @@ function init(){
   if("scrollRestoration" in history)history.scrollRestoration="manual";
   rAll();
   window.scrollTo(0,0);
-  loadLiveData();
-  cargarJugadoresYResultadosSupabase().then(function(){
-    cargarFichasSupabase();
-    cargarDesafiosSupabase();
-    cargarTorneosInternos();
+  cargarFixtureSizeSupabase().then(function(){
+    cargarJugadoresYResultadosSupabase().then(function(){
+      cargarFichasSupabase();
+      cargarDesafiosSupabase();
+      cargarTorneosInternos();
+      ocultarSplash();
+    });
   });
   cargarVisibilidadTorneoInterno();
-  startLiveRefresh(); // se mantiene como respaldo por si Realtime se cae
+  startLiveRefresh();
   iniciarRealtime();
   initVisitas();
   var rankingSectionEl=document.getElementById('ranking');
