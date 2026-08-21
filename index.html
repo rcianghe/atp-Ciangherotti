@@ -2151,7 +2151,13 @@ async function cargarJugadoresYResultadosSupabase(){
       return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado};
     });
     DATA.results=resultadosRaw.map(function(r){
-      var score=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
+      var scoreCrudo=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
+      // El marcador se guarda en Supabase en orden jugador1-jugador2, no
+      // ganador-perdedor. Si el ganador quedo cargado como jugador2, hay
+      // que invertir cada set (6-1 -> 1-6) para que el texto siempre
+      // muestre "Ganador venció a Perdedor" con el marcador del ganador
+      // primero (scorePerspectiva ya hace exactamente este ajuste).
+      var score=scorePerspectiva(scoreCrudo,r.jugador1,r.ganador);
       return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1};
     });
 
