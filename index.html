@@ -51,14 +51,15 @@ body{font-family:'Barlow',sans-serif;background:var(--ng);color:var(--bl);overfl
 ::-webkit-scrollbar-thumb{background:var(--v);border-radius:7px;border:3px solid var(--gd)}
 ::-webkit-scrollbar-thumb:hover{background:var(--vl)}
 header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(14,14,14,0.97);border-bottom:2px solid var(--v);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:58px}
-.lw{display:flex;align-items:center;gap:16px;overflow:visible}
-.lc{width:68px;height:68px;border-radius:50%;object-fit:cover;background:#fff;flex-shrink:0;position:relative;z-index:2;border:2px solid rgba(255,255,255,.92);transform:translateX(-32px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);animation:logoAura 3.2s ease-in-out infinite}
-.lc:hover{transform:translateX(-32px) scale(1.06) rotate(-2deg)}
-@keyframes logoAura{
-  0%,100%{box-shadow:0 0 0 3px rgba(8,8,8,.92),0 0 0 5px color-mix(in srgb,var(--v) 60%,var(--am) 40%),0 0 0 6px rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.6),0 0 16px color-mix(in srgb,var(--v) 30%,transparent)}
-  50%{box-shadow:0 0 0 3px rgba(8,8,8,.92),0 0 0 5px color-mix(in srgb,var(--v) 72%,var(--am) 50%),0 0 0 6px rgba(255,255,255,.14),0 8px 22px rgba(0,0,0,.6),0 0 28px color-mix(in srgb,var(--v) 55%,transparent)}
+.lw{display:flex;align-items:center;gap:10px}
+.lc-wrap{position:relative;display:inline-flex;flex-shrink:0}
+.lc{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#fff;display:block}
+.lc-wrap::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.45),rgba(91,191,42,.2) 42%,rgba(91,191,42,.05) 68%,transparent 100%);box-shadow:0 0 9px rgba(91,191,42,.45),inset 0 0 6px rgba(255,255,255,.3);animation:campoFuerza 2.6s ease-in-out infinite}
+@keyframes campoFuerza{
+  0%,100%{opacity:.5;transform:scale(1)}
+  50%{opacity:.9;transform:scale(1.14)}
 }
-@media(prefers-reduced-motion:reduce){.lc{animation:none}}
+@media(prefers-reduced-motion:reduce){.lc-wrap::after{animation:none}}
 .lt{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;line-height:1.1;color:var(--bl)}
 .lt span{color:var(--v)}
 nav a{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl);text-decoration:none;padding:0 .7rem;height:58px;display:inline-flex;align-items:center;border-bottom:3px solid transparent;transition:all .2s}
@@ -109,6 +110,7 @@ section{padding:4rem 1.5rem}
   #hero{background-attachment:fixed}
 }
 .hl{position:absolute;inset:0;opacity:.03;background-image:linear-gradient(white 1px,transparent 1px),linear-gradient(90deg,white 1px,transparent 1px);background-size:48px 48px}
+.htex{position:absolute;inset:0;opacity:.05;background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.5) 1px,transparent 0);background-size:14px 14px;pointer-events:none}
 .hd{position:absolute;top:0;right:-60px;width:480px;height:100vh;background:linear-gradient(135deg,rgba(46,125,209,.1) 50%,rgba(192,57,43,.07) 50%);transform:skewX(-8deg)}
 .hc{position:relative;z-index:2;text-align:center;padding:2rem 1.5rem}
 .htag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--am);border:1px solid rgba(212,230,10,.4);padding:.28rem .9rem;border-radius:2px;margin-bottom:1.4rem}
@@ -124,6 +126,13 @@ section{padding:4rem 1.5rem}
   50%{text-shadow:0 0 12px rgba(212,230,10,.95),0 0 28px rgba(212,230,10,.6),0 0 42px rgba(212,230,10,.3)}
 }
 @media(prefers-reduced-motion:reduce){.ht .g,.ht .y{animation:none}}
+.ti{position:relative;display:inline-block}
+.ti::before{content:"";position:absolute;left:50%;top:-.2em;width:.44em;height:.44em;border-radius:50%;transform:translateX(-50%);background:radial-gradient(circle at 32% 30%,#f4ff9e,#c9e021 55%,#8ea915 100%);box-shadow:0 0 5px rgba(212,230,10,.65),0 1px 2px rgba(0,0,0,.4);animation:tiBounce 2.2s ease-in-out infinite}
+.ti::after{content:"";position:absolute;left:50%;top:-.2em;width:.44em;height:.44em;border-radius:50%;transform:translateX(-50%);background:linear-gradient(105deg,transparent 44%,rgba(255,255,255,.8) 48%,rgba(255,255,255,.8) 52%,transparent 56%),linear-gradient(75deg,transparent 44%,rgba(255,255,255,.8) 48%,rgba(255,255,255,.8) 52%,transparent 56%);opacity:.85;animation:tiBounce 2.2s ease-in-out infinite}
+@keyframes tiBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.ti::before,.ti::after{animation:none}}
+.hcourtline{position:relative;width:130px;height:2px;margin:1.2rem auto 0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 10px,transparent 10px 18px)}
+.hcourtline::after{content:"";position:absolute;left:50%;top:-4px;width:2px;height:10px;background:rgba(255,255,255,.55);transform:translateX(-50%)}
 .hs{font-size:.9rem;font-weight:300;color:var(--gl);letter-spacing:2px;margin-top:.9rem;text-transform:uppercase}
 /* === Estadisticas del hero: grid 2x2 de tarjetas "en vivo" ===
    Reemplaza la fila plana de numeros por tarjetas con icono, acento de
@@ -146,8 +155,10 @@ section{padding:4rem 1.5rem}
 .hstIcwrap{flex-shrink:0;width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--accent) 18%,transparent);display:flex;align-items:center;justify-content:center}
 .hstIcwrap svg{width:18px;height:18px;color:var(--accent);display:block}
 .hstBody{min-width:0}
-.hstCard .hsn{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--bl);line-height:1}
+.hstCard .hsn{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--bl);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:1px;text-shadow:0 0 8px color-mix(in srgb,var(--accent) 55%,transparent)}
 .hstCard .hsl{font-family:'Barlow Condensed',sans-serif;font-size:.56rem;font-weight:600;letter-spacing:1.3px;text-transform:uppercase;color:var(--gl);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hstSeriesDots{display:flex;gap:.3rem;margin-top:.3rem}
+.hstSeriesDots span{width:7px;height:7px;border-radius:50%;display:inline-block}
 .hst-blue{--accent:var(--az)}
 .hst-amber{--accent:var(--am)}
 .hst-green{--accent:var(--v)}
@@ -161,12 +172,39 @@ section{padding:4rem 1.5rem}
   .hstCard .hsl{font-size:.62rem}
 }
 @media(prefers-reduced-motion:reduce){.hstats-dot{animation:none}}
+/* === Banner ticker "en vivo" del hero: entre la foto de jugadores y la
+   caja de Jugador del Mes. Muestra info dinamica generada por el propio
+   club (ultimo resultado, proximo partido, lider del ranking, resumen de
+   partidos) en un carrusel horizontal continuo y lento, para que se
+   alcance a leer con calma. Se arma con dos copias identicas del
+   contenido puestas una al lado de la otra (#hTickerGroup1/2) y se anima
+   el contenedor -50% de su ancho total: como las dos copias son
+   identicas, al llegar a -50% se ve exactamente igual que al empezar, asi
+   el loop no se nota (tecnica estandar de marquee sin cortes). */
+.hticker{display:flex;align-items:center;gap:.7rem;width:100%;max-width:520px;margin:1.6rem auto 0;padding:.55rem .9rem;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
+@supports((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .hticker{backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
+}
+.hticker-live{flex-shrink:0;display:inline-flex;align-items:center;gap:.35rem;font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ro);border-right:1px solid rgba(255,255,255,.15);padding-right:.65rem}
+.hticker-dot{width:6px;height:6px;border-radius:50%;background:var(--ro);box-shadow:0 0 6px var(--ro),0 0 12px rgba(192,57,43,.5);animation:hstatsPulse 1.3s ease-in-out infinite;flex-shrink:0}
+.hticker-viewport{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.hticker-track{display:flex;width:max-content;animation:htickerScroll 34s linear infinite}
+.hticker:hover .hticker-track{animation-play-state:paused}
+.hticker-group{display:flex;white-space:nowrap;padding-right:3.5rem}
+.hticker-part{margin-right:2.4rem;font-family:'Barlow Condensed',sans-serif;font-size:.74rem;letter-spacing:.3px;color:var(--bl)}
+.hticker-part b{color:var(--am);font-weight:700}
+@keyframes htickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(max-width:480px){.hticker{max-width:92%;padding:.5rem .75rem}.hticker-live{font-size:.54rem}.hticker-part{font-size:.68rem}}
+@media(prefers-reduced-motion:reduce){.hticker-track{animation:none}#hTickerGroup2{display:none}.hticker-viewport{overflow-x:auto}}
 @keyframes fxIn{from{opacity:0;transform:translateY(28px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fxBreathe{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.02) rotate(.3deg)}}
 @keyframes fxGlow{0%,100%{filter:drop-shadow(0 0 10px rgba(91,191,42,.45)) drop-shadow(0 0 24px rgba(91,191,42,.25)) drop-shadow(0 14px 20px rgba(0,0,0,.5))}50%{filter:drop-shadow(0 0 16px rgba(91,191,42,.7)) drop-shadow(0 0 34px rgba(91,191,42,.4)) drop-shadow(0 14px 20px rgba(0,0,0,.5))}}
 @keyframes fxRingPulse{0%,100%{box-shadow:0 0 0 0 rgba(91,191,42,.55)}50%{box-shadow:0 0 0 6px rgba(91,191,42,0)}}
 
-.heroMascot{display:block;margin:.4rem auto -.6rem;max-height:280px;width:auto;
+.heroMascotWrap{position:relative;display:flex;justify-content:center}
+.heroMascotWrap::before{content:"";position:absolute;left:50%;top:8%;transform:translateX(-50%);width:92%;max-width:420px;height:82%;background:radial-gradient(ellipse at center,rgba(91,191,42,.2) 0%,rgba(91,191,42,.07) 45%,transparent 72%);filter:blur(6px);pointer-events:none;z-index:0}
+.heroMascotWrap::after{content:"";position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);width:60%;max-width:210px;height:20px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.55) 0%,rgba(0,0,0,.22) 55%,transparent 75%);filter:blur(2px);pointer-events:none;z-index:0}
+.heroMascot{display:block;margin:.4rem auto -.6rem;max-height:280px;width:auto;position:relative;z-index:1;
   animation:fxIn .9s cubic-bezier(.2,.9,.3,1) both, fxBreathe 4.5s ease-in-out .9s infinite, fxGlow 4.5s ease-in-out .9s infinite;
   transition:transform .35s ease}
 .heroMascot:hover{transform:rotate(-3deg) translateY(-8px) scale(1.04)}
@@ -902,7 +940,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 </div>
 <header>
   <div class="lw">
-    <img class="lc" src="logo-club-tenis-estadio-quilicura.jpg" alt="Logo del Club de Tenis Estadio Quilicura">
+    <span class="lc-wrap"><img class="lc" src="logo-club-tenis-estadio-quilicura.jpg" alt="Logo del Club de Tenis Estadio Quilicura"></span>
     <div class="lt">CLUB DE TENIS<br><span>ESTADIO QUILICURA</span></div>
   </div>
   <nav>
@@ -919,10 +957,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 </header>
 
 <section id="hero">
-  <div class="hbg"></div><div class="hl"></div><div class="hd"></div>
+  <div class="hbg"></div><div class="hl"></div><div class="htex"></div><div class="hd"></div>
   <div class="hc">
     <div class="htag">Temporada 2026</div>
-    <h1 class="ht"><span class="g">TENIS</span><br><span class="y">QUILICURA</span></h1>
+    <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y">QUILICURA</span></h1>
+    <div class="hcourtline" aria-hidden="true"></div>
     <p class="hs">Escalerilla por Series - Ranking en Vivo</p>
     <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
       <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
@@ -937,7 +976,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
         </div>
         <div class="hstCard hst-red">
           <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
-          <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div></div>
+          <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div><div class="hstSeriesDots" aria-hidden="true"><span style="background:#e05a4a"></span><span style="background:#5a9ee0"></span><span style="background:#7ed44a"></span></div></div>
         </div>
         <div class="hstCard hst-green">
           <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></div>
@@ -945,7 +984,18 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
         </div>
       </div>
     </div>
-    <img class="heroMascot" id="heroMascotImg" alt="Ricardo Ciangherotti" style="display:none">
+    <div class="heroMascotWrap">
+      <img class="heroMascot" id="heroMascotImg" alt="Ricardo Ciangherotti" style="display:none">
+    </div>
+    <div class="hticker" role="status" aria-label="Informacion en vivo del club">
+      <span class="hticker-live"><span class="hticker-dot" aria-hidden="true"></span>En vivo</span>
+      <div class="hticker-viewport">
+        <div class="hticker-track" id="hTickerTrack">
+          <span class="hticker-group" id="hTickerGroup1"></span>
+          <span class="hticker-group" id="hTickerGroup2" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
     <div class="hjm" id="hjm" onclick="showProfile(document.getElementById('hjm').dataset.nombre,true)">
       <span class="hjmtop"><span class="hjmi">🔥</span><span class="hjmt">Jugador del Mes</span></span>
       <span class="hjmn" id="hjmNombre"></span>
@@ -1927,6 +1977,44 @@ function fraseDestacado(nombre){
   return pick(FRASES_DESTACADO,_seedDesdeNombre(nombre));
 }
 
+// Arma el contenido del banner "en vivo" del hero (entre la foto de
+// jugadores y Jugador del Mes) con datos que el propio club genera:
+// ultimo resultado jugado, proximo partido pendiente, lider del ranking
+// general y un resumen de partidos jugados/pendientes. Se llama cada vez
+// que rHeroStats() corre, asi que se mantiene al dia con cada refresco.
+function construirTickerHero(){
+  var g1=document.getElementById('hTickerGroup1');
+  var g2=document.getElementById('hTickerGroup2');
+  if(!g1||!g2)return;
+  var partes=[];
+  if(DATA.results&&DATA.results.length){
+    var ordenados=DATA.results.slice().sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
+    var ult=ordenados[0];
+    partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.ganador)+'</b> venci\u00f3 a '+esc(ult.perdedor)+' '+esc(ult.score)+' (Serie '+esc(ult.serie)+')');
+  }
+  if(DATA.matches&&DATA.matches.length){
+    var pendientes=DATA.matches.filter(function(m){return m.status==='pending'&&m.fecha;}).sort(function(a,b){return parseFechaDDMMYYYY(a.fecha)-parseFechaDDMMYYYY(b.fecha);});
+    if(pendientes.length){
+      var prox=pendientes[0];
+      partes.push('\ud83d\udcc5 Pr\u00f3ximo partido: <b>'+esc(prox.p1||'Por definir')+'</b> vs <b>'+esc(prox.p2||'Por definir')+'</b> \u00b7 '+esc(prox.fecha)+(prox.hora?(' '+esc(prox.hora)):'')+' (Serie '+esc(prox.serie)+')');
+    }
+  }
+  if(DATA.players&&DATA.players.length){
+    var activos=DATA.players.filter(function(p){return !p.retirado;});
+    if(activos.length){
+      var lider=activos.slice().sort(function(a,b){return b.pts-a.pts;})[0];
+      partes.push('\ud83c\udfc6 L\u00edder del ranking general: <b>'+esc(lider.nombre)+'</b> con '+lider.pts+' pts');
+    }
+  }
+  var jugados=(DATA.results||[]).length;
+  var pend=(DATA.matches||[]).filter(function(m){return m.status==='pending';}).length;
+  partes.push('\ud83d\udcca '+jugados+' partidos jugados \u00b7 '+pend+' pendientes esta temporada');
+  if(!partes.length)partes.push('\ud83c\udfbe Bienvenido al Club de Tenis Estadio Quilicura');
+  var html=partes.map(function(p){return '<span class="hticker-part">'+p+'</span>';}).join('');
+  g1.innerHTML=html;
+  g2.innerHTML=html;
+}
+
 function rJugadorDelMes(){
   var el=document.getElementById('hjm');
   if(!el)return;
@@ -2636,20 +2724,35 @@ function init(){
   if(rankingSectionEl)rankingObs.observe(rankingSectionEl);
 }
 
+function animarContador(el,valorFinal){
+  if(!el)return;
+  var valorInicial=parseInt(el.textContent,10);if(isNaN(valorInicial))valorInicial=0;
+  if(valorInicial===valorFinal){el.textContent=valorFinal;return;}
+  var duracion=800,inicio=null;
+  function paso(ts){
+    if(inicio===null)inicio=ts;
+    var prog=Math.min((ts-inicio)/duracion,1);
+    var val=Math.round(valorInicial+(valorFinal-valorInicial)*(1-Math.pow(1-prog,3)));
+    el.textContent=val;
+    if(prog<1)requestAnimationFrame(paso);else el.textContent=valorFinal;
+  }
+  requestAnimationFrame(paso);
+}
 function rHeroStats(){
   var activos=DATA.players.filter(function(p){return !p.retirado;}).length;
   var pendientes=DATA.matches.length;
   var jugados=DATA.results.length;
   var series={};DATA.players.forEach(function(p){series[p.serie]=true;});
   var nSeries=Object.keys(series).length;
-  var elSp=document.getElementById("sp");if(elSp)elSp.textContent=activos;
-  var elSm=document.getElementById("sm");if(elSm)elSm.textContent=pendientes;
-  var elSs=document.getElementById("ss");if(elSs)elSs.textContent=nSeries;
-  var elSr=document.getElementById("sr");if(elSr)elSr.textContent=jugados;
+  animarContador(document.getElementById("sp"),activos);
+  animarContador(document.getElementById("sm"),pendientes);
+  animarContador(document.getElementById("ss"),nSeries);
+  animarContador(document.getElementById("sr"),jugados);
   var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - Escalerilla 2026 - "+activos+" jugadores activos - "+jugados+" partidos jugados";
   var elHm=document.getElementById("heroMascotImg");
   if(elHm){elHm.src="jugadores/big-3.PNG";elHm.style.display="block";}
   rJugadorDelMes();
+  construirTickerHero();
 }
 
 var perfilInicialRenderizado=false;
