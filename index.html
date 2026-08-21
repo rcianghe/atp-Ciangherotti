@@ -172,7 +172,7 @@ section{padding:4rem 1.5rem}
    el contenedor -50% de su ancho total: como las dos copias son
    identicas, al llegar a -50% se ve exactamente igual que al empezar, asi
    el loop no se nota (tecnica estandar de marquee sin cortes). */
-.hticker{position:relative;z-index:0;display:flex;align-items:center;gap:.7rem;width:100%;max-width:520px;margin:-1.6rem auto 0;padding:.55rem .9rem;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
+.hticker{position:relative;z-index:0;display:flex;align-items:center;gap:.7rem;width:100%;max-width:520px;margin:.8rem auto 0;padding:.55rem .9rem;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
 @supports((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .hticker{backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
 }
@@ -195,11 +195,11 @@ section{padding:4rem 1.5rem}
 .heroMascotWrap{position:relative;z-index:2;display:flex;justify-content:center}
 .heroMascotWrap::before{content:"";position:absolute;left:50%;top:8%;transform:translateX(-50%);width:92%;max-width:420px;height:82%;background:radial-gradient(ellipse at center,rgba(91,191,42,.2) 0%,rgba(91,191,42,.07) 45%,transparent 72%);filter:blur(6px);pointer-events:none;z-index:0}
 .heroMascotWrap::after{content:"";position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);width:60%;max-width:210px;height:20px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.55) 0%,rgba(0,0,0,.22) 55%,transparent 75%);filter:blur(2px);pointer-events:none;z-index:0}
-.heroMascot{display:block;margin:.4rem auto -.6rem;max-height:280px;width:auto;position:relative;z-index:1;
+.heroMascot{display:block;margin:.4rem auto 0;max-height:280px;width:auto;position:relative;z-index:1;
   animation:fxIn .9s cubic-bezier(.2,.9,.3,1) both, fxBreathe 4.5s ease-in-out .9s infinite, fxGlow 4.5s ease-in-out .9s infinite;
   transition:transform .35s ease}
 .heroMascot:hover{transform:rotate(-3deg) translateY(-8px) scale(1.04)}
-@media (max-width:480px){.heroMascot{max-height:195px}}
+@media (max-width:480px){.heroMascot{max-height:195px}.hticker{margin-top:.5rem}}
 .pav.foto{padding:0;overflow:hidden;background:var(--ng);animation:fxIn .7s ease-out both, fxRingPulse 3s ease-in-out .7s infinite}
 .pav.foto img{width:100%;height:100%;object-fit:cover;object-position:top center;animation:fxBreathe 5s ease-in-out infinite}
 .pherowrap{position:relative}
