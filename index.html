@@ -1734,8 +1734,9 @@ var PRODS=[
 var PUNTOS = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0,bonoTodosGanados:500,bonoTodosJugados:150,bonoBagelBagel:100};
 // Tamaño de fixture por serie (partidos totales de la temporada), usado
 // para los bonos de "todos jugados"/"todos ganados" en calcularRanking().
-// Se actualiza con lo que llega de la hoja Config via Apps Script, y se
-// reutiliza cuando se recalcula el ranking con datos de Supabase.
+// Se actualiza desde configuracion_sitio (clave "fixture_size") via
+// cargarFixtureSizeSupabase(), y se reutiliza cuando se recalcula el
+// ranking con datos de Supabase.
 var FIXTURE_SIZE_ACTUAL={A:9,B:9,C:22};
 
 function numSets(m){var n=0;if(m.set1)n++;if(m.set2)n++;if(m.set3)n++;return n;}
@@ -2011,15 +2012,14 @@ function rJugadorDelMes(){
 }
 
 // ============================================================
-// JUGADORES Y RESULTADOS DESDE SUPABASE
+// JUGADORES, RESULTADOS Y FIXTURE DESDE SUPABASE
 // ============================================================
-// Reemplaza DATA.players/DATA.results (que hasta ahora venian de
-// Apps Script/Google Sheets via transformLiveData) por datos leidos
-// directo de las tablas "jugadores" y "resultados" de Supabase, ya
-// migradas. Mismo patron de respaldo que getTitulos(): si Supabase
-// no responde, NO se toca DATA (se queda con lo ultimo que tenia,
-// sea el respaldo estatico embebido o el ultimo dato de Sheets), asi
-// nunca se rompe la pantalla por un fallo de red puntual.
+// DATA.players/DATA.results/DATA.matches se leen directo de las
+// tablas "jugadores" y "resultados" de Supabase (fixture pendiente
+// = filas de "resultados" con ganador_id en null). Mismo patron de
+// respaldo que getTitulos(): si Supabase no responde, NO se toca
+// DATA (se queda con el respaldo estatico embebido), asi nunca se
+// rompe la pantalla por un fallo de red puntual.
 //
 // El calculo de puntos/ranking se hace con la MISMA funcion
 // calcularRanking() de siempre, para que insignias, rachas,
@@ -2553,7 +2553,6 @@ async function cargarTorneosInternos(){
 }
 
 var currentProfileName=null; // jugador actualmente mostrado en la seccion Perfil (evita que el auto-refresh lo resetee al #1 del ranking)
-var liveRefreshBusy=false;
 var splashOculto=false;
 function ocultarSplash(){
   if(splashOculto)return;
@@ -2561,6 +2560,9 @@ function ocultarSplash(){
   var sp=document.getElementById('splash');
   if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},400);}
 }
+// Refresco automatico: reconsulta Supabase cada 5 min mientras la pestana este visible
+// (respaldo por si un canal de Realtime se desconecta), asi los cambios se reflejan
+// solos sin necesidad de recargar (F5).
 var LIVE_REFRESH_MS=300000;
 function startLiveRefresh(){
   setInterval(function(){
@@ -3608,7 +3610,7 @@ var FICHA_OPCIONES={
   superficie:["Cancha dura","Polvo de ladrillo","Cesped","Sintetica rapida","Sin preferencia"],
   golpe:["Drive","Reves a una mano","Reves a dos manos","Saque","Volea","Globo","Golpe cortado","Drop Shot","Slice"]
 };
-var SERVER_FICHAS={}; // se llena en transformLiveData() con lo que devuelve doGet
+var SERVER_FICHAS={}; // se llena en cargarFichasSupabase() con lo que devuelve la tabla fichas_tecnicas
 var fichaEditando=null; // nombre del jugador cuya ficha esta en modo edicion
 var fichaGuardando=false;
 var liveEditando=null; // id del desafio cuyo link en vivo se esta editando
