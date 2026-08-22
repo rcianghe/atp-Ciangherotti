@@ -153,6 +153,7 @@ section{padding:4rem 1.5rem}
 .hstBody{min-width:0}
 .hstCard .hsn{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--bl);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:1px;text-shadow:0 0 8px color-mix(in srgb,var(--accent) 55%,transparent)}
 .hstCard .hsl{font-family:'Barlow Condensed',sans-serif;font-size:.56rem;font-weight:600;letter-spacing:1.3px;text-transform:uppercase;color:var(--gl);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hstCard .hsl.hsl-days{white-space:normal;line-height:1.15;letter-spacing:.8px;font-size:.52rem;overflow:visible;text-overflow:clip}
 .hstSeriesDots{display:flex;gap:.3rem;margin-top:.3rem}
 .hstSeriesDots span{width:7px;height:7px;border-radius:50%;display:inline-block}
 .hst-blue{--accent:var(--az)}
@@ -1028,8 +1029,8 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
               <div class="hstBody"><div class="hsn" id="sp">37</div><div class="hsl">Competidores</div></div>
             </div>
             <div class="hstCard hst-amber">
-              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
-              <div class="hstBody"><div class="hsn" id="sm">83</div><div class="hsl">Game Pendientes</div></div>
+              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd"/></svg></div>
+              <div class="hstBody"><div class="hsn" id="sm">45</div><div class="hsl hsl-days">Dias de Competencia</div></div>
             </div>
             <div class="hstCard hst-red">
               <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
@@ -2770,14 +2771,18 @@ function animarContador(el,valorFinal){
   }
   requestAnimationFrame(paso);
 }
+var TEMPORADA_INICIO=new Date(2026,0,1); // ajustar a la fecha real de inicio de la temporada
+function diasDeCompetencia(){
+  var ms=Date.now()-TEMPORADA_INICIO.getTime();
+  return Math.max(0,Math.floor(ms/86400000)+1);
+}
 function rHeroStats(){
   var activos=DATA.players.filter(function(p){return !p.retirado;}).length;
-  var pendientes=DATA.matches.length;
   var jugados=DATA.results.length;
   var series={};DATA.players.forEach(function(p){series[p.serie]=true;});
   var nSeries=Object.keys(series).length;
   animarContador(document.getElementById("sp"),activos);
-  animarContador(document.getElementById("sm"),pendientes);
+  animarContador(document.getElementById("sm"),diasDeCompetencia());
   animarContador(document.getElementById("ss"),nSeries);
   animarContador(document.getElementById("sr"),jugados);
   var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - Escalerilla 2026 - "+activos+" jugadores activos - "+jugados+" partidos jugados";
