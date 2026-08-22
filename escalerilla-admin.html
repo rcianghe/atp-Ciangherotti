@@ -66,31 +66,6 @@ a{color:var(--accent-dark);}
 .sidebar-foot b{color:var(--sidebar-ink);display:block;font-size:12.5px;margin-bottom:6px;}
 .sidebar-foot button{margin-top:8px;width:100%;}
 
-.main{overflow-y:auto;height:100vh;}
-.topbar{position:sticky;top:0;background:rgba(246,244,238,.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:18px 30px;display:flex;align-items:center;justify-content:space-between;z-index:5;}
-.topbar h2{font-family:var(--display);font-size:21px;margin:0;}
-.topbar p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);}
-.topbar-actions{display:flex;gap:10px;align-items:center;}
-.search-box{position:relative;}
-.search-box input{width:220px;padding:8px 12px 8px 30px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;}
-.search-box::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:14px;}
-.content{padding:24px 30px 60px;}
-
-/* ---------- Stat cards ---------- */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:26px;}
-.stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
-.stat-card .n{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;}
-.stat-card .l{font-size:12px;color:var(--ink-soft);margin-top:6px;}
-.stat-card.accent{background:var(--sidebar);border-color:var(--sidebar);}
-.stat-card.accent .n{color:var(--accent);}
-.stat-card.accent .l{color:var(--sidebar-ink-dim);}
-
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;}
-.panel-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-.panel-head h3{font-family:var(--display);font-size:15px;margin:0;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-@media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
-
 /* ---------- Mobile: menu hamburguesa (oculto en escritorio) ---------- */
 .menu-btn{display:none;background:transparent;border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:17px;line-height:1;color:var(--ink);flex:none;}
 .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(10,16,12,.55);z-index:55;}
@@ -122,6 +97,31 @@ a{color:var(--accent-dark);}
   .modal-head{padding:14px 16px;}
   .modal-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));position:sticky;bottom:0;background:#fff;}
 }
+
+.main{overflow-y:auto;height:100vh;}
+.topbar{position:sticky;top:0;background:rgba(246,244,238,.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:18px 30px;display:flex;align-items:center;justify-content:space-between;z-index:5;}
+.topbar h2{font-family:var(--display);font-size:21px;margin:0;}
+.topbar p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+.search-box{position:relative;}
+.search-box input{width:220px;padding:8px 12px 8px 30px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;}
+.search-box::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:14px;}
+.content{padding:24px 30px 60px;}
+
+/* ---------- Stat cards ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:26px;}
+.stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+.stat-card .n{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;}
+.stat-card .l{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+.stat-card.accent{background:var(--sidebar);border-color:var(--sidebar);}
+.stat-card.accent .n{color:var(--accent);}
+.stat-card.accent .l{color:var(--sidebar-ink-dim);}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.panel-head h3{font-family:var(--display);font-size:15px;margin:0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
 
 /* ---------- Table ---------- */
 .table-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
@@ -192,16 +192,50 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
     </div>
     <div class="login-error" id="loginError"></div>
-    <div class="field">
-      <label>Correo</label>
-      <input type="email" id="loginEmail" placeholder="admin@tuclub.cl" autocomplete="username">
+
+    <!-- ---- Formulario de login ---- -->
+    <div id="loginForm">
+      <div class="field">
+        <label>Correo</label>
+        <input type="email" id="loginEmail" placeholder="admin@tuclub.cl" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Ingresar</button>
+      <p style="text-align:center;margin:14px 0 0;">
+        <button type="button" class="subtle-link" onclick="showForgotForm()">¿Olvidaste tu contraseña?</button>
+      </p>
+      <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin:14px 0 0;">Solo cuentas registradas en la tabla <code>admins</code> pueden entrar.</p>
     </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+
+    <!-- ---- Formulario de recuperación (pedir link) ---- -->
+    <div id="forgotForm" style="display:none;">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;">Escribe tu correo y te enviamos un link para crear una nueva contraseña.</p>
+      <div class="field">
+        <label>Correo</label>
+        <input type="email" id="forgotEmail" placeholder="admin@tuclub.cl" autocomplete="username">
+      </div>
+      <button class="btn btn-primary btn-block" id="forgotBtn" onclick="doSendReset()">Enviar link de recuperación</button>
+      <p style="text-align:center;margin:14px 0 0;">
+        <button type="button" class="subtle-link" onclick="showLoginForm()">← Volver a ingresar</button>
+      </p>
     </div>
-    <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Ingresar</button>
-    <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;">Solo cuentas registradas en la tabla <code>admins</code> pueden entrar.</p>
+
+    <!-- ---- Formulario para definir nueva contraseña (llega desde el link del correo) ---- -->
+    <div id="resetForm" style="display:none;">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;">Define tu nueva contraseña para <b id="resetEmailLabel"></b>.</p>
+      <div class="field">
+        <label>Nueva contraseña</label>
+        <input type="password" id="resetPass1" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Repetir contraseña</label>
+        <input type="password" id="resetPass2" placeholder="Repite la contraseña" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary btn-block" id="resetBtn" onclick="doUpdatePassword()">Guardar nueva contraseña</button>
+    </div>
   </div>
 </div>
 
@@ -650,6 +684,76 @@ function bracketRowActions(r){
 /* =========================================================================
    AUTH
    ========================================================================= */
+/* ---- Navegación entre formularios de la pantalla de login ---- */
+function hideLoginError(){ const e=document.getElementById('loginError'); e.style.display='none'; }
+function showLoginForm(){
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('forgotForm').style.display='none';
+  document.getElementById('resetForm').style.display='none';
+  hideLoginError();
+}
+function showForgotForm(){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('forgotForm').style.display='block';
+  document.getElementById('resetForm').style.display='none';
+  hideLoginError();
+  const prefill = document.getElementById('loginEmail').value.trim();
+  if(prefill) document.getElementById('forgotEmail').value = prefill;
+}
+function showResetForm(email){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('forgotForm').style.display='none';
+  document.getElementById('resetForm').style.display='block';
+  document.getElementById('resetEmailLabel').textContent = email || 'tu cuenta';
+  hideLoginError();
+}
+
+/* ---- Enviar link de recuperación ---- */
+async function doSendReset(){
+  const email = document.getElementById('forgotEmail').value.trim();
+  const errBox = document.getElementById('loginError');
+  errBox.style.display='none';
+  if(!email){ errBox.textContent='Ingresa tu correo.'; errBox.style.display='block'; return; }
+  const btn = document.getElementById('forgotBtn');
+  btn.textContent='Enviando…'; btn.disabled=true;
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  btn.textContent='Enviar link de recuperación'; btn.disabled=false;
+  if(error){ errBox.textContent = error.message; errBox.style.display='block'; return; }
+  toast('Te enviamos un correo con el link para crear tu nueva contraseña.');
+  showLoginForm();
+}
+
+/* ---- Guardar nueva contraseña (después de abrir el link del correo) ---- */
+async function doUpdatePassword(){
+  const p1 = document.getElementById('resetPass1').value;
+  const p2 = document.getElementById('resetPass2').value;
+  const errBox = document.getElementById('loginError');
+  errBox.style.display='none';
+  if(!p1 || p1.length<6){ errBox.textContent='La contraseña debe tener al menos 6 caracteres.'; errBox.style.display='block'; return; }
+  if(p1!==p2){ errBox.textContent='Las contraseñas no coinciden.'; errBox.style.display='block'; return; }
+  const btn = document.getElementById('resetBtn');
+  btn.textContent='Guardando…'; btn.disabled=true;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  btn.textContent='Guardar nueva contraseña'; btn.disabled=false;
+  if(error){ errBox.textContent = error.message; errBox.style.display='block'; return; }
+  await sb.auth.signOut();
+  window.history.replaceState(null, '', window.location.pathname);
+  toast('Contraseña actualizada. Ya puedes ingresar con ella.');
+  document.getElementById('loginEmail').value = document.getElementById('resetEmailLabel').textContent;
+  document.getElementById('loginPass').value='';
+  showLoginForm();
+}
+
+/* ---- Detectar que llegamos desde el link de recuperación del correo ---- */
+sb.auth.onAuthStateChange((event, session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('app').classList.remove('show');
+    showResetForm(session?.user?.email);
+  }
+});
+
 async function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
@@ -738,10 +842,10 @@ function setActiveNav(view){
 // Menú lateral en celular: se abre con el botón ☰ y se cierra solo al
 // elegir una sección o al tocar fuera de él (backdrop oscuro).
 function toggleSidebar(force){
-  const sb = document.querySelector('.sidebar');
+  const sidebarEl = document.querySelector('.sidebar');
   const bd = document.getElementById('sidebarBackdrop');
-  const open = force!==undefined ? force : !sb.classList.contains('open');
-  sb.classList.toggle('open', open);
+  const open = force!==undefined ? force : !sidebarEl.classList.contains('open');
+  sidebarEl.classList.toggle('open', open);
   bd.classList.toggle('show', open);
 }
 
@@ -1020,6 +1124,8 @@ function toast(msg, isError=false){
    INIT
    ========================================================================= */
 document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('forgotEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') doSendReset(); });
+document.getElementById('resetPass2').addEventListener('keydown', e=>{ if(e.key==='Enter') doUpdatePassword(); });
 checkExistingSession();
 </script>
 </body>
