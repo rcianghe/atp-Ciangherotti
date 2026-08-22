@@ -117,31 +117,9 @@ section{padding:4rem 1.5rem}
 /* Desde tablet/escritorio: el titulo gigante se achica y pasa a ser
    una etiqueta compacta arriba a la izquierda, alineada con el logo
    del header. En celular queda igual que antes (no se toca). */
-@media(min-width:768px){
-  .hc{padding-top:.9rem;padding-bottom:1.2rem}
-  .htbox{flex-direction:column;align-items:flex-start;text-align:left;gap:.3rem;margin-bottom:.8rem}
-  .htbox .htag{margin-bottom:0}
-  .ht{font-size:clamp(1.05rem,2.4vw,1.55rem);letter-spacing:.5px;line-height:1.05;-webkit-text-stroke:1px var(--tvd);text-stroke:1px var(--tvd);text-shadow:2px 2px 0 rgba(0,0,0,.4)}
-  .hstats{margin-top:0;gap:.4rem}
-  /* Tarjetas en abanico, superpuestas y pegadas arriba de la cabeza
-     de los 3 jugadores, como en la referencia. */
-  .hstGrid{display:flex;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin-bottom:-46px;position:relative;z-index:3}
-  .hstCard{width:126px;flex:none;padding:.65rem .6rem;gap:.45rem;margin:0 -16px;transition:transform .25s ease}
-  .hstCard:nth-child(1){transform:rotate(-11deg) translateY(20px)}
-  .hstCard:nth-child(2){transform:rotate(-4deg) translateY(0px);z-index:1}
-  .hstCard:nth-child(3){transform:rotate(4deg) translateY(0px);z-index:1}
-  .hstCard:nth-child(4){transform:rotate(11deg) translateY(20px)}
-  .hstCard:hover{transform:translateY(-6px) scale(1.05) rotate(0deg);z-index:5}
-  .hstCard .hsn{font-size:1.5rem}
-  .hstCard .hsl{font-size:.52rem}
-  .hstIcwrap{width:29px;height:29px}
-  .hstIcwrap svg{width:15px;height:15px}
-  .heroMascotWrap{margin-top:0}
-  .heroMascot{max-height:255px;margin-top:0}
-  .hticker{margin-top:0}
-  .hjm{margin-top:.9rem}
-  .hcta{margin-top:.9rem}
-}
+/* (El diseño de escritorio se define al final de la hoja de estilos,
+   en @media(min-width:1024px), para que gane correctamente sobre las
+   reglas base de las tarjetas — ver el final de este bloque <style>.) */
 
 
 .ti{position:relative;display:inline-block}
@@ -952,6 +930,61 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .sh .st{color:#111}
   a[href]:after{content:""} /* evita que Chrome imprima las URLs completas al lado de cada link */
 }
+
+/* ==========================================================================
+   HERO — VERSION ESCRITORIO (>=1024px)
+   Colocado al FINAL de la hoja de estilos a proposito: en CSS, entre dos
+   reglas con la misma especificidad, gana la que aparece mas abajo en el
+   archivo, sin importar si esta dentro de un @media o no. Como las reglas
+   base de .hstGrid/.hstCard/etc. viven mas arriba, cualquier ajuste de
+   escritorio puesto antes de ellas terminaba siendo ignorado. Por eso todo
+   el ajuste de escritorio vive aqui, al final, para que gane siempre.
+   La version de celular (todo lo de arriba) queda intacta.
+   ========================================================================== */
+@media(min-width:1024px){
+  /* Que el contenido arranque arriba (no centrado) para poder calcular
+     con precision cuanto mide "lo de arriba de la pantalla" */
+  #hero{justify-content:flex-start}
+  .hc{padding-top:.9rem;padding-bottom:1.2rem}
+
+  /* Titulo compacto, chico, alineado a la izquierda debajo del logo */
+  .htbox{flex-direction:column;align-items:flex-start;text-align:left;gap:.3rem;margin-bottom:0}
+  .htbox .htag{margin-bottom:0}
+  .ht{font-size:clamp(1.05rem,2.4vw,1.55rem);letter-spacing:.5px;line-height:1.05;-webkit-text-stroke:1px var(--tvd);text-stroke:1px var(--tvd);text-shadow:2px 2px 0 rgba(0,0,0,.4)}
+
+  /* heroTop agrupa titulo+tarjetas+foto (arriba) y el ticker (abajo) y
+     ocupa exactamente el alto disponible de la pantalla (100vh menos el
+     header y el padding del hero), asi el ticker queda anclado abajo del
+     todo y no aparece scroll al cargar la pagina. */
+  .heroTop{height:calc(100vh - 58px - 2.1rem);display:flex;flex-direction:column;justify-content:space-between}
+  .heroTopStack{display:flex;flex-direction:column}
+
+  .hstats{margin-top:0;gap:.4rem}
+
+  /* Las 4 tarjetas en una sola fila horizontal, en abanico, pegadas
+     justo arriba de la cabeza de los 3 jugadores */
+  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -46px;position:relative;z-index:3}
+  .hstCard{width:126px;flex:none;padding:.65rem .6rem;gap:.45rem;margin:0 -16px;transition:transform .25s ease}
+  .hstCard:nth-child(1){transform:rotate(-9deg) translateY(20px)}
+  .hstCard:nth-child(2){transform:rotate(-3deg) translateY(0);z-index:1}
+  .hstCard:nth-child(3){transform:rotate(3deg) translateY(0);z-index:1}
+  .hstCard:nth-child(4){transform:rotate(9deg) translateY(20px)}
+  .hstCard:hover{transform:translateY(-6px) scale(1.05) rotate(0deg);z-index:5}
+  .hstCard .hsn{font-size:1.5rem}
+  .hstCard .hsl{font-size:.52rem}
+  .hstIcwrap{width:29px;height:29px}
+  .hstIcwrap svg{width:15px;height:15px}
+
+  .heroMascotWrap{margin-top:0}
+  .heroMascot{max-height:min(230px,22vh);margin-top:0}
+
+  /* Ticker anclado abajo del todo (ultimo elemento de heroTop, empujado
+     al fondo por el justify-content:space-between de .heroTop) */
+  .hticker{margin-top:0}
+
+  .hjm{margin-top:1.4rem}
+  .hcta{margin-top:1.3rem}
+}
 </style>
 </head>
 <body>
@@ -981,40 +1014,44 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <section id="hero">
   <div class="hbg"></div><div class="hl"></div><div class="htex"></div><div class="hd"></div>
   <div class="hc">
-    <div class="htbox">
-      <div class="htag">Temporada 2026</div>
-      <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y">QUILICURA</span></h1>
-    </div>
-    <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
-      <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
-      <div class="hstGrid">
-        <div class="hstCard hst-blue">
-          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg></div>
-          <div class="hstBody"><div class="hsn" id="sp">37</div><div class="hsl">Competidores</div></div>
+    <div class="heroTop">
+      <div class="heroTopStack">
+        <div class="htbox">
+          <div class="htag">Temporada 2026</div>
+          <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y">QUILICURA</span></h1>
         </div>
-        <div class="hstCard hst-amber">
-          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
-          <div class="hstBody"><div class="hsn" id="sm">83</div><div class="hsl">Game Pendientes</div></div>
+        <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
+          <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
+          <div class="hstGrid">
+            <div class="hstCard hst-blue">
+              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg></div>
+              <div class="hstBody"><div class="hsn" id="sp">37</div><div class="hsl">Competidores</div></div>
+            </div>
+            <div class="hstCard hst-amber">
+              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
+              <div class="hstBody"><div class="hsn" id="sm">83</div><div class="hsl">Game Pendientes</div></div>
+            </div>
+            <div class="hstCard hst-red">
+              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
+              <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div><div class="hstSeriesDots" aria-hidden="true"><span style="background:#e05a4a"></span><span style="background:#5a9ee0"></span><span style="background:#7ed44a"></span></div></div>
+            </div>
+            <div class="hstCard hst-green">
+              <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></div>
+              <div class="hstBody"><div class="hsn" id="sr">148</div><div class="hsl">Game Jugados</div></div>
+            </div>
+          </div>
         </div>
-        <div class="hstCard hst-red">
-          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
-          <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div><div class="hstSeriesDots" aria-hidden="true"><span style="background:#e05a4a"></span><span style="background:#5a9ee0"></span><span style="background:#7ed44a"></span></div></div>
-        </div>
-        <div class="hstCard hst-green">
-          <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></div>
-          <div class="hstBody"><div class="hsn" id="sr">148</div><div class="hsl">Game Jugados</div></div>
+        <div class="heroMascotWrap">
+          <img class="heroMascot" id="heroMascotImg" alt="Ricardo Ciangherotti" style="display:none">
         </div>
       </div>
-    </div>
-    <div class="heroMascotWrap">
-      <img class="heroMascot" id="heroMascotImg" alt="Ricardo Ciangherotti" style="display:none">
-    </div>
-    <div class="hticker" role="status" aria-label="Informacion en vivo del club">
-      <span class="hticker-live"><span class="hticker-dot" aria-hidden="true"></span>En vivo</span>
-      <div class="hticker-viewport">
-        <div class="hticker-track" id="hTickerTrack">
-          <span class="hticker-group" id="hTickerGroup1"></span>
-          <span class="hticker-group" id="hTickerGroup2" aria-hidden="true"></span>
+      <div class="hticker" role="status" aria-label="Informacion en vivo del club">
+        <span class="hticker-live"><span class="hticker-dot" aria-hidden="true"></span>En vivo</span>
+        <div class="hticker-viewport">
+          <div class="hticker-track" id="hTickerTrack">
+            <span class="hticker-group" id="hTickerGroup1"></span>
+            <span class="hticker-group" id="hTickerGroup2" aria-hidden="true"></span>
+          </div>
         </div>
       </div>
     </div>
