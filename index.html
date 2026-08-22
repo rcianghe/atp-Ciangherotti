@@ -942,8 +942,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
    La version de celular (todo lo de arriba) queda intacta.
    ========================================================================== */
 @media(min-width:1024px){
-  /* Que el contenido arranque arriba (no centrado) para poder calcular
-     con precision cuanto mide "lo de arriba de la pantalla" */
+  /* Que el contenido arranque arriba (no centrado), asi todo queda
+     agrupado en la parte superior de la pantalla en vez de repartirse
+     con espacios vacios. */
   #hero{justify-content:flex-start}
   .hc{padding-top:.9rem;padding-bottom:1.2rem}
 
@@ -952,38 +953,29 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .htbox .htag{margin-bottom:0}
   .ht{font-size:clamp(1.05rem,2.4vw,1.55rem);letter-spacing:.5px;line-height:1.05;-webkit-text-stroke:1px var(--tvd);text-stroke:1px var(--tvd);text-shadow:2px 2px 0 rgba(0,0,0,.4)}
 
-  /* heroTop agrupa titulo+tarjetas+foto (arriba) y el ticker (abajo) y
-     ocupa exactamente el alto disponible de la pantalla (100vh menos el
-     header y el padding del hero), asi el ticker queda anclado abajo del
-     todo y no aparece scroll al cargar la pagina. */
-  .heroTop{height:calc(100vh - 58px - 2.1rem);display:flex;flex-direction:column;justify-content:space-between}
-  .heroTopStack{display:flex;flex-direction:column}
-
   .hstats{margin-top:0;gap:.4rem}
 
-  /* Las 4 tarjetas en una sola fila horizontal, en abanico, pegadas
-     justo arriba de la cabeza de los 3 jugadores */
-  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -46px;position:relative;z-index:3}
-  .hstCard{width:126px;flex:none;padding:.65rem .6rem;gap:.45rem;margin:0 -16px;transition:transform .25s ease}
-  .hstCard:nth-child(1){transform:rotate(-9deg) translateY(20px)}
+  /* Las 4 tarjetas en una sola fila horizontal, en abanico suave,
+     pegadas arriba de la cabeza de los 3 jugadores. Superposicion
+     leve (no tapa los numeros). */
+  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -14px;position:relative;z-index:3}
+  .hstCard{width:118px;flex:none;padding:.6rem .55rem;gap:.4rem;margin:0 -4px;transition:transform .25s ease}
+  .hstCard:nth-child(1){transform:rotate(-8deg) translateY(10px)}
   .hstCard:nth-child(2){transform:rotate(-3deg) translateY(0);z-index:1}
   .hstCard:nth-child(3){transform:rotate(3deg) translateY(0);z-index:1}
-  .hstCard:nth-child(4){transform:rotate(9deg) translateY(20px)}
+  .hstCard:nth-child(4){transform:rotate(8deg) translateY(10px)}
   .hstCard:hover{transform:translateY(-6px) scale(1.05) rotate(0deg);z-index:5}
-  .hstCard .hsn{font-size:1.5rem}
-  .hstCard .hsl{font-size:.52rem}
-  .hstIcwrap{width:29px;height:29px}
-  .hstIcwrap svg{width:15px;height:15px}
+  .hstCard .hsn{font-size:1.4rem}
+  .hstCard .hsl{font-size:.5rem}
+  .hstIcwrap{width:27px;height:27px}
+  .hstIcwrap svg{width:14px;height:14px}
 
-  .heroMascotWrap{margin-top:0}
-  .heroMascot{max-height:min(230px,22vh);margin-top:0}
+  .heroMascotWrap{margin-top:.3rem}
+  .heroMascot{max-height:210px;margin-top:0}
 
-  /* Ticker anclado abajo del todo (ultimo elemento de heroTop, empujado
-     al fondo por el justify-content:space-between de .heroTop) */
-  .hticker{margin-top:0}
-
-  .hjm{margin-top:1.4rem}
-  .hcta{margin-top:1.3rem}
+  .hticker{margin-top:.6rem}
+  .hjm{margin-top:1.1rem}
+  .hcta{margin-top:1rem}
 }
 </style>
 </head>
