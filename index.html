@@ -210,14 +210,18 @@ section{padding:4rem 1.5rem}
 .hcta{display:flex;gap:.9rem;justify-content:center;margin-top:1.3rem;flex-wrap:wrap}
 .mprevia{margin-top:.7rem;padding:.65rem .85rem;background:rgba(212,230,10,.05);border-left:2px solid var(--am);border-radius:0 6px 6px 0;font-size:.76rem;line-height:1.45;color:var(--bl);font-style:italic}
 .mprevia b{font-style:normal;color:var(--am);font-weight:700}
-.hjm{display:none;flex-direction:column;align-items:center;gap:.35rem;margin:1rem auto 0;padding:.9rem 1.6rem;border:1px solid rgba(212,230,10,.35);border-radius:14px;background:rgba(212,230,10,.06);max-width:380px}
+.hjm{display:none;position:relative;overflow:hidden;align-items:stretch;margin:1.4rem auto 0;width:100%;max-width:640px;min-height:190px;border-radius:18px;border:1px solid rgba(212,230,10,.35);background:linear-gradient(135deg,rgba(20,20,20,.97),rgba(10,16,8,.97));box-shadow:0 20px 50px -22px rgba(0,0,0,.65),inset 0 0 40px rgba(91,191,42,.06);cursor:pointer}
 .hjm.show{display:flex}
+.hjmContent{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:1.3rem 1.5rem;position:relative;z-index:2;text-align:left}
+.hjmFotoWrap{position:relative;width:180px;flex:none;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.hjmFotoWrap::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 55% 35%,rgba(91,191,42,.4),transparent 72%)}
+.hjmFoto{position:relative;z-index:2;height:100%;max-height:220px;width:auto;object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));display:none}
 .hjmtop{display:flex;align-items:center;gap:.4rem}
-.hjmi{font-size:1rem;line-height:1}
-.hjmt{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl)}
-.hjmn{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.5px;color:var(--am);line-height:1.1;cursor:pointer;text-align:center}
-.hjmd{font-size:.68rem;letter-spacing:.5px;color:var(--v);font-weight:600}
-@media(max-width:520px){.hjm{max-width:88%;padding:.8rem 1.2rem}.hjmn{font-size:1.3rem}.hjmt{font-size:.56rem;letter-spacing:1.5px}.hjmd{font-size:.62rem}}
+.hjmi{font-size:1.1rem;line-height:1}
+.hjmt{font-family:'Barlow Condensed',sans-serif;font-size:.64rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gl)}
+.hjmn{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:.5px;color:var(--am);line-height:1.05;cursor:pointer}
+.hjmd{font-size:.72rem;letter-spacing:.4px;color:var(--v);font-weight:600}
+@media(max-width:640px){.hjm{flex-direction:column-reverse;max-width:90%;min-height:0}.hjmFotoWrap{width:100%;height:160px}.hjmContent{text-align:center;align-items:center;padding:1.1rem 1.2rem}.hjmn{font-size:1.7rem}.hjmt{font-size:.58rem;letter-spacing:1.5px}.hjmd{font-size:.66rem}}
 .bp{background:var(--v);color:var(--ng);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.75rem 1.7rem;border:none;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
 .bp:hover{background:var(--vl);transform:translateY(-2px)}
 .bo{border:1px solid rgba(245,245,240,.3);color:var(--bl);background:transparent;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:.75rem 1.7rem;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
@@ -982,9 +986,12 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       </div>
     </div>
     <div class="hjm" id="hjm" onclick="showProfile(document.getElementById('hjm').dataset.nombre,true)">
-      <span class="hjmtop"><span class="hjmi">🔥</span><span class="hjmt">Jugador del Mes</span></span>
-      <span class="hjmn" id="hjmNombre"></span>
-      <span class="hjmd" id="hjmDelta"></span>
+      <div class="hjmContent">
+        <span class="hjmtop"><span class="hjmi">🔥</span><span class="hjmt">Jugador del Mes</span></span>
+        <span class="hjmn" id="hjmNombre"></span>
+        <span class="hjmd" id="hjmDelta"></span>
+      </div>
+      <div class="hjmFotoWrap"><img class="hjmFoto" id="hjmFoto" alt=""></div>
     </div>
     <div class="hcta">
       <a href="#ranking" class="bp">Ver Ranking</a>
@@ -2007,6 +2014,22 @@ function rJugadorDelMes(){
   if(!jm){el.classList.remove('show');return;}
   document.getElementById('hjmNombre').textContent=jm.nombre;
   document.getElementById('hjmDelta').textContent=fraseDestacado(jm.nombre)+' - '+jm.cantidad+(jm.cantidad===1?' victoria seguida':' victorias seguidas')+' - Serie '+jm.serie;
+  // Foto de cuerpo: se busca en FOTOS_JUGADORES por nombre, igual que el
+  // resto del sitio (ranking, perfil). Si el jugador destacado no tiene
+  // foto cargada, simplemente no se muestra (la tarjeta sigue funcionando
+  // solo con texto, como antes).
+  var fotoEl=document.getElementById('hjmFoto');
+  if(fotoEl){
+    var fotoData=FOTOS_JUGADORES[jm.nombre];
+    if(fotoData&&fotoData.cuerpo){
+      fotoEl.src=fotoData.cuerpo;
+      fotoEl.alt=jm.nombre;
+      fotoEl.style.display='block';
+    }else{
+      fotoEl.removeAttribute('src');
+      fotoEl.style.display='none';
+    }
+  }
   el.dataset.nombre=jm.nombre;
   el.classList.add('show');
 }
