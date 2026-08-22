@@ -933,6 +933,44 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 }
 
 /* ==========================================================================
+   HERO — MOVIL Y TABLET (<1024px)
+   Reordena visualmente el hero SIN tocar el HTML (asi el JS que rellena
+   estadisticas, ticker, etc. sigue apuntando a los mismos IDs): titulo
+   arriba, foto de los 3 jugadores al centro, tarjetas compactas debajo
+   en grilla 2x2 (nunca encima de la foto), y el resto (ticker, jugador
+   del mes, CTA) apilado despues, comprimido para que el CTA quede
+   visible sin scroll excesivo. Va antes del bloque de escritorio para
+   que este ultimo siga ganando en pantallas grandes. */
+@media(max-width:1023px){
+  #hero{padding-top:70px;padding-bottom:1.6rem}
+  .hc{padding:.6rem 1.1rem 0;width:100%}
+  .heroTopStack{display:flex;flex-direction:column;align-items:center;width:100%}
+  .htbox{order:1}
+  .htag{margin-bottom:1rem}
+  .ht{font-size:clamp(2.5rem,13vw,4.4rem);line-height:1.04}
+  .heroMascotWrap{order:2;margin-top:.3rem}
+  .heroMascot{max-height:min(260px,34vh)}
+  .hstats{order:3;margin-top:.2rem;width:100%}
+  .hstGrid{margin-left:auto;margin-right:auto}
+  .hticker{margin-top:.9rem}
+  .hjm{margin-top:1rem;max-width:94%}
+  .hcta{margin-top:1rem}
+}
+@media(max-width:480px){
+  header{padding:0 1rem;height:54px}
+  .lc{width:36px;height:36px}
+  .lt{font-size:.82rem}
+  .lt span{font-size:.7rem}
+  #hero{padding-top:64px}
+  .heroMascot{max-height:min(215px,30vh)}
+  .hstGrid{max-width:290px;gap:.5rem}
+  .hstCard{padding:.65rem .6rem;gap:.5rem}
+  .hstIcwrap{width:31px;height:31px}
+  .hstIcwrap svg{width:16px;height:16px}
+  .hstCard .hsn{font-size:1.5rem}
+}
+
+/* ==========================================================================
    HERO — VERSION ESCRITORIO (>=1024px)
    Colocado al FINAL de la hoja de estilos a proposito: en CSS, entre dos
    reglas con la misma especificidad, gana la que aparece mas abajo en el
