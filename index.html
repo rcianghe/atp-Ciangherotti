@@ -962,22 +962,27 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
   .hstats{margin-top:0;gap:.4rem}
 
-  /* Las 4 tarjetas en una sola fila horizontal, en abanico, pegadas
-     justo arriba de la cabeza de los 3 jugadores */
-  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -46px;position:relative;z-index:3}
-  .hstCard{width:126px;flex:none;padding:.65rem .6rem;gap:.45rem;margin:0 -16px;transition:transform .25s ease}
-  .hstCard:nth-child(1){transform:rotate(-9deg) translateY(20px)}
-  .hstCard:nth-child(2){transform:rotate(-3deg) translateY(0);z-index:1}
-  .hstCard:nth-child(3){transform:rotate(3deg) translateY(0);z-index:1}
-  .hstCard:nth-child(4){transform:rotate(9deg) translateY(20px)}
+  /* Las 4 tarjetas en abanico, ABIERTAS alrededor de la cabeza de los
+     jugadores (arco que las enmarca por arriba), en vez de caer encima
+     de la foto: por eso el margen inferior ahora es positivo (deja aire
+     entre el abanico y las cabezas) y el arco es mas ancho y curvo
+     (rotacion + traslacion mayor en las tarjetas de las puntas). Todo en
+     clamp()/vh para que se reacomode segun el alto real del hero y no
+     se corte en pantallas de notebook mas bajas. */
+  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto clamp(10px,2.2vh,22px);position:relative;z-index:3}
+  .hstCard{width:clamp(96px,9vw,126px);flex:none;padding:.6rem .55rem;gap:.4rem;margin:0 clamp(-14px,-1.1vw,-10px);transition:transform .25s ease}
+  .hstCard:nth-child(1){transform:rotate(-15deg) translate(10px,30px)}
+  .hstCard:nth-child(2){transform:rotate(-5deg) translateY(6px);z-index:1}
+  .hstCard:nth-child(3){transform:rotate(5deg) translateY(6px);z-index:1}
+  .hstCard:nth-child(4){transform:rotate(15deg) translate(-10px,30px)}
   .hstCard:hover{transform:translateY(-6px) scale(1.05) rotate(0deg);z-index:5}
-  .hstCard .hsn{font-size:1.5rem}
-  .hstCard .hsl{font-size:.52rem}
-  .hstIcwrap{width:29px;height:29px}
-  .hstIcwrap svg{width:15px;height:15px}
+  .hstCard .hsn{font-size:1.4rem}
+  .hstCard .hsl{font-size:.5rem}
+  .hstIcwrap{width:27px;height:27px}
+  .hstIcwrap svg{width:14px;height:14px}
 
   .heroMascotWrap{margin-top:0}
-  .heroMascot{max-height:min(230px,22vh);margin-top:0}
+  .heroMascot{max-height:min(220px,20vh);margin-top:0}
 
   /* Ticker anclado abajo del todo (ultimo elemento de heroTop, empujado
      al fondo por el justify-content:space-between de .heroTop) */
