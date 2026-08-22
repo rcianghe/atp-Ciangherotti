@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escalerilla · Panel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#F6F4EE; --panel:#FFFFFF; --ink:#17231C; --ink-soft:#5B6B60; --line:#E1DDCE;
+  --sidebar:#0E1A13; --sidebar-line:#213A28; --sidebar-ink:#B9C9BB; --sidebar-ink-dim:#6F8874;
+  --accent:#5BBF2A; --accent-dark:#3F8F1B; --accent-soft:#E7F5DC;
+  --clay:#B65332; --clay-soft:#F6E4DC; --danger:#C0392B; --warn:#B8860B; --warn-soft:#FBF0D9;
+  --radius:10px; --mono:'JetBrains Mono',ui-monospace,monospace; --display:'Space Grotesk',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--body);background:var(--bg);color:var(--ink);}
+::selection{background:var(--accent-soft);}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+a{color:var(--accent-dark);}
+
+/* ---------- Login ---------- */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:
+  radial-gradient(circle at 20% 20%, #16281C 0%, #0E1A13 55%, #0A130E 100%);}
+.login-card{width:380px;background:var(--panel);border-radius:16px;padding:36px 32px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);}
+.login-brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+.rung-mark{width:34px;height:34px;flex:none;}
+.login-brand h1{font-family:var(--display);font-size:19px;margin:0;letter-spacing:.2px;}
+.login-brand span{display:block;font-size:11px;color:var(--ink-soft);letter-spacing:.14em;text-transform:uppercase;margin-top:1px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.02em;}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:#FBFAF6;color:var(--ink);transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:8px;padding:10px 16px;font-size:13.5px;font-weight:600;transition:filter .12s,transform .05s;}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--accent-dark);color:#fff;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-block{width:100%;padding:11px 16px;}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1.5px solid var(--line);}
+.btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink);}
+.btn-danger{background:#FCEDEA;color:var(--danger);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-sm{padding:6px 10px;font-size:12.5px;border-radius:6px;}
+.login-error{background:var(--clay-soft);color:var(--clay);font-size:12.5px;padding:9px 11px;border-radius:7px;margin-bottom:14px;display:none;}
+
+/* ---------- App shell ---------- */
+#app{display:none;min-height:100vh;grid-template-columns:238px 1fr;grid-template-rows:100vh;}
+#app.show{display:grid;}
+.sidebar{background:var(--sidebar);color:var(--sidebar-ink);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-head{padding:22px 20px 16px;border-bottom:1px solid var(--sidebar-line);display:flex;gap:10px;align-items:center;}
+.sidebar-head h1{font-family:var(--display);color:#fff;font-size:16.5px;margin:0;}
+.sidebar-head span{display:block;font-size:10px;color:var(--sidebar-ink-dim);letter-spacing:.15em;text-transform:uppercase;margin-top:1px;}
+.rung-nav{flex:1;overflow-y:auto;padding:14px 0 10px;position:relative;}
+.rung-nav::before{content:"";position:absolute;left:29px;top:4px;bottom:4px;width:1px;background:var(--sidebar-line);}
+.nav-group-label{font-size:10.5px;font-weight:600;color:var(--sidebar-ink-dim);text-transform:uppercase;letter-spacing:.13em;padding:14px 20px 6px 20px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8px 20px 8px 20px;font-size:13.5px;color:var(--sidebar-ink);cursor:pointer;position:relative;border-left:2px solid transparent;}
+.nav-item .rung{width:9px;height:1px;background:var(--sidebar-line);flex:none;margin-left:-1px;}
+.nav-item:hover{color:#fff;}
+.nav-item.active{color:#fff;background:rgba(91,191,42,.12);border-left:2px solid var(--accent);font-weight:600;}
+.nav-item.active .rung{background:var(--accent);height:2px;}
+.nav-item .count{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--sidebar-ink-dim);background:rgba(255,255,255,.05);padding:1px 6px;border-radius:20px;}
+.sidebar-foot{padding:14px 20px;border-top:1px solid var(--sidebar-line);font-size:12px;color:var(--sidebar-ink-dim);}
+.sidebar-foot b{color:var(--sidebar-ink);display:block;font-size:12.5px;margin-bottom:6px;}
+.sidebar-foot button{margin-top:8px;width:100%;}
+
+.main{overflow-y:auto;height:100vh;}
+.topbar{position:sticky;top:0;background:rgba(246,244,238,.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:18px 30px;display:flex;align-items:center;justify-content:space-between;z-index:5;}
+.topbar h2{font-family:var(--display);font-size:21px;margin:0;}
+.topbar p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+.search-box{position:relative;}
+.search-box input{width:220px;padding:8px 12px 8px 30px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;}
+.search-box::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:14px;}
+.content{padding:24px 30px 60px;}
+
+/* ---------- Stat cards ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:26px;}
+.stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+.stat-card .n{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;}
+.stat-card .l{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+.stat-card.accent{background:var(--sidebar);border-color:var(--sidebar);}
+.stat-card.accent .n{color:var(--accent);}
+.stat-card.accent .l{color:var(--sidebar-ink-dim);}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.panel-head h3{font-family:var(--display);font-size:15px;margin:0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
+
+/* ---------- Table ---------- */
+.table-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.table-toolbar select{padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;padding:9px 14px;border-bottom:1.5px solid var(--line);white-space:nowrap;}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+tbody tr:hover{background:#FBFAF4;}
+tbody tr:last-child td{border-bottom:none;}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;white-space:nowrap;}
+.icon-btn{background:transparent;border:1px solid var(--line);border-radius:6px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-soft);}
+.icon-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
+.icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);}
+.empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:13.5px;}
+.empty-state .glyph{font-size:26px;margin-bottom:8px;}
+
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
+.badge-green{background:var(--accent-soft);color:var(--accent-dark);}
+.badge-gray{background:#EDEBE3;color:var(--ink-soft);}
+.badge-clay{background:var(--clay-soft);color:var(--clay);}
+.badge-warn{background:var(--warn-soft);color:var(--warn);}
+.badge-red{background:#FCEAE7;color:var(--danger);}
+.set-score{font-family:var(--mono);background:var(--sidebar);color:#fff;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:600;}
+.set-score.empty{background:#EDEBE3;color:var(--ink-soft);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(14,26,19,.55);z-index:50;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:14px;width:520px;max-width:100%;box-shadow:0 30px 60px -15px rgba(0,0,0,.4);}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{font-family:var(--display);font-size:16px;margin:0;}
+.modal-close{background:transparent;border:none;font-size:20px;color:var(--ink-soft);line-height:1;}
+.modal-body{padding:20px 22px;max-height:60vh;overflow-y:auto;}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.checkbox-field{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.checkbox-field input{width:16px;height:16px;}
+.hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--sidebar);color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;z-index:100;box-shadow:0 15px 30px -10px rgba(0,0,0,.4);display:none;align-items:center;gap:8px;}
+.toast.show{display:flex;}
+.toast.err{background:var(--danger);}
+.loading-row td{color:var(--ink-soft);padding:24px 14px;text-align:center;}
+.toggle{position:relative;width:38px;height:22px;border-radius:20px;background:#EDEBE3;flex:none;transition:background .15s;border:none;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.toggle.on::after{transform:translateX(16px);}
+.subtle-link{font-size:12.5px;color:var(--accent-dark);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
+.advisory{background:var(--clay-soft);border:1px solid #E3B7A6;border-radius:9px;padding:12px 14px;font-size:12.5px;color:#7A3520;margin-bottom:18px;line-height:1.5;}
+.advisory code{background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <svg class="rung-mark" viewBox="0 0 34 34" fill="none">
+        <rect x="4" y="2" width="4" height="30" rx="1.5" fill="#3F8F1B"/>
+        <rect x="26" y="2" width="4" height="30" rx="1.5" fill="#3F8F1B"/>
+        <rect x="4" y="6" width="26" height="3" rx="1.5" fill="#5BBF2A"/>
+        <rect x="4" y="15.5" width="26" height="3" rx="1.5" fill="#5BBF2A"/>
+        <rect x="4" y="25" width="26" height="3" rx="1.5" fill="#5BBF2A"/>
+      </svg>
+      <div>
+        <h1>Escalerilla</h1>
+        <span>Panel Super Admin</span>
+      </div>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="field">
+      <label>Correo</label>
+      <input type="email" id="loginEmail" placeholder="admin@tuclub.cl" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Ingresar</button>
+    <p style="text-align:center;font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;">Solo cuentas registradas en la tabla <code>admins</code> pueden entrar.</p>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <svg class="rung-mark" width="26" height="26" viewBox="0 0 34 34" fill="none">
+        <rect x="4" y="2" width="4" height="30" rx="1.5" fill="#5BBF2A"/>
+        <rect x="26" y="2" width="4" height="30" rx="1.5" fill="#5BBF2A"/>
+        <rect x="4" y="6" width="26" height="3" rx="1.5" fill="#B9C9BB"/>
+        <rect x="4" y="15.5" width="26" height="3" rx="1.5" fill="#B9C9BB"/>
+        <rect x="4" y="25" width="26" height="3" rx="1.5" fill="#B9C9BB"/>
+      </svg>
+      <div>
+        <h1>Escalerilla</h1>
+        <span>Super Admin</span>
+      </div>
+    </div>
+    <nav class="rung-nav" id="navContainer"></nav>
+    <div class="sidebar-foot">
+      <b id="adminName">—</b>
+      <span id="adminEmail" style="font-size:11.5px;"></span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="viewTitle">Resumen</h2>
+        <p id="viewSubtitle">Estado general de la temporada</p>
+      </div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Editar</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveRecord()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   CONFIG SUPABASE
+   ========================================================================= */
+const SUPA_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentEntity = null;
+let editingId = null;
+let rowsCache = [];
+let lookups = { jugadores:[], clubes:[], temporadas:[], competiciones:[], membresias:[] };
+
+/* =========================================================================
+   ENTIDADES — un solo motor genérico de CRUD para las 16 tablas
+   ========================================================================= */
+const ENTITIES = {
+
+  jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id',
+    select:'id,nombre,email,telefono,serie,estado,activo,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,clubes(nombre)',
+    order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
+    columns:[
+      {key:'nombre',label:'Nombre'},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">Serie ${v||'—'}</span>`},
+      {key:'estado',label:'Estado',render:v=>badgeEstadoJugador(v)},
+      {key:'clubes',label:'Club',render:v=>v?.nombre||'<span class="hint">—</span>'},
+      {key:'encargado',label:'Encargado'},
+      {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+    ],
+    fields:[
+      {key:'nombre',label:'Nombre completo',type:'text',required:true},
+      {key:'email',label:'Correo',type:'email'},
+      {key:'telefono',label:'Teléfono',type:'text'},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C']},
+      {key:'estado',label:'Estado',type:'select',options:['Activo','Retirado +50%','Retirado -50%']},
+      {key:'club_id',label:'Club',type:'fk',lookup:'clubes'},
+      {key:'encargado',label:'Encargado de serie',type:'text'},
+      {key:'comuna_particular',label:'Comuna particular',type:'text'},
+      {key:'comuna_laboral',label:'Comuna laboral',type:'text'},
+      {key:'link_cancha',label:'Link de cancha (mapa)',type:'text'},
+      {key:'activo',label:'Jugador activo',type:'bool',default:true},
+    ]},
+
+  fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id',
+    select:'jugador_id,nivel,mano,superficie,golpe,disponible,disponibilidad_desafios,comuna_laboral,comuna_particular,jugadores(nombre)',
+    order:{col:'jugador_id'}, searchCols:[],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'nivel',label:'Nivel'},
+      {key:'mano',label:'Mano'},
+      {key:'golpe',label:'Golpe favorito'},
+      {key:'disponible',label:'Disponible',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+      {key:'disponibilidad_desafios',label:'Horarios',render:v=>Array.isArray(v)&&v.length?v.join(', '):'<span class="hint">—</span>'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true,disabledOnEdit:true},
+      {key:'nivel',label:'Nivel',type:'select',options:['Principiante','Intermedio Bajo','Intermedio','Intermedio Alto','Avanzado']},
+      {key:'mano',label:'Mano',type:'select',options:['Derecha','Izquierda']},
+      {key:'superficie',label:'Superficie favorita',type:'text'},
+      {key:'golpe',label:'Golpe favorito',type:'text'},
+      {key:'disponible',label:'Disponible para jugar',type:'bool',default:true},
+      {key:'disponibilidad_desafios',label:'Horarios disponibles (separados por coma)',type:'taglist'},
+      {key:'comuna_laboral',label:'Comuna laboral',type:'text'},
+      {key:'comuna_particular',label:'Comuna particular',type:'text'},
+    ]},
+
+  desafios:{ label:'Desafíos', group:'Competición', table:'desafios', pk:'id',
+    select:'id,dia,hora,cancha,mensaje,estado,afiche_url,afiche_resultado_url,live_url,created_at,de:de_id(nombre),para:para_id(nombre),de_id,para_id',
+    order:{col:'created_at',asc:false}, searchCols:[], filterField:'estado', filterOptions:['Pendiente','Aceptado','Rechazado','Cancelado','Expirado'],
+    columns:[
+      {key:'de',label:'De',render:v=>v?.nombre||'—'},
+      {key:'para',label:'Para',render:v=>v?.nombre||'—'},
+      {key:'dia',label:'Día'},
+      {key:'hora',label:'Hora'},
+      {key:'cancha',label:'Cancha'},
+      {key:'estado',label:'Estado',render:v=>badgeEstadoDesafio(v)},
+    ],
+    fields:[
+      {key:'de_id',label:'Desafiante (de)',type:'fk',lookup:'jugadores',required:true},
+      {key:'para_id',label:'Desafiado (para)',type:'fk',lookup:'jugadores',required:true},
+      {key:'dia',label:'Día',type:'date'},
+      {key:'hora',label:'Hora (texto libre, ej. 18:00 hrs)',type:'text'},
+      {key:'cancha',label:'Cancha (número)',type:'text'},
+      {key:'mensaje',label:'Mensaje',type:'textarea'},
+      {key:'estado',label:'Estado',type:'select',options:['Pendiente','Aceptado','Rechazado','Cancelado','Expirado']},
+      {key:'afiche_url',label:'Afiche URL (video/foto reto)',type:'text'},
+      {key:'afiche_resultado_url',label:'Afiche resultado URL',type:'text'},
+      {key:'live_url',label:'Live URL',type:'text'},
+    ]},
+
+  resultados:{ label:'Resultados', group:'Competición', table:'resultados', pk:'id',
+    select:'id,fecha,hora,cancha,serie,set1,set2,set3,tipo,foto_resultado_url,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id,temporada_id,desafio_id,torneo_partido_id',
+    order:{col:'fecha',asc:false}, searchCols:[], filterField:'serie', filterOptions:['A','B','C'],
+    columns:[
+      {key:'fecha',label:'Fecha'},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
+      {key:'j1',label:'Jugador 1',render:v=>v?.nombre||'—'},
+      {key:'j2',label:'Jugador 2',render:v=>v?.nombre||'—'},
+      {key:'sets',label:'Sets',render:(v,r)=>renderSets(r)},
+      {key:'g',label:'Ganador',render:v=>v?`<b>${v.nombre}</b>`:'—'},
+      {key:'tipo',label:'Tipo',render:v=>v==='W.O.'?'<span class="badge badge-clay">W.O.</span>':'<span class="badge badge-gray">Normal</span>'},
+    ],
+    fields:[
+      {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas'},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'jugador1_id',label:'Jugador 1',type:'fk',lookup:'jugadores',required:true},
+      {key:'jugador2_id',label:'Jugador 2',type:'fk',lookup:'jugadores',required:true},
+      {key:'set1',label:'Set 1 (ej. 6-4)',type:'text'},
+      {key:'set2',label:'Set 2',type:'text'},
+      {key:'set3',label:'Set 3 / super tie-break',type:'text'},
+      {key:'ganador_id',label:'Ganador',type:'fk',lookup:'jugadores',required:true},
+      {key:'tipo',label:'Tipo',type:'select',options:['Normal','W.O.']},
+      {key:'fecha',label:'Fecha',type:'date'},
+      {key:'hora',label:'Hora',type:'text'},
+      {key:'cancha',label:'Cancha',type:'text'},
+      {key:'foto_resultado_url',label:'Foto resultado URL',type:'text'},
+      {key:'desafio_id',label:'ID desafío vinculado (opcional)',type:'text'},
+      {key:'torneo_partido_id',label:'ID partido de torneo vinculado (opcional)',type:'text'},
+    ]},
+
+  competiciones:{ label:'Torneos / competiciones', group:'Competición', table:'competiciones', pk:'id',
+    select:'id,serie,temporada,periodo,estado,fecha_inicio,tipo,club_id,temporada_id,clubes(nombre)',
+    order:{col:'fecha_inicio',asc:false}, searchCols:[],
+    columns:[
+      {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
+      {key:'serie',label:'Serie'},
+      {key:'temporada',label:'Año'},
+      {key:'periodo',label:'Periodo'},
+      {key:'estado',label:'Estado',render:v=>badgeEstadoTorneo(v)},
+      {key:'clubes',label:'Club',render:v=>v?.nombre||'—'},
+      {key:'_bracket',label:'',render:(v,r)=>`<button class="subtle-link" onclick="viewBracket('${r.id}')">Ver llave →</button>`},
+    ],
+    fields:[
+      {key:'tipo',label:'Tipo',type:'select',options:['escalerilla','interno','interclub','abierto'],required:true},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'temporada',label:'Año',type:'number',required:true},
+      {key:'periodo',label:'Periodo',type:'select',options:['','Apertura','Clausura']},
+      {key:'estado',label:'Estado',type:'select',options:['armado','en_curso','finalizado','cancelado']},
+      {key:'fecha_inicio',label:'Fecha inicio',type:'date'},
+      {key:'club_id',label:'Club',type:'fk',lookup:'clubes'},
+      {key:'temporada_id',label:'Temporada asociada',type:'fk',lookup:'temporadas'},
+    ]},
+
+  torneo_partidos:{ label:'Llave de partidos', group:'Competición', table:'torneo_partidos', pk:'id',
+    select:'id,ronda,posicion,set1,set2,set3,tipo,es_bye,es_mejor_perdedor,fecha,torneo_id,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id',
+    order:{col:'ronda'}, searchCols:[], filterField:'torneo_id', filterLookup:'competiciones',
+    columns:[
+      {key:'ronda',label:'Ronda'},
+      {key:'posicion',label:'Pos.'},
+      {key:'j1',label:'Jugador 1',render:v=>v?.nombre||'<span class="hint">bye</span>'},
+      {key:'j2',label:'Jugador 2',render:v=>v?.nombre||'<span class="hint">bye</span>'},
+      {key:'sets',label:'Sets',render:(v,r)=>renderSets(r)},
+      {key:'g',label:'Ganador',render:v=>v?`<b>${v.nombre}</b>`:'—'},
+      {key:'es_bye',label:'Bye',render:v=>v?'<span class="badge badge-gray">Sí</span>':''},
+      {key:'_acciones',label:'',render:(v,r)=>bracketRowActions(r)},
+    ],
+    fields:[
+      {key:'torneo_id',label:'Torneo',type:'fk',lookup:'competiciones',required:true},
+      {key:'ronda',label:'Ronda',type:'number',required:true},
+      {key:'posicion',label:'Posición',type:'number',required:true},
+      {key:'jugador1_id',label:'Jugador 1',type:'fk',lookup:'jugadores'},
+      {key:'jugador2_id',label:'Jugador 2',type:'fk',lookup:'jugadores'},
+      {key:'ganador_id',label:'Ganador',type:'fk',lookup:'jugadores'},
+      {key:'set1',label:'Set 1',type:'text'},
+      {key:'set2',label:'Set 2',type:'text'},
+      {key:'set3',label:'Set 3',type:'text'},
+      {key:'tipo',label:'Tipo',type:'select',options:['normal','W.O.']},
+      {key:'fecha',label:'Fecha',type:'date'},
+      {key:'es_bye',label:'Es bye',type:'bool'},
+      {key:'es_mejor_perdedor',label:'Es mejor perdedor',type:'bool'},
+    ]},
+
+  titulos:{ label:'Títulos', group:'Competición', table:'titulos', pk:'id',
+    select:'id,serie,temporada,periodo,jugador_id,torneo_partido_id,jugadores(nombre)',
+    order:{col:'temporada',asc:false}, searchCols:[],
+    columns:[
+      {key:'jugadores',label:'Campeón',render:v=>v?.nombre?`🏆 <b>${v.nombre}</b>`:'—'},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
+      {key:'temporada',label:'Temporada'},
+      {key:'periodo',label:'Periodo'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador campeón',type:'fk',lookup:'jugadores',required:true},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'temporada',label:'Año',type:'number',required:true},
+      {key:'periodo',label:'Periodo',type:'select',options:['Apertura','Clausura','Anual']},
+      {key:'torneo_partido_id',label:'ID partido de torneo (opcional)',type:'text'},
+    ]},
+
+  temporadas:{ label:'Temporadas', group:'Competición', table:'temporadas', pk:'id',
+    select:'id,nombre,tipo,fecha_inicio,fecha_fin,activa,club_id,clubes(nombre)',
+    order:{col:'fecha_inicio',asc:false}, searchCols:['nombre'],
+    columns:[
+      {key:'nombre',label:'Nombre'},
+      {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
+      {key:'fecha_inicio',label:'Inicio'},
+      {key:'fecha_fin',label:'Fin'},
+      {key:'clubes',label:'Club',render:v=>v?.nombre||'—'},
+      {key:'activa',label:'Activa',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+    ],
+    fields:[
+      {key:'nombre',label:'Nombre',type:'text',required:true},
+      {key:'tipo',label:'Tipo',type:'select',options:['escalerilla','torneo_verano'],required:true},
+      {key:'fecha_inicio',label:'Fecha inicio',type:'date',required:true},
+      {key:'fecha_fin',label:'Fecha fin',type:'date',required:true},
+      {key:'club_id',label:'Club',type:'fk',lookup:'clubes'},
+      {key:'activa',label:'Temporada activa',type:'bool',default:true},
+    ]},
+
+  inscripciones:{ label:'Inscripciones', group:'Competición', table:'inscripciones', pk:'id',
+    select:'id,serie,frecuencia_semanal,fixture_size,jugador_id,temporada_id,jugadores(nombre),temporadas(nombre)',
+    order:{col:'id'}, searchCols:[],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'temporadas',label:'Temporada',render:v=>v?.nombre||'—'},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
+      {key:'frecuencia_semanal',label:'Frec./semana'},
+      {key:'fixture_size',label:'Tamaño fixture'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas',required:true},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'frecuencia_semanal',label:'Frecuencia semanal',type:'select',options:['1','2','3']},
+      {key:'fixture_size',label:'Tamaño de fixture',type:'number',default:9},
+    ]},
+
+  clubes:{ label:'Clubes', group:'Club', table:'clubes', pk:'id',
+    select:'id,nombre,comuna,encargado_nombre,encargado_contacto,link_cancha,color_tema,logo_url,activo,slug',
+    order:{col:'nombre'}, searchCols:['nombre','comuna'],
+    columns:[
+      {key:'nombre',label:'Nombre'},
+      {key:'comuna',label:'Comuna'},
+      {key:'encargado_nombre',label:'Encargado'},
+      {key:'color_tema',label:'Color',render:v=>v?`<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:13px;height:13px;border-radius:4px;background:${v};display:inline-block;border:1px solid #0002"></span>${v}</span>`:'—'},
+      {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+    ],
+    fields:[
+      {key:'nombre',label:'Nombre del club',type:'text',required:true},
+      {key:'slug',label:'Slug (URL)',type:'text'},
+      {key:'comuna',label:'Comuna',type:'text'},
+      {key:'encargado_nombre',label:'Nombre encargado',type:'text'},
+      {key:'encargado_contacto',label:'Contacto encargado',type:'text'},
+      {key:'link_cancha',label:'Link cancha (mapa)',type:'text'},
+      {key:'color_tema',label:'Color tema (hex)',type:'text',default:'#5BBF2A'},
+      {key:'logo_url',label:'Logo URL',type:'text'},
+      {key:'activo',label:'Club activo',type:'bool',default:true},
+    ]},
+
+  membresias:{ label:'Membresías', group:'Club', table:'membresias', pk:'id',
+    select:'id,tipo,estado,monto,fecha_inicio,fecha_fin,jugador_id,jugadores(nombre)',
+    order:{col:'fecha_fin',asc:false}, searchCols:[], filterField:'estado', filterOptions:['activa','vencida','pendiente'],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
+      {key:'estado',label:'Estado',render:v=>badgeEstadoMembresia(v)},
+      {key:'monto',label:'Monto',render:v=>v?fmtCLP(v):'—'},
+      {key:'fecha_inicio',label:'Inicio'},
+      {key:'fecha_fin',label:'Vence'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'tipo',label:'Tipo',type:'select',options:['web','escalerilla'],required:true},
+      {key:'estado',label:'Estado',type:'select',options:['activa','vencida','pendiente']},
+      {key:'monto',label:'Monto (CLP)',type:'number',required:true},
+      {key:'fecha_inicio',label:'Fecha inicio',type:'date'},
+      {key:'fecha_fin',label:'Fecha vencimiento',type:'date'},
+    ]},
+
+  pagos:{ label:'Pagos', group:'Club', table:'pagos', pk:'id',
+    select:'id,monto,medio,estado,transbank_token,created_at,jugador_id,membresia_id,jugadores(nombre)',
+    order:{col:'created_at',asc:false}, searchCols:[], filterField:'estado', filterOptions:['iniciado','aprobado','rechazado','anulado'],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'monto',label:'Monto',render:v=>fmtCLP(v)},
+      {key:'medio',label:'Medio'},
+      {key:'estado',label:'Estado',render:v=>badgeEstadoPago(v)},
+      {key:'created_at',label:'Fecha',render:v=>v?new Date(v).toLocaleDateString('es-CL'):'—'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'membresia_id',label:'Membresía asociada',type:'fk',lookup:'membresias'},
+      {key:'monto',label:'Monto (CLP)',type:'number',required:true},
+      {key:'medio',label:'Medio de pago',type:'select',options:['webpay','transferencia','efectivo'],default:'webpay'},
+      {key:'estado',label:'Estado',type:'select',options:['iniciado','aprobado','rechazado','anulado']},
+    ]},
+
+  insignias:{ label:'Insignias', group:'Club', table:'insignias', pk:'id',
+    select:'id,tipo,nombre,icono,otorgada_en,jugador_id,temporada_id,jugadores(nombre)',
+    order:{col:'otorgada_en',asc:false}, searchCols:['nombre'],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'nombre',label:'Insignia',render:(v,r)=>`${r.icono||'🎖️'} ${v}`},
+      {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
+      {key:'otorgada_en',label:'Otorgada',render:v=>v?new Date(v).toLocaleDateString('es-CL'):'—'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'nombre',label:'Nombre de la insignia',type:'text',required:true},
+      {key:'tipo',label:'Tipo',type:'text',required:true},
+      {key:'icono',label:'Ícono (emoji)',type:'text'},
+      {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas'},
+    ]},
+
+  galeria_fin_de_semana:{ label:'Galería', group:'Sistema', table:'galeria_fin_de_semana', pk:'id',
+    select:'id,titulo,url_foto,dia,created_at', order:{col:'created_at',asc:false}, searchCols:['titulo'],
+    columns:[
+      {key:'url_foto',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;">`:'—'},
+      {key:'titulo',label:'Título'},
+      {key:'dia',label:'Día'},
+    ],
+    fields:[
+      {key:'titulo',label:'Título',type:'text'},
+      {key:'url_foto',label:'URL de la foto',type:'text',required:true},
+      {key:'dia',label:'Día (texto libre)',type:'text'},
+    ]},
+
+  admins:{ label:'Administradores', group:'Sistema', table:'admins', pk:'user_id',
+    select:'user_id,nombre,created_at', order:{col:'created_at'}, searchCols:['nombre'], noCreateHint:true,
+    columns:[
+      {key:'nombre',label:'Nombre'},
+      {key:'user_id',label:'User ID (auth)',render:v=>`<span class="hint" style="font-family:var(--mono)">${v}</span>`},
+      {key:'created_at',label:'Desde',render:v=>v?new Date(v).toLocaleDateString('es-CL'):'—'},
+    ],
+    fields:[
+      {key:'user_id',label:'User ID de Supabase Auth',type:'text',required:true,disabledOnEdit:true},
+      {key:'nombre',label:'Nombre',type:'text'},
+    ]},
+
+  push_tokens:{ label:'Push tokens', group:'Sistema', table:'push_tokens', pk:'jugador_id',
+    select:'jugador_id,token,updated_at,jugadores(nombre)', order:{col:'updated_at',asc:false}, searchCols:[], noCreate:true, noEdit:true, noDelete:false,
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'token',label:'Token',render:v=>`<span class="hint" style="font-family:var(--mono)">${(v||'').slice(0,28)}…</span>`},
+      {key:'updated_at',label:'Actualizado',render:v=>v?new Date(v).toLocaleString('es-CL'):'—'},
+    ], fields:[]},
+};
+
+const NAV_GROUPS = ['Resumen','Competición','Club','Sistema'];
+
+/* =========================================================================
+   HELPERS DE FORMATO / BADGES
+   ========================================================================= */
+function fmtCLP(n){ return n==null?'—':'$'+Number(n).toLocaleString('es-CL'); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+function badgeEstadoJugador(v){
+  if(v==='Activo') return '<span class="badge badge-green">Activo</span>';
+  if(v==='Retirado +50%') return '<span class="badge badge-warn">Retirado +50%</span>';
+  if(v==='Retirado -50%') return '<span class="badge badge-clay">Retirado -50%</span>';
+  return `<span class="badge badge-gray">${v||'—'}</span>`;
+}
+function badgeEstadoDesafio(v){
+  const map={Pendiente:'badge-warn',Aceptado:'badge-green',Rechazado:'badge-red',Cancelado:'badge-gray',Expirado:'badge-gray'};
+  return `<span class="badge ${map[v]||'badge-gray'}">${v}</span>`;
+}
+function badgeEstadoTorneo(v){
+  const map={armado:'badge-gray',en_curso:'badge-warn',finalizado:'badge-green',cancelado:'badge-red'};
+  return `<span class="badge ${map[v]||'badge-gray'}">${v}</span>`;
+}
+function badgeEstadoMembresia(v){
+  const map={activa:'badge-green',vencida:'badge-red',pendiente:'badge-warn'};
+  return `<span class="badge ${map[v]||'badge-gray'}">${v}</span>`;
+}
+function badgeEstadoPago(v){
+  const map={aprobado:'badge-green',rechazado:'badge-red',anulado:'badge-gray',iniciado:'badge-warn'};
+  return `<span class="badge ${map[v]||'badge-gray'}">${v}</span>`;
+}
+function renderSets(r){
+  const sets=[r.set1,r.set2,r.set3].filter(Boolean);
+  if(!sets.length) return '<span class="set-score empty">—</span>';
+  return sets.map(s=>`<span class="set-score">${s}</span>`).join(' ');
+}
+function bracketRowActions(r){
+  let html = '<div class="row-actions">';
+  if(!r.ganador_id && r.jugador1_id && r.jugador2_id){
+    html += `<button class="btn btn-sm btn-primary" onclick="quickRegistrarResultado('${r.id}')">Registrar resultado</button>`;
+  }
+  if(r.ganador_id){
+    html += `<button class="icon-btn" title="Deshacer resultado" onclick="quickDeshacerResultado('${r.id}')">↺</button>`;
+  }
+  html += `<button class="icon-btn" title="Editar" onclick="openEdit('${r.id}')">✎</button>`;
+  html += '</div>';
+  return html;
+}
+
+/* =========================================================================
+   AUTH
+   ========================================================================= */
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errBox = document.getElementById('loginError');
+  errBox.style.display='none';
+  if(!email || !pass){ errBox.textContent='Ingresa correo y contraseña.'; errBox.style.display='block'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent='Ingresando…'; btn.disabled=true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){
+    errBox.textContent = error.message==='Invalid login credentials' ? 'Correo o contraseña incorrectos.' : error.message;
+    errBox.style.display='block'; btn.textContent='Ingresar'; btn.disabled=false; return;
+  }
+  const { data: adminRow, error: adminErr } = await sb.from('admins').select('*').eq('user_id', data.user.id).maybeSingle();
+  if(adminErr || !adminRow){
+    errBox.textContent = 'Esta cuenta no tiene permisos de administrador.';
+    errBox.style.display='block'; btn.textContent='Ingresar'; btn.disabled=false;
+    await sb.auth.signOut();
+    return;
+  }
+  currentUser = { ...data.user, adminName: adminRow.nombre };
+  btn.textContent='Ingresar'; btn.disabled=false;
+  enterApp();
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginEmail').value=''; document.getElementById('loginPass').value='';
+}
+async function checkExistingSession(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    const { data: adminRow } = await sb.from('admins').select('*').eq('user_id', data.session.user.id).maybeSingle();
+    if(adminRow){ currentUser = { ...data.session.user, adminName: adminRow.nombre }; enterApp(); return; }
+  }
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+async function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('adminName').textContent = currentUser.adminName || 'Admin';
+  document.getElementById('adminEmail').textContent = currentUser.email || '';
+  await loadLookups();
+  buildNav();
+  showDashboard();
+}
+
+/* =========================================================================
+   LOOKUPS (para selects tipo FK)
+   ========================================================================= */
+async function loadLookups(){
+  const [j,c,t,comp,mem] = await Promise.all([
+    sb.from('jugadores').select('id,nombre,serie').order('nombre'),
+    sb.from('clubes').select('id,nombre').order('nombre'),
+    sb.from('temporadas').select('id,nombre').order('nombre'),
+    sb.from('competiciones').select('id,serie,temporada,periodo,tipo').order('temporada',{ascending:false}),
+    sb.from('membresias').select('id,tipo,estado,jugador_id,jugadores(nombre)'),
+  ]);
+  lookups.jugadores = (j.data||[]).map(x=>({id:x.id,label:`${x.nombre} (Serie ${x.serie||'—'})`}));
+  lookups.clubes = (c.data||[]).map(x=>({id:x.id,label:x.nombre}));
+  lookups.temporadas = (t.data||[]).map(x=>({id:x.id,label:x.nombre}));
+  lookups.competiciones = (comp.data||[]).map(x=>({id:x.id,label:`${x.tipo} · Serie ${x.serie} · ${x.temporada}${x.periodo?' · '+x.periodo:''}`}));
+  lookups.membresias = (mem.data||[]).map(x=>({id:x.id,label:`${x.jugadores?.nombre||'?'} · ${x.tipo} · ${x.estado}`}));
+}
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+function buildNav(){
+  const nav = document.getElementById('navContainer');
+  let html = `<div class="nav-item active" data-view="dashboard" onclick="showDashboard()"><span class="rung"></span>📊 Resumen</div>`;
+  NAV_GROUPS.slice(1).forEach(group=>{
+    html += `<div class="nav-group-label">${group}</div>`;
+    Object.entries(ENTITIES).filter(([k,e])=>e.group===group).forEach(([key,e])=>{
+      html += `<div class="nav-item" data-view="${key}" onclick="showEntity('${key}')"><span class="rung"></span>${e.label}</div>`;
+    });
+  });
+  nav.innerHTML = html;
+}
+function setActiveNav(view){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.dataset.view===view));
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+async function showDashboard(){
+  setActiveNav('dashboard');
+  document.getElementById('viewTitle').textContent='Resumen';
+  document.getElementById('viewSubtitle').textContent='Estado general del club y la temporada';
+  document.getElementById('topbarActions').innerHTML='';
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="stat-grid" id="statGrid"></div><div class="two-col"><div class="panel" id="panelPendientes"></div><div class="panel" id="panelUltimos"></div></div>';
+
+  const [jug, des, res, tit, comp, mem] = await Promise.all([
+    sb.from('jugadores').select('id,estado',{count:'exact'}),
+    sb.from('desafios').select('id,estado,de:de_id(nombre),para:para_id(nombre),dia,hora',{count:'exact'}).order('created_at',{ascending:false}).limit(6),
+    sb.from('resultados').select('id',{count:'exact'}),
+    sb.from('titulos').select('id',{count:'exact'}),
+    sb.from('competiciones').select('id,estado',{count:'exact'}),
+    sb.from('membresias').select('id,estado',{count:'exact'}),
+  ]);
+
+  const activos = (jug.data||[]).filter(x=>x.estado==='Activo').length;
+  const pendientesDesafios = (des.data||[]).filter(x=>x.estado==='Pendiente');
+  const torneosActivos = (comp.data||[]).filter(x=>x.estado==='en_curso').length;
+  const membresiasActivas = (mem.data||[]).filter(x=>x.estado==='activa').length;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card accent"><div class="n">${jug.count??0}</div><div class="l">Jugadores registrados</div></div>
+    <div class="stat-card"><div class="n">${activos}</div><div class="l">Activos</div></div>
+    <div class="stat-card"><div class="n">${res.count??0}</div><div class="l">Resultados cargados</div></div>
+    <div class="stat-card"><div class="n">${pendientesDesafios.length}</div><div class="l">Desafíos pendientes</div></div>
+    <div class="stat-card"><div class="n">${torneosActivos}</div><div class="l">Torneos en curso</div></div>
+    <div class="stat-card"><div class="n">${tit.count??0}</div><div class="l">Títulos históricos</div></div>
+    <div class="stat-card"><div class="n">${membresiasActivas}</div><div class="l">Membresías activas</div></div>
+  `;
+
+  document.getElementById('panelPendientes').innerHTML = `
+    <div class="panel-head"><h3>Desafíos pendientes</h3><button class="subtle-link" onclick="showEntity('desafios')">Ver todos →</button></div>
+    <table><tbody>
+    ${pendientesDesafios.length? pendientesDesafios.map(d=>`
+      <tr><td><b>${d.de?.nombre||'?'}</b> vs <b>${d.para?.nombre||'?'}</b><br><span class="hint">${d.dia||''} ${d.hora||''}</span></td>
+      <td style="text-align:right">${badgeEstadoDesafio(d.estado)}</td></tr>
+    `).join('') : '<tr><td class="empty-state">No hay desafíos pendientes 🎾</td></tr>'}
+    </tbody></table>`;
+
+  const { data: ultimos } = await sb.from('resultados').select('fecha,serie,set1,set2,set3,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre)').order('fecha',{ascending:false}).limit(6);
+  document.getElementById('panelUltimos').innerHTML = `
+    <div class="panel-head"><h3>Últimos resultados</h3><button class="subtle-link" onclick="showEntity('resultados')">Ver todos →</button></div>
+    <table><tbody>
+    ${(ultimos&&ultimos.length)? ultimos.map(r=>`
+      <tr><td><b>${r.j1?.nombre||'?'}</b> vs <b>${r.j2?.nombre||'?'}</b><br><span class="hint">Serie ${r.serie} · ${r.fecha||''}</span></td>
+      <td style="text-align:right">${renderSets(r)}</td></tr>
+    `).join('') : '<tr><td class="empty-state">Sin resultados aún</td></tr>'}
+    </tbody></table>`;
+}
+
+/* =========================================================================
+   VISTA GENÉRICA DE ENTIDAD
+   ========================================================================= */
+let currentFilterValue = '';
+let currentSearchValue = '';
+
+async function showEntity(key, opts={}){
+  currentEntity = key;
+  const e = ENTITIES[key];
+  setActiveNav(key);
+  document.getElementById('viewTitle').textContent = e.label;
+  document.getElementById('viewSubtitle').textContent = `Tabla: ${e.table}`;
+  currentFilterValue = opts.filterValue || '';
+  currentSearchValue = '';
+
+  document.getElementById('topbarActions').innerHTML = e.noCreate? '' :
+    `<button class="btn btn-primary" onclick="openCreate()">+ Nuevo</button>`;
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    ${key==='push_tokens' ? '<div class="advisory">⚠️ Esta tabla no tiene Row Level Security activada — cualquiera con la clave anónima puede leerla o modificarla. Revisa la nota de seguridad al final de este chat para el SQL de corrección.</div>' : ''}
+    <div class="panel">
+      <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
+        <div class="table-toolbar" style="margin:0;">
+          ${e.searchCols?.length? `<div class="search-box"><input id="searchInput" placeholder="Buscar…" oninput="onSearchInput(this.value)"></div>`:''}
+          ${e.filterOptions? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">${e.filterField==='estado'?'Todos los estados':'Todos'}</option>${e.filterOptions.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`:''}
+          ${e.filterLookup? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">Todos los torneos</option>${lookups[e.filterLookup].map(o=>`<option value="${o.id}" ${opts.filterValue===o.id?'selected':''}>${o.label}</option>`).join('')}</select>`:''}
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table><thead><tr>${e.columns.map(c=>`<th>${c.label}</th>`).join('')}${e.columns.some(c=>c.key==='_acciones')?'':'<th></th>'}</tr></thead>
+        <tbody id="tableBody"><tr class="loading-row"><td colspan="${e.columns.length+1}">Cargando…</td></tr></tbody></table>
+      </div>
+    </div>`;
+  await fetchAndRenderRows();
+}
+
+async function fetchAndRenderRows(){
+  const e = ENTITIES[currentEntity];
+  let q = sb.from(e.table).select(e.select);
+  if(e.order) q = q.order(e.order.col, {ascending: e.order.asc!==false});
+  if(currentFilterValue && e.filterField) q = q.eq(e.filterField, currentFilterValue);
+  const { data, error } = await q.limit(500);
+  if(error){ toast('Error cargando datos: '+error.message, true); rowsCache=[]; }
+  else rowsCache = data||[];
+  renderRows();
+}
+
+function renderRows(){
+  const e = ENTITIES[currentEntity];
+  let rows = rowsCache;
+  if(currentSearchValue && e.searchCols?.length){
+    const s = currentSearchValue.toLowerCase();
+    rows = rows.filter(r=>e.searchCols.some(c=>String(r[c]||'').toLowerCase().includes(s)));
+  }
+  const tbody = document.getElementById('tableBody');
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="${e.columns.length+1}"><div class="empty-state"><div class="glyph">🎾</div>No hay registros todavía.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>{
+    const cells = e.columns.map(c=>`<td>${c.render? c.render(r[c.key],r) : (r[c.key]??'<span class="hint">—</span>')}</td>`).join('');
+    const hasOwnActions = e.columns.some(c=>c.key==='_acciones');
+    let actions = '';
+    if(!hasOwnActions){
+      const editBtn = e.noEdit? '' : `<button class="icon-btn" title="Editar" onclick="openEdit('${r[e.pk]}')">✎</button>`;
+      const delBtn = e.noDelete? '' : `<button class="icon-btn danger" title="Eliminar" onclick="confirmDelete('${r[e.pk]}')">🗑</button>`;
+      actions = (editBtn||delBtn) ? `<td><div class="row-actions">${editBtn}${delBtn}</div></td>` : '<td></td>';
+    } else {
+      actions = '';
+    }
+    return `<tr>${cells}${actions}</tr>`;
+  }).join('');
+}
+
+function onSearchInput(v){ currentSearchValue=v; renderRows(); }
+function onFilterChange(v){ currentFilterValue=v; fetchAndRenderRows(); }
+
+function viewBracket(torneoId){ showEntity('torneo_partidos', {filterValue: torneoId}); }
+
+/* =========================================================================
+   MODAL CREAR / EDITAR
+   ========================================================================= */
+function openCreate(){ editingId=null; openModalForm({}); }
+function openEdit(id){
+  editingId=id;
+  const e = ENTITIES[currentEntity];
+  const record = rowsCache.find(r=>String(r[e.pk])===String(id));
+  openModalForm(record||{});
+}
+function openModalForm(record){
+  const e = ENTITIES[currentEntity];
+  document.getElementById('modalTitle').textContent = (editingId? 'Editar: ':'Nuevo: ') + e.label;
+  const body = document.getElementById('modalBody');
+  let extra = '';
+  if(currentEntity==='admins' && !editingId){
+    extra = `<div class="advisory" style="margin-bottom:16px;">Para agregar un admin necesitas el <b>User ID</b> de esa cuenta en Supabase Auth (Authentication → Users en el dashboard de Supabase). El super admin no puede crear usuarios nuevos por seguridad — primero la persona debe registrarse en la web.</div>`;
+  }
+  body.innerHTML = extra + e.fields.map(f=>renderField(f, record)).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function renderField(f, record){
+  const raw = record[f.key];
+  const val = (raw===undefined||raw===null) ? (f.default!==undefined? f.default : '') : raw;
+  const disabled = (editingId && f.disabledOnEdit) ? 'disabled' : '';
+  if(f.type==='bool'){
+    const on = val===true || val==='true';
+    return `<div class="checkbox-field">
+      <button type="button" class="toggle ${on?'on':''}" id="f_${f.key}" onclick="this.classList.toggle('on')"></button>
+      <label style="margin:0;font-weight:500;color:var(--ink);font-size:13px;">${f.label}</label>
+    </div>`;
+  }
+  if(f.type==='select'){
+    return `<div class="field"><label>${f.label}${f.required?' *':''}</label>
+      <select id="f_${f.key}" ${disabled}>${f.options.map(o=>`<option value="${o}" ${String(val)===String(o)?'selected':''}>${o===''?'(sin definir)':o}</option>`).join('')}</select></div>`;
+  }
+  if(f.type==='fk'){
+    const opts = lookups[f.lookup]||[];
+    return `<div class="field"><label>${f.label}${f.required?' *':''}</label>
+      <select id="f_${f.key}" ${disabled}><option value="">(ninguno)</option>${opts.map(o=>`<option value="${o.id}" ${String(val)===String(o.id)?'selected':''}>${o.label}</option>`).join('')}</select></div>`;
+  }
+  if(f.type==='textarea'){
+    return `<div class="field"><label>${f.label}${f.required?' *':''}</label><textarea id="f_${f.key}" rows="3" ${disabled}>${val||''}</textarea></div>`;
+  }
+  if(f.type==='taglist'){
+    const strVal = Array.isArray(val)? val.join(', ') : (val||'');
+    return `<div class="field"><label>${f.label}</label><input id="f_${f.key}" type="text" value="${escAttr(strVal)}" ${disabled}><div class="hint">Ej: lunAM, mieAM, sabPM</div></div>`;
+  }
+  const inputType = f.type==='number'?'number':(f.type==='date'?'date':(f.type==='email'?'email':'text'));
+  return `<div class="field"><label>${f.label}${f.required?' *':''}</label><input id="f_${f.key}" type="${inputType}" value="${escAttr(val)}" ${disabled}></div>`;
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+async function saveRecord(){
+  const e = ENTITIES[currentEntity];
+  const payload = {};
+  for(const f of e.fields){
+    if(f.disabledOnEdit && editingId) continue;
+    const el = document.getElementById('f_'+f.key);
+    if(!el) continue;
+    if(f.type==='bool'){ payload[f.key] = el.classList.contains('on'); }
+    else if(f.type==='number'){ payload[f.key] = el.value===''? null : Number(el.value); }
+    else if(f.type==='taglist'){ payload[f.key] = el.value.trim()? el.value.split(',').map(s=>s.trim()).filter(Boolean) : null; }
+    else { payload[f.key] = el.value===''? null : el.value; }
+    if(f.required && (payload[f.key]===null || payload[f.key]==='')){
+      toast(`El campo "${f.label}" es obligatorio.`, true); return;
+    }
+  }
+  const btn = document.getElementById('modalSaveBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  let error;
+  if(editingId){
+    ({error} = await sb.from(e.table).update(payload).eq(e.pk, editingId));
+  } else {
+    ({error} = await sb.from(e.table).insert(payload));
+  }
+  btn.disabled=false; btn.textContent='Guardar';
+  if(error){ toast('Error al guardar: '+error.message, true); return; }
+  toast('Guardado correctamente.');
+  closeModal();
+  fetchAndRenderRows();
+  if(currentEntity==='jugadores'||currentEntity==='clubes'||currentEntity==='temporadas'||currentEntity==='competiciones'||currentEntity==='membresias') loadLookups();
+}
+
+async function confirmDelete(id){
+  const e = ENTITIES[currentEntity];
+  if(!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from(e.table).delete().eq(e.pk, id);
+  if(error){ toast('Error al eliminar: '+error.message, true); return; }
+  toast('Registro eliminado.');
+  fetchAndRenderRows();
+}
+
+/* =========================================================================
+   ACCIONES RÁPIDAS DE LLAVE (usan las funciones RPC ya existentes en la BD)
+   ========================================================================= */
+async function quickRegistrarResultado(partidoId){
+  const r = rowsCache.find(x=>String(x.id)===String(partidoId));
+  if(!r) return;
+  const opts = [r.j1?.nombre, r.j2?.nombre];
+  const ganadorNombre = prompt(`Ganador del partido — escribe exactamente:\n1) ${opts[0]}\n2) ${opts[1]}`, opts[0]);
+  if(!ganadorNombre) return;
+  const ganadorId = ganadorNombre.trim()===opts[0] ? r.jugador1_id : (ganadorNombre.trim()===opts[1] ? r.jugador2_id : null);
+  if(!ganadorId){ toast('Nombre de ganador no coincide.', true); return; }
+  const set1 = prompt('Set 1 (ej. 6-4):','')||null;
+  const set2 = prompt('Set 2 (ej. 6-4):','')||null;
+  const set3 = prompt('Set 3 / super tie-break (opcional):','')||null;
+  const { error } = await sb.rpc('registrar_resultado_partido', {
+    p_partido_id: partidoId, p_ganador_id: ganadorId, p_set1:set1, p_set2:set2, p_set3:set3, p_tipo:'normal'
+  });
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast('Resultado registrado. La llave avanza automáticamente.');
+  fetchAndRenderRows();
+}
+async function quickDeshacerResultado(partidoId){
+  if(!confirm('¿Deshacer el resultado de este partido? Esto puede revertir el avance de la llave.')) return;
+  const { error } = await sb.rpc('deshacer_resultado_partido', { p_partido_id: partidoId });
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast('Resultado deshecho.');
+  fetchAndRenderRows();
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer;
+function toast(msg, isError=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError?' err':'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3800);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+checkExistingSession();
+</script>
+</body>
+</html>
