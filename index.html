@@ -195,6 +195,12 @@ section{padding:4rem 1.5rem}
 .hticker-live{flex-shrink:0;display:inline-flex;align-items:center;gap:.35rem;font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ro);border-right:1px solid rgba(255,255,255,.15);padding-right:.65rem}
 .hticker-dot{width:6px;height:6px;border-radius:50%;background:var(--ro);box-shadow:0 0 6px var(--ro),0 0 12px rgba(192,57,43,.5);animation:hstatsPulse 1.3s ease-in-out infinite;flex-shrink:0}
 .hticker-viewport{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+/* En viewports angostos, 6% del ancho ya son ~10-15px: suficiente para
+   comerse media palabra del arranque del texto. Se usa un fundido en
+   px fijos (mas chico) en vez de %, para que no dependa del ancho. */
+@media(max-width:1023px){
+  .hticker-viewport{-webkit-mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent);mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent)}
+}
 .hticker-track{display:flex;width:max-content;animation:htickerScroll 34s linear infinite}
 .hticker:hover .hticker-track{animation-play-state:paused}
 .hticker-group{display:flex;white-space:nowrap;padding-right:3.5rem}
@@ -976,6 +982,39 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .hticker{margin-top:.9rem}
   .hjm{margin-top:1rem;max-width:94%}
   .hcta{margin-top:1rem}
+}
+/* Fase 8 — mismo ajuste que en escritorio: empujar el ticker hacia
+   abajo para que el "Jugador del Mes" quede fuera de la pantalla
+   inicial (hay que hacer scroll para verlo). La formula reusa el
+   mismo tope que ya tiene la foto (min(230px,30vh)) para no
+   sobre-empujar en telefonos altos, igual que en escritorio.
+   Se separa en dos rangos porque el menu inferior fijo (.mn, 71px)
+   solo existe en telefono (<=768px); en tablet (769-1023px) sigue
+   el menu de arriba y no hay que descontar esa franja. */
+@media(max-width:1023px) and (min-width:769px){
+  /* En este rango de ancho el titulo y la foto siempre tocan su tope
+     maximo (no dependen de la altura de pantalla), asi que el "resto"
+     de la formula es un numero fijo, sin el min(vh,...) que si hace
+     falta en telefono. (Constante medida directo con el navegador,
+     no a ojo, para no repetir el desajuste de la primera version.) */
+  .hticker{margin-top:max(.5rem,calc(100vh - 747px))}
+}
+@media(max-width:768px){
+  .hticker{margin-top:max(.5rem,calc(100vh - 483px - min(30vh,230px)))}
+}
+/* Telefonos bajos (iPhone SE y similares, alto <=700px): con la formula
+   de arriba el margen calculado da negativo (no hay aire para empujar),
+   asi que el ticker queda pegado y termina tapado por el menu inferior
+   fijo. Se achica un poco el espaciado vertical del bloque de arriba
+   (titulo, tarjetas, foto) solo en este rango para liberar esos px. */
+@media(max-width:768px) and (max-height:700px){
+  .htag{margin-bottom:.6rem}
+  .hstats{margin-top:.2rem}
+  .hstGrid{gap:.4rem}
+  .hstCard{padding:.65rem .7rem}
+  .heroMascotWrap{margin-top:.3rem}
+  .heroMascot{max-height:min(190px,26vh)}
+  .hticker{margin-top:max(0px,calc(100vh - 500px - min(26vh,190px)))}
 }
 @media(max-width:480px){
   header{padding:0 1rem;height:54px}
