@@ -1089,7 +1089,14 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
      inicial. Se empuja el ticker hacia abajo con un margen en vh para
      que quede pegado al piso del hero y el jugador del mes quede
      debajo del pliegue (hay que scrollear para verlo). */
-  .hticker{grid-area:ticker;margin-top:14vh;max-width:none;width:100%}
+  /* Fase 7 — fix v2: el problema anterior era que el margen crecia
+     1:1 con el alto de pantalla, pero el bloque de arriba (foto)
+     tiene un tope de 560px (min(58vh,560px)) que deja de crecer en
+     monitores altos. Replicando ese mismo tope dentro de la formula
+     el margen se ajusta a la altura real que va a ocupar la foto en
+     cada pantalla, en vez de sobre-empujar el ticker fuera de la
+     pantalla en monitores grandes (lo que pasaba con el calc fijo). */
+  .hticker{grid-area:ticker;margin-top:max(2rem,calc(100vh - min(58vh,560px) - 150px));max-width:none;width:100%}
   .hjm{grid-area:jugadormes;margin-top:0}
   .hcta a{white-space:nowrap}
   #hero{padding-bottom:0}
