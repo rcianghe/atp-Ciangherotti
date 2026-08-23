@@ -140,6 +140,7 @@ section{padding:4rem 1.5rem}
 .hstats{display:flex;flex-direction:column;align-items:center;gap:.85rem;margin-top:2.2rem}
 .hstats-live{display:inline-flex;align-items:center;gap:.5rem;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gl)}
 .hstats-dot{width:7px;height:7px;border-radius:50%;background:var(--v);box-shadow:0 0 6px var(--v),0 0 12px rgba(91,191,42,.5);animation:hstatsPulse 1.6s ease-in-out infinite;flex-shrink:0}
+.hdesc{display:none}
 @keyframes hstatsPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
 .hstGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;width:100%;max-width:320px}
 .hstCard{position:relative;display:flex;align-items:center;gap:.65rem;padding:.9rem .85rem;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);text-align:left;transition:transform .2s ease,border-color .2s ease,background .2s ease;--accent:var(--v);overflow:hidden}
@@ -993,40 +994,61 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
    La version de celular (todo lo de arriba) queda intacta.
    ========================================================================== */
 @media(min-width:1024px){
-  /* Que el contenido arranque arriba (no centrado), asi todo queda
-     agrupado en la parte superior de la pantalla en vez de repartirse
-     con espacios vacios. */
+  /* ======================================================================
+     FASE 1 — Layout de escritorio en dos columnas (texto | visual),
+     inspirado en el mockup: titulo+descripcion+CTA a la izquierda,
+     foto de los 3 jugadores a la derecha con las 4 tarjetas de
+     estadisticas flotando en las esquinas. Se logra sin duplicar HTML:
+     .heroTop / .heroTopStack / .hstats pasan a display:contents solo
+     en este breakpoint, asi sus hijos (htbox, hstats-live, hdesc,
+     hstGrid, heroMascotWrap) se vuelven items directos de la grilla
+     de .hc y se pueden ubicar libremente por grid-area. El HTML y el
+     JS (ids) no se tocan, y la version mobile (<1024px) sigue intacta. */
   #hero{justify-content:flex-start}
-  .hc{padding-top:.9rem;padding-bottom:1.2rem}
+  .hc{
+    padding-top:2.2rem;padding-bottom:1.6rem;text-align:left;
+    max-width:1300px;width:100%;margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(340px,460px) 1fr;
+    grid-template-areas:
+      "tagtitle   visual"
+      "livelabel  visual"
+      "desc       visual"
+      "cta        visual"
+      "ticker     ticker"
+      "jugadormes jugadormes";
+    align-items:center;
+    row-gap:.6rem;column-gap:2.5rem;
+  }
+  .heroTop,.heroTopStack,.hstats{display:contents}
 
-  /* Titulo compacto, chico, alineado a la izquierda debajo del logo */
-  .htbox{flex-direction:column;align-items:flex-start;text-align:left;gap:.3rem;margin-bottom:0}
+  .htbox{grid-area:tagtitle;flex-direction:column;align-items:flex-start;text-align:left;gap:.5rem;margin-bottom:0}
   .htbox .htag{margin-bottom:0}
-  .ht{font-size:clamp(1.05rem,2.4vw,1.55rem);letter-spacing:.5px;line-height:1.05;-webkit-text-stroke:1px var(--tvd);text-stroke:1px var(--tvd);text-shadow:2px 2px 0 rgba(0,0,0,.4)}
+  .ht{font-size:clamp(2.6rem,4.6vw,4.6rem);letter-spacing:1px;line-height:1.03;-webkit-text-stroke:2px var(--tvd);text-stroke:2px var(--tvd);text-shadow:4px 4px 0 rgba(0,0,0,.4)}
 
-  .hstats{margin-top:0;gap:.4rem}
+  .hstats-live{grid-area:livelabel;font-size:.66rem;letter-spacing:2.5px}
+  .hdesc{grid-area:desc;display:block;max-width:360px;font-size:.92rem;line-height:1.6;color:var(--gl);font-weight:300}
 
-  /* Las 4 tarjetas en una sola fila horizontal, en abanico suave,
-     pegadas arriba de la cabeza de los 3 jugadores. Superposicion
-     leve (no tapa los numeros). */
-  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -14px;position:relative;z-index:3}
-  .hstCard{width:118px;flex:none;padding:.6rem .55rem;gap:.4rem;margin:0 -4px;transition:transform .25s ease}
-  .hstCard:nth-child(1){transform:rotate(-8deg) translateY(10px)}
-  .hstCard:nth-child(2){transform:rotate(-3deg) translateY(0);z-index:1}
-  .hstCard:nth-child(3){transform:rotate(3deg) translateY(0);z-index:1}
-  .hstCard:nth-child(4){transform:rotate(8deg) translateY(10px)}
-  .hstCard:hover{transform:translateY(-6px) scale(1.05) rotate(0deg);z-index:5}
-  .hstCard .hsn{font-size:1.5rem}
-  .hstCard .hsl{font-size:.52rem}
-  .hstIcwrap{width:29px;height:29px}
-  .hstIcwrap svg{width:15px;height:15px}
+  .hcta{grid-area:cta;margin-top:.4rem;justify-content:flex-start}
 
-  .heroMascotWrap{margin-top:.3rem}
-  .heroMascot{max-height:210px;margin-top:0}
+  /* Columna visual: la foto y las 4 tarjetas ocupan la MISMA grid-area
+     ("visual"), por lo que ambas se estiran a cubrir toda la celda y
+     quedan superpuestas — asi las tarjetas se pueden anclar a las
+     cuatro esquinas de la foto con position:absolute. */
+  .heroMascotWrap{grid-area:visual;margin-top:0;height:100%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+  .heroMascot{max-height:min(64vh,620px);margin-top:0;filter:drop-shadow(0 25px 40px rgba(0,0,0,.55))}
 
-  .hticker{margin-top:.6rem}
-  .hjm{margin-top:1.1rem}
-  .hcta{margin-top:1rem}
+  .hstGrid{grid-area:visual;position:relative;z-index:3;width:100%;height:100%;max-width:none;display:block;gap:0;pointer-events:none}
+  .hstCard{position:absolute;width:150px;pointer-events:auto;padding:.9rem .95rem;transition:transform .25s ease,border-color .2s ease}
+  .hstCard:nth-child(1){top:8%;left:0}
+  .hstCard:nth-child(2){top:8%;right:0}
+  .hstCard:nth-child(3){bottom:10%;left:0}
+  .hstCard:nth-child(4){bottom:10%;right:0}
+  .hstCard:hover{transform:translateY(-4px);z-index:5}
+
+  .hticker{grid-area:ticker;margin-top:1.4rem;max-width:640px;margin-left:0;margin-right:auto}
+  .hjm{grid-area:jugadormes;margin-top:0}
+  .hcta a{white-space:nowrap}
 }
 </style>
 </head>
@@ -1065,6 +1087,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
         </div>
         <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
           <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
+          <p class="hdesc">Sigue en tiempo real el rendimiento de los jugadores y compite por el primer lugar del ranking.</p>
           <div class="hstGrid">
             <div class="hstCard hst-blue">
               <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg></div>
