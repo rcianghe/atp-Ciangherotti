@@ -1058,21 +1058,43 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
      ("visual"), por lo que ambas se estiran a cubrir toda la celda y
      quedan superpuestas — asi las tarjetas se pueden anclar a las
      cuatro esquinas de la foto con position:absolute. */
+  /* Fase 4 — fix: .hc tiene align-items:center (para que las columnas
+     de texto no se estiren de mas), pero eso tambien encogia la
+     columna visual (foto + tarjetas) a su alto de contenido en vez de
+     ocupar las 4 filas que ocupa via grid-area. Sin esto, el top/bottom
+     en % de las tarjetas y las lineas del SVG quedaban calculados sobre
+     una caja mas chica de lo esperado y se veian mal ubicadas. */
+  .heroMascotWrap,.hstGrid{align-self:stretch}
+
   .heroMascotWrap{grid-area:visual;margin-top:0;height:100%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
-  .heroMascot{max-height:min(64vh,620px);margin-top:0;filter:drop-shadow(0 25px 40px rgba(0,0,0,.55))}
+  /* Fase 5 — fix: la foto ocupaba casi todo el ancho de la columna
+     visual, asi que las tarjetas ancladas a las esquinas quedaban
+     encima de los jugadores. Se achica la foto (max-width) para que
+     sobre aire real a los costados donde viven las tarjetas. */
+  .heroMascot{max-height:min(58vh,560px);max-width:62%;width:auto;margin:0 auto;filter:drop-shadow(0 25px 40px rgba(0,0,0,.55))}
 
   .hstGrid{grid-area:visual;position:relative;z-index:3;width:100%;height:100%;max-width:none;display:block;gap:0;pointer-events:none}
   .hconn{display:block;position:absolute;inset:0;width:100%;height:100%;z-index:1}
   .hstCard{position:absolute;z-index:2;width:150px;pointer-events:auto;padding:.9rem .95rem;transition:transform .25s ease,border-color .2s ease}
-  .hstCard:nth-child(2){top:10%;left:-6px}
-  .hstCard:nth-child(3){top:10%;right:-6px}
-  .hstCard:nth-child(4){bottom:16%;left:-6px}
-  .hstCard:nth-child(5){bottom:16%;right:-6px}
+  .hstCard:nth-child(2){top:2%;left:0}
+  .hstCard:nth-child(3){top:2%;right:0}
+  .hstCard:nth-child(4){bottom:8%;left:0}
+  .hstCard:nth-child(5){bottom:8%;right:0}
   .hstCard:hover{transform:translateY(-4px);z-index:5}
 
-  .hticker{grid-area:ticker;margin-top:1.4rem;max-width:640px;margin-left:0;margin-right:auto}
+  /* Fase 4 — fix: el ticker ocupa las DOS columnas del grid (abarca
+     todo el ancho del hero, como la barra "En vivo" del mockup), pero
+     tenia un max-width:640px heredado de un ajuste anterior que lo
+     dejaba angosto y pegado a la izquierda. Se saca esa limitacion. */
+  .hticker{grid-area:ticker;margin-top:1.4rem;max-width:none;width:100%}
   .hjm{grid-area:jugadormes;margin-top:0}
   .hcta a{white-space:nowrap}
+  /* Fase 5 — fix: el ticker debe quedar pegado al borde inferior del
+     hero, sin espacio muerto debajo. #hero hereda padding-bottom:4rem
+     de la regla generica "section{padding:4rem 1.5rem}", y .hc ademas
+     sumaba su propio padding-bottom: ambos se sacan aca. */
+  #hero{padding-bottom:0}
+  .hc{padding-bottom:0}
 }
 </style>
 </head>
@@ -1114,10 +1136,10 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
           <p class="hdesc">Sigue en tiempo real el rendimiento de los jugadores y compite por el primer lugar del ranking.</p>
           <div class="hstGrid">
             <svg class="hconn" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
-              <path class="hconn-path" d="M150,165 C290,140 350,225 445,270"/>
-              <path class="hconn-path" d="M850,165 C710,140 650,225 555,270"/>
-              <path class="hconn-path hconn-path-b" d="M150,455 C290,478 350,400 445,355"/>
-              <path class="hconn-path hconn-path-b" d="M850,455 C710,478 650,400 555,355"/>
+              <path class="hconn-path" d="M60,50 C220,20 320,180 445,270"/>
+              <path class="hconn-path" d="M940,50 C780,20 680,180 555,270"/>
+              <path class="hconn-path hconn-path-b" d="M60,530 C220,560 320,420 445,355"/>
+              <path class="hconn-path hconn-path-b" d="M940,530 C780,560 680,420 555,355"/>
             </svg>
             <div class="hstCard hst-blue">
               <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/></svg></div>
