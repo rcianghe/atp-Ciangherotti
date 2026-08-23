@@ -936,11 +936,10 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
    HERO — MOVIL Y TABLET (<1024px)
    Reordena visualmente el hero SIN tocar el HTML (asi el JS que rellena
    estadisticas, ticker, etc. sigue apuntando a los mismos IDs): titulo
-   arriba, foto de los 3 jugadores al centro, tarjetas compactas debajo
-   en grilla 2x2 (nunca encima de la foto), y el resto (ticker, jugador
-   del mes, CTA) apilado despues, comprimido para que el CTA quede
-   visible sin scroll excesivo. Va antes del bloque de escritorio para
-   que este ultimo siga ganando en pantallas grandes. */
+   arriba, tarjetas en abanico (igual que en escritorio, a menor escala),
+   foto de los 3 jugadores justo debajo del abanico, y el resto (ticker,
+   jugador del mes, CTA) apilado despues. Va antes del bloque de
+   escritorio para que este ultimo siga ganando en pantallas grandes. */
 @media(max-width:1023px){
   #hero{padding-top:70px;padding-bottom:1.6rem}
   .hc{padding:.6rem 1.1rem 0;width:100%}
@@ -948,10 +947,24 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .htbox{order:1}
   .htag{margin-bottom:1rem}
   .ht{font-size:clamp(2.5rem,13vw,4.4rem);line-height:1.04}
-  .heroMascotWrap{order:2;margin-top:.3rem}
+  .hstats{order:2;margin-top:.2rem;width:100%}
+  .heroMascotWrap{order:3;margin-top:0}
   .heroMascot{max-height:min(260px,34vh)}
-  .hstats{order:3;margin-top:.2rem;width:100%}
-  .hstGrid{margin-left:auto;margin-right:auto}
+
+  /* Abanico compacto, mismo criterio que en escritorio: fila unica,
+     leve superposicion, pegado justo arriba de la cabeza de los
+     jugadores. */
+  .hstGrid{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;max-width:none;width:auto;gap:0;margin:0 auto -10px;position:relative;z-index:3}
+  .hstCard{width:clamp(72px,20vw,92px);flex:none;padding:.45rem .4rem;gap:.3rem;margin:0 -6px;transition:transform .25s ease}
+  .hstCard:nth-child(1){transform:rotate(-8deg) translateY(8px)}
+  .hstCard:nth-child(2){transform:rotate(-3deg) translateY(0);z-index:1}
+  .hstCard:nth-child(3){transform:rotate(3deg) translateY(0);z-index:1}
+  .hstCard:nth-child(4){transform:rotate(8deg) translateY(8px)}
+  .hstCard .hsn{font-size:1.05rem}
+  .hstCard .hsl{font-size:.42rem}
+  .hstIcwrap{width:22px;height:22px}
+  .hstIcwrap svg{width:12px;height:12px}
+
   .hticker{margin-top:.9rem}
   .hjm{margin-top:1rem;max-width:94%}
   .hcta{margin-top:1rem}
@@ -962,12 +975,23 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .lt{font-size:.82rem}
   .lt span{font-size:.7rem}
   #hero{padding-top:64px}
-  .heroMascot{max-height:min(215px,30vh)}
-  .hstGrid{max-width:290px;gap:.5rem}
-  .hstCard{padding:.65rem .6rem;gap:.5rem}
-  .hstIcwrap{width:31px;height:31px}
-  .hstIcwrap svg{width:16px;height:16px}
-  .hstCard .hsn{font-size:1.5rem}
+  .heroMascot{max-height:min(210px,28vh)}
+  .hstCard{width:clamp(66px,19vw,82px);padding:.4rem .35rem}
+  .hstCard .hsn{font-size:.95rem}
+  .hstCard .hsl{font-size:.4rem}
+  .hstIcwrap{width:20px;height:20px}
+  .hstIcwrap svg{width:11px;height:11px}
+}
+/* La tarjeta de Jugador del Mes (con foto) queda igual que en escritorio.
+   Lo que se ajusta abajo es que no se asome en la primera pantalla: el
+   bloque de arriba (titulo+abanico+foto+ticker) ocupa el alto completo
+   de la pantalla, empujando Jugador del Mes justo debajo de esa primera
+   vista, visible solo al bajar. */
+@media(max-width:1023px){
+  .heroTop{min-height:calc(100dvh - 70px - .6rem)}
+}
+@media(max-width:480px){
+  .heroTop{min-height:calc(100dvh - 64px - .6rem)}
 }
 
 /* ==========================================================================
