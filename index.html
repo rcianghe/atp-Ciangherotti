@@ -937,19 +937,14 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
    Reordena visualmente el hero SIN tocar el HTML (asi el JS que rellena
    estadisticas, ticker, etc. sigue apuntando a los mismos IDs): titulo
    arriba, las 4 tarjetas en cuadricula 2x2 (formando un cuadrado grande)
-   arriba de la foto de los 3 jugadores, y el ticker "En vivo" anclado al
-   borde de abajo de la primera pantalla (proporcional al alto real del
-   celular). Jugador del Mes y el CTA quedan debajo, visibles al bajar.
-   Va antes del bloque de escritorio para que este ultimo siga ganando
-   en pantallas grandes. */
+   arriba de la foto de los 3 jugadores, y el ticker "En vivo" justo
+   despues, con espaciado fijo y simple (sin alturas forzadas: eso
+   resulto fragil y generaba huecos grandes en pantallas reales). Va
+   antes del bloque de escritorio para que este ultimo siga ganando en
+   pantallas grandes. */
 @media(max-width:1023px){
   #hero{padding-top:70px;padding-bottom:1.6rem}
   .hc{padding:.6rem 1.1rem 0;width:100%}
-
-  /* El grupo de arriba (titulo+cuadros+foto) y el ticker quedan cada
-     uno pegado a un extremo de la primera pantalla: el ticker siempre
-     al fondo, sin importar cuanto mida el contenido de arriba. */
-  .heroTop{min-height:calc(100dvh - 70px - .6rem);display:flex;flex-direction:column;justify-content:space-between}
   .heroTopStack{display:flex;flex-direction:column;align-items:center;width:100%}
 
   .htbox{order:1}
@@ -968,6 +963,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .heroMascotWrap{order:3;margin-top:.5rem}
   .heroMascot{max-height:min(230px,30vh)}
 
+  .hticker{margin-top:.9rem}
   .hjm{margin-top:1rem;max-width:94%}
   .hcta{margin-top:1rem}
 }
@@ -977,7 +973,6 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .lt{font-size:.82rem}
   .lt span{font-size:.7rem}
   #hero{padding-top:64px}
-  .heroTop{min-height:calc(100dvh - 64px - .6rem)}
   .heroMascot{max-height:min(195px,26vh)}
   .hstGrid{max-width:min(280px,84vw);gap:.5rem}
   .hstCard{padding:.7rem .65rem}
