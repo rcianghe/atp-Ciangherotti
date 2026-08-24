@@ -255,6 +255,10 @@ tbody tr:last-child td{border-bottom:none;}
         <span>Super Admin</span>
       </div>
     </div>
+    <div style="padding:12px 20px;border-bottom:1px solid var(--sidebar-line)">
+      <label style="display:block;font-size:10px;color:var(--sidebar-ink-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Club</label>
+      <select id="clubFilterSelect" onchange="onClubFilterChange(this.value)" style="width:100%;padding:7px 8px;border-radius:7px;border:1px solid var(--sidebar-line);background:#152016;color:#fff;font-size:12.5px;"></select>
+    </div>
     <nav class="rung-nav" id="navContainer"></nav>
     <div class="sidebar-foot">
       <b id="adminName">—</b>
@@ -309,12 +313,41 @@ let editingId = null;
 let rowsCache = [];
 let lookups = { jugadores:[], clubes:[], temporadas:[], competiciones:[], membresias:[] };
 
+/* ---- Filtro global por club ---- */
+let selectedClubId = localStorage.getItem('escalerilla_admin_club') || '';
+let clubJugadorIdsCache = {}; // clubId -> [jugador_id, ...] (tablas que llegan al club via jugador_id)
+
+async function getClubJugadorIds(clubId){
+  if(clubJugadorIdsCache[clubId]) return clubJugadorIdsCache[clubId];
+  const { data } = await sb.from('jugadores').select('id').eq('club_id', clubId);
+  const ids = (data||[]).map(x=>x.id);
+  clubJugadorIdsCache[clubId] = ids;
+  return ids;
+}
+
+function populateClubFilterSelect(){
+  const sel = document.getElementById('clubFilterSelect');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Todos los clubes</option>' +
+    lookups.clubes.map(c=>`<option value="${c.id}" ${selectedClubId===c.id?'selected':''}>${c.label}</option>`).join('');
+}
+
+async function onClubFilterChange(v){
+  selectedClubId = v;
+  localStorage.setItem('escalerilla_admin_club', v);
+  clubJugadorIdsCache = {}; // el club cambio, se invalida el cache de jugadores
+  await loadLookups(); // los selects de "Jugador" en los formularios tambien se filtran por club
+  populateClubFilterSelect();
+  if(currentEntity) showEntity(currentEntity);
+  else showDashboard();
+}
+
 /* =========================================================================
    ENTIDADES — un solo motor genérico de CRUD para las 16 tablas
    ========================================================================= */
 const ENTITIES = {
 
-  jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id',
+  jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
     select:'id,nombre,email,telefono,serie,estado,activo,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
@@ -339,7 +372,7 @@ const ENTITIES = {
       {key:'activo',label:'Jugador activo',type:'bool',default:true},
     ]},
 
-  fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id',
+  fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id', clubFilter:'direct',
     select:'jugador_id,nivel,mano,superficie,golpe,disponible,disponibilidad_desafios,comuna_laboral,comuna_particular,jugadores(nombre)',
     order:{col:'jugador_id'}, searchCols:[],
     columns:[
@@ -362,7 +395,7 @@ const ENTITIES = {
       {key:'comuna_particular',label:'Comuna particular',type:'text'},
     ]},
 
-  desafios:{ label:'Desafíos', group:'Competición', table:'desafios', pk:'id',
+  desafios:{ label:'Desafíos', group:'Competición', table:'desafios', pk:'id', clubFilter:'direct',
     select:'id,dia,hora,cancha,mensaje,estado,afiche_url,afiche_resultado_url,live_url,created_at,de:de_id(nombre),para:para_id(nombre),de_id,para_id',
     order:{col:'created_at',asc:false}, searchCols:[], filterField:'estado', filterOptions:['Pendiente','Aceptado','Rechazado','Cancelado','Expirado'],
     columns:[
@@ -386,7 +419,7 @@ const ENTITIES = {
       {key:'live_url',label:'Live URL',type:'text'},
     ]},
 
-  resultados:{ label:'Resultados', group:'Competición', table:'resultados', pk:'id',
+  resultados:{ label:'Resultados', group:'Competición', table:'resultados', pk:'id', clubFilter:'direct',
     select:'id,fecha,hora,cancha,serie,set1,set2,set3,tipo,foto_resultado_url,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id,temporada_id,desafio_id,torneo_partido_id',
     order:{col:'fecha',asc:false}, searchCols:[], filterField:'serie', filterOptions:['A','B','C'],
     columns:[
@@ -416,7 +449,7 @@ const ENTITIES = {
       {key:'torneo_partido_id',label:'ID partido de torneo vinculado (opcional)',type:'text'},
     ]},
 
-  competiciones:{ label:'Torneos / competiciones', group:'Competición', table:'competiciones', pk:'id',
+  competiciones:{ label:'Torneos / competiciones', group:'Competición', table:'competiciones', pk:'id', clubFilter:'direct',
     select:'id,serie,temporada,periodo,estado,fecha_inicio,tipo,club_id,temporada_id,clubes(nombre)',
     order:{col:'fecha_inicio',asc:false}, searchCols:[],
     columns:[
@@ -439,7 +472,7 @@ const ENTITIES = {
       {key:'temporada_id',label:'Temporada asociada',type:'fk',lookup:'temporadas'},
     ]},
 
-  torneo_partidos:{ label:'Llave de partidos', group:'Competición', table:'torneo_partidos', pk:'id',
+  torneo_partidos:{ label:'Llave de partidos', group:'Competición', table:'torneo_partidos', pk:'id', clubFilter:'direct',
     select:'id,ronda,posicion,set1,set2,set3,tipo,es_bye,es_mejor_perdedor,fecha,torneo_id,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id',
     order:{col:'ronda'}, searchCols:[], filterField:'torneo_id', filterLookup:'competiciones',
     columns:[
@@ -468,7 +501,7 @@ const ENTITIES = {
       {key:'es_mejor_perdedor',label:'Es mejor perdedor',type:'bool'},
     ]},
 
-  titulos:{ label:'Títulos', group:'Competición', table:'titulos', pk:'id',
+  titulos:{ label:'Títulos', group:'Competición', table:'titulos', pk:'id', clubFilter:'direct',
     select:'id,serie,temporada,periodo,jugador_id,torneo_partido_id,jugadores(nombre)',
     order:{col:'temporada',asc:false}, searchCols:[],
     columns:[
@@ -485,7 +518,7 @@ const ENTITIES = {
       {key:'torneo_partido_id',label:'ID partido de torneo (opcional)',type:'text'},
     ]},
 
-  temporadas:{ label:'Temporadas', group:'Competición', table:'temporadas', pk:'id',
+  temporadas:{ label:'Temporadas', group:'Competición', table:'temporadas', pk:'id', clubFilter:'direct',
     select:'id,nombre,tipo,fecha_inicio,fecha_fin,activa,club_id,clubes(nombre)',
     order:{col:'fecha_inicio',asc:false}, searchCols:['nombre'],
     columns:[
@@ -505,7 +538,7 @@ const ENTITIES = {
       {key:'activa',label:'Temporada activa',type:'bool',default:true},
     ]},
 
-  inscripciones:{ label:'Inscripciones', group:'Competición', table:'inscripciones', pk:'id',
+  inscripciones:{ label:'Inscripciones', group:'Competición', table:'inscripciones', pk:'id', clubFilter:'viaJugador',
     select:'id,serie,frecuencia_semanal,fixture_size,jugador_id,temporada_id,jugadores(nombre),temporadas(nombre)',
     order:{col:'id'}, searchCols:[],
     columns:[
@@ -545,7 +578,7 @@ const ENTITIES = {
       {key:'activo',label:'Club activo',type:'bool',default:true},
     ]},
 
-  membresias:{ label:'Membresías', group:'Club', table:'membresias', pk:'id',
+  membresias:{ label:'Membresías', group:'Club', table:'membresias', pk:'id', clubFilter:'viaJugador',
     select:'id,tipo,estado,monto,fecha_inicio,fecha_fin,jugador_id,jugadores(nombre)',
     order:{col:'fecha_fin',asc:false}, searchCols:[], filterField:'estado', filterOptions:['activa','vencida','pendiente'],
     columns:[
@@ -565,7 +598,7 @@ const ENTITIES = {
       {key:'fecha_fin',label:'Fecha vencimiento',type:'date'},
     ]},
 
-  pagos:{ label:'Pagos', group:'Club', table:'pagos', pk:'id',
+  pagos:{ label:'Pagos', group:'Club', table:'pagos', pk:'id', clubFilter:'viaJugador',
     select:'id,monto,medio,estado,transbank_token,created_at,jugador_id,membresia_id,jugadores(nombre)',
     order:{col:'created_at',asc:false}, searchCols:[], filterField:'estado', filterOptions:['iniciado','aprobado','rechazado','anulado'],
     columns:[
@@ -583,7 +616,7 @@ const ENTITIES = {
       {key:'estado',label:'Estado',type:'select',options:['iniciado','aprobado','rechazado','anulado']},
     ]},
 
-  insignias:{ label:'Insignias', group:'Club', table:'insignias', pk:'id',
+  insignias:{ label:'Insignias', group:'Club', table:'insignias', pk:'id', clubFilter:'viaJugador',
     select:'id,tipo,nombre,icono,otorgada_en,jugador_id,temporada_id,jugadores(nombre)',
     order:{col:'otorgada_en',asc:false}, searchCols:['nombre'],
     columns:[
@@ -600,7 +633,7 @@ const ENTITIES = {
       {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas'},
     ]},
 
-  galeria_fin_de_semana:{ label:'Galería', group:'Sistema', table:'galeria_fin_de_semana', pk:'id',
+  galeria_fin_de_semana:{ label:'Galería', group:'Sistema', table:'galeria_fin_de_semana', pk:'id', clubFilter:'direct',
     select:'id,titulo,url_foto,dia,created_at', order:{col:'created_at',asc:false}, searchCols:['titulo'],
     columns:[
       {key:'url_foto',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;">`:'—'},
@@ -613,7 +646,7 @@ const ENTITIES = {
       {key:'dia',label:'Día (texto libre)',type:'text'},
     ]},
 
-  admins:{ label:'Administradores', group:'Sistema', table:'admins', pk:'user_id',
+  admins:{ label:'Administradores', group:'Sistema', table:'admins', pk:'user_id', clubFilter:'direct', clubFilterIncludeNull:true,
     select:'user_id,nombre,created_at', order:{col:'created_at'}, searchCols:['nombre'], noCreateHint:true,
     columns:[
       {key:'nombre',label:'Nombre'},
@@ -625,7 +658,7 @@ const ENTITIES = {
       {key:'nombre',label:'Nombre',type:'text'},
     ]},
 
-  push_tokens:{ label:'Push tokens', group:'Sistema', table:'push_tokens', pk:'jugador_id',
+  push_tokens:{ label:'Push tokens', group:'Sistema', table:'push_tokens', pk:'jugador_id', clubFilter:'viaJugador',
     select:'jugador_id,token,updated_at,jugadores(nombre)', order:{col:'updated_at',asc:false}, searchCols:[], noCreate:true, noEdit:true, noDelete:false,
     columns:[
       {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
@@ -800,6 +833,7 @@ async function enterApp(){
   document.getElementById('adminName').textContent = currentUser.adminName || 'Admin';
   document.getElementById('adminEmail').textContent = currentUser.email || '';
   await loadLookups();
+  populateClubFilterSelect();
   buildNav();
   showDashboard();
 }
@@ -809,7 +843,9 @@ async function enterApp(){
    ========================================================================= */
 async function loadLookups(){
   const [j,c,t,comp,mem] = await Promise.all([
-    sb.from('jugadores').select('id,nombre,serie').order('nombre'),
+    (selectedClubId
+      ? sb.from('jugadores').select('id,nombre,serie').eq('club_id', selectedClubId).order('nombre')
+      : sb.from('jugadores').select('id,nombre,serie').order('nombre')),
     sb.from('clubes').select('id,nombre').order('nombre'),
     sb.from('temporadas').select('id,nombre').order('nombre'),
     sb.from('competiciones').select('id,serie,temporada,periodo,tipo').order('temporada',{ascending:false}),
@@ -856,18 +892,29 @@ async function showDashboard(){
   toggleSidebar(false);
   setActiveNav('dashboard');
   document.getElementById('viewTitle').textContent='Resumen';
-  document.getElementById('viewSubtitle').textContent='Estado general del club y la temporada';
+  const clubNombreDash = selectedClubId ? (lookups.clubes.find(c=>c.id===selectedClubId)?.label||'') : '';
+  document.getElementById('viewSubtitle').textContent = clubNombreDash ? `Estado general — ${clubNombreDash}` : 'Estado general de todos los clubes';
   document.getElementById('topbarActions').innerHTML='';
   const content = document.getElementById('content');
   content.innerHTML = '<div class="stat-grid" id="statGrid"></div><div class="two-col"><div class="panel" id="panelPendientes"></div><div class="panel" id="panelUltimos"></div></div>';
 
+  const clubIdsDash = selectedClubId ? await getClubJugadorIds(selectedClubId) : null;
+  let memQueryDash = sb.from('membresias').select('id,estado',{count:'exact'});
+  if(clubIdsDash) memQueryDash = clubIdsDash.length ? memQueryDash.in('jugador_id', clubIdsDash) : memQueryDash.eq('jugador_id','00000000-0000-0000-0000-000000000000');
+
+  let jugQueryDash = sb.from('jugadores').select('id,estado',{count:'exact'});
+  if(selectedClubId) jugQueryDash = jugQueryDash.eq('club_id', selectedClubId);
+  let desQueryDash = sb.from('desafios').select('id,estado,de:de_id(nombre),para:para_id(nombre),dia,hora',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
+  if(selectedClubId) desQueryDash = desQueryDash.eq('club_id', selectedClubId);
+  let resQueryDash = sb.from('resultados').select('id',{count:'exact'});
+  if(selectedClubId) resQueryDash = resQueryDash.eq('club_id', selectedClubId);
+  let titQueryDash = sb.from('titulos').select('id',{count:'exact'});
+  if(selectedClubId) titQueryDash = titQueryDash.eq('club_id', selectedClubId);
+  let compQueryDash = sb.from('competiciones').select('id,estado',{count:'exact'});
+  if(selectedClubId) compQueryDash = compQueryDash.eq('club_id', selectedClubId);
+
   const [jug, des, res, tit, comp, mem] = await Promise.all([
-    sb.from('jugadores').select('id,estado',{count:'exact'}),
-    sb.from('desafios').select('id,estado,de:de_id(nombre),para:para_id(nombre),dia,hora',{count:'exact'}).order('created_at',{ascending:false}).limit(6),
-    sb.from('resultados').select('id',{count:'exact'}),
-    sb.from('titulos').select('id',{count:'exact'}),
-    sb.from('competiciones').select('id,estado',{count:'exact'}),
-    sb.from('membresias').select('id,estado',{count:'exact'}),
+    jugQueryDash, desQueryDash, resQueryDash, titQueryDash, compQueryDash, memQueryDash,
   ]);
 
   const activos = (jug.data||[]).filter(x=>x.estado==='Activo').length;
@@ -894,7 +941,9 @@ async function showDashboard(){
     `).join('') : '<tr><td class="empty-state">No hay desafíos pendientes 🎾</td></tr>'}
     </tbody></table>`;
 
-  const { data: ultimos } = await sb.from('resultados').select('fecha,serie,set1,set2,set3,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre)').order('fecha',{ascending:false}).limit(6);
+  let ultQueryDash = sb.from('resultados').select('fecha,serie,set1,set2,set3,j1:jugador1_id(nombre),j2:jugador2_id(nombre),g:ganador_id(nombre)').order('fecha',{ascending:false}).limit(6);
+  if(selectedClubId) ultQueryDash = ultQueryDash.eq('club_id', selectedClubId);
+  const { data: ultimos } = await ultQueryDash;
   document.getElementById('panelUltimos').innerHTML = `
     <div class="panel-head"><h3>Últimos resultados</h3><button class="subtle-link" onclick="showEntity('resultados')">Ver todos →</button></div>
     <table><tbody>
@@ -917,7 +966,8 @@ async function showEntity(key, opts={}){
   const e = ENTITIES[key];
   setActiveNav(key);
   document.getElementById('viewTitle').textContent = e.label;
-  document.getElementById('viewSubtitle').textContent = `Tabla: ${e.table}`;
+  const clubNombreEntidad = selectedClubId ? (lookups.clubes.find(c=>c.id===selectedClubId)?.label||'') : '';
+  document.getElementById('viewSubtitle').textContent = `Tabla: ${e.table}` + (clubNombreEntidad ? ` · Club: ${clubNombreEntidad}` : '');
   currentFilterValue = opts.filterValue || '';
   currentSearchValue = '';
 
@@ -948,6 +998,18 @@ async function fetchAndRenderRows(){
   let q = sb.from(e.table).select(e.select);
   if(e.order) q = q.order(e.order.col, {ascending: e.order.asc!==false});
   if(currentFilterValue && e.filterField) q = q.eq(e.filterField, currentFilterValue);
+
+  if(selectedClubId && e.clubFilter==='direct' && e.clubFilterIncludeNull){
+    // Admins universales (club_id NULL) deben seguir visibles pase lo que pase el filtro.
+    q = q.or(`club_id.eq.${selectedClubId},club_id.is.null`);
+  } else if(selectedClubId && e.clubFilter==='direct'){
+    q = q.eq('club_id', selectedClubId);
+  } else if(selectedClubId && e.clubFilter==='viaJugador'){
+    const ids = await getClubJugadorIds(selectedClubId);
+    if(!ids.length){ rowsCache=[]; renderRows(); return; }
+    q = q.in('jugador_id', ids);
+  }
+
   const { data, error } = await q.limit(500);
   if(error){ toast('Error cargando datos: '+error.message, true); rowsCache=[]; }
   else rowsCache = data||[];
