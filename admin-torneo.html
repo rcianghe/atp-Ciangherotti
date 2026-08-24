@@ -54,12 +54,14 @@ input[type=text],input[type=number],select{background:var(--g);border:1px solid 
 .backbtn:hover{color:var(--v)}
 .mp-picker{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--gm)}
 .mp-opt{display:flex;align-items:center;gap:.5rem;font-size:.82rem;padding:.35rem 0}
+.clubsel{background:var(--g);border:1px solid var(--gm);border-radius:5px;padding:.5rem .6rem;color:var(--bl);font-family:'Barlow',sans-serif;font-size:.85rem}
+.clubpill{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:.2rem .6rem;border-radius:10px;background:rgba(91,191,42,.18);color:var(--v);border:1px solid rgba(91,191,42,.4)}
 </style>
 </head>
 <body>
 
 <h1>Torneo Interno — Panel Admin</h1>
-<div class="sub">Club de Tenis Estadio Quilicura</div>
+<div class="sub" id="subHeader">Club de Tenis Estadio Quilicura</div>
 
 <div id="app"></div>
 
@@ -86,6 +88,17 @@ var mensaje=null; // {tipo:'ok'|'err', texto}
 var mpSeleccion=null; // jugador_id elegido como "mejor perdedor" al avanzar de ronda
 var guardando=false;
 
+// ---- Fase 3: club administrado en esta sesion ----
+// Si el admin logueado tiene admins.club_id definido (admin scoped),
+// clubActual queda fijo a ese club y no se muestra selector.
+// Si admins.club_id es NULL (super-admin, ej. Ricardo), se carga la
+// lista de clubes activos y se muestra un selector: hay que elegir
+// explicitamente cual club administrar antes de ver nada.
+var adminClubIdFijo=null;   // club_id de la fila admins de este usuario (null = super-admin)
+var clubesDisponibles=[];   // [{id,nombre,slug}] solo se llena para super-admin
+var clubActual=null;        // club_id efectivamente seleccionado/fijo para esta sesion
+var clubActualNombre='';
+
 // ---- Visibilidad publica del Torneo Interno (interruptor activo/inactivo) ----
 // Controla si la seccion "Interno" aparece en el menu y la pagina publica
 // (index.html). Vive en la tabla "configuracion_sitio" (clave/valor), asi
@@ -102,8 +115,9 @@ function esErrorEsquemaFaltante(err){
 }
 
 async function cargarVisibilidadTorneoInterno(){
+  if(!clubActual)return;
   try{
-    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').maybeSingle();
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').eq('club_id',clubActual).maybeSingle();
     if(res.error){
       if(esErrorEsquemaFaltante(res.error)){
         console.warn('La tabla "configuracion_sitio" todavia no existe. Corre la migracion en Supabase.',res.error);
@@ -119,11 +133,11 @@ async function cargarVisibilidadTorneoInterno(){
 }
 
 async function toggleVisibilidadTorneoInterno(){
-  if(visibilidadCargando||!visibilidadTablaDisponible)return;
+  if(visibilidadCargando||!visibilidadTablaDisponible||!clubActual)return;
   var nuevo=!torneoInternoVisible;
   visibilidadCargando=true;render();
   try{
-    var res=await window.supabaseClient.from('configuracion_sitio').upsert({clave:'torneo_interno_visible',valor:nuevo},{onConflict:'clave'});
+    var res=await window.supabaseClient.from('configuracion_sitio').upsert({clave:'torneo_interno_visible',club_id:clubActual,valor:nuevo},{onConflict:'clave,club_id'});
     if(res.error){
       visibilidadCargando=false;
       setMsg('err','No se pudo cambiar la visibilidad: '+res.error.message);
@@ -161,25 +175,67 @@ async function chequearAdmin(){
   chequeoListo=false;render();
   if(!usuarioActual){esAdmin=false;chequeoListo=true;render();return;}
   try{
-    var res=await window.supabaseClient.from('admins').select('user_id').eq('user_id',usuarioActual.uid).maybeSingle();
+    var res=await window.supabaseClient.from('admins').select('user_id,club_id').eq('user_id',usuarioActual.uid).maybeSingle();
     esAdmin=!res.error&&!!res.data;
-  }catch(e){esAdmin=false;}
+    adminClubIdFijo=esAdmin?(res.data.club_id||null):null;
+  }catch(e){esAdmin=false;adminClubIdFijo=null;}
   chequeoListo=true;
   if(esAdmin){
-    await cargarJugadoresClub();
-    await cargarTorneosDeSerie(serieActual);
-    await cargarVisibilidadTorneoInterno();
+    if(adminClubIdFijo){
+      // Admin scoped a un solo club: no hay nada que elegir.
+      await fijarClubActual(adminClubIdFijo);
+    }else{
+      // Super-admin (club_id NULL): hay que elegir explicitamente cual
+      // club administrar antes de cargar cualquier dato.
+      await cargarClubesDisponibles();
+    }
   }
   render();
 }
 
+async function cargarClubesDisponibles(){
+  try{
+    var res=await window.supabaseClient.from('clubes').select('id,nombre,slug').eq('activo',true).order('nombre');
+    clubesDisponibles=res.error?[]:res.data;
+  }catch(e){clubesDisponibles=[];}
+}
+
+// Fija clubActual (ya sea porque el admin es scoped, o porque el
+// super-admin lo eligio en el selector) y recarga todos los datos
+// dependientes de club desde cero.
+async function fijarClubActual(clubId){
+  clubActual=clubId;
+  var c=clubesDisponibles.filter(function(x){return x.id===clubId;})[0];
+  clubActualNombre=c?c.nombre:'';
+  if(!clubActualNombre){
+    try{
+      var res=await window.supabaseClient.from('clubes').select('nombre').eq('id',clubId).maybeSingle();
+      clubActualNombre=(!res.error&&res.data)?res.data.nombre:'';
+    }catch(e){}
+  }
+  var sub=document.getElementById('subHeader');
+  if(sub)sub.textContent=clubActualNombre||'Club de Tenis Estadio Quilicura';
+  torneoAbierto=null;partidos=[];mensaje=null;
+  await cargarJugadoresClub();
+  await cargarTorneosDeSerie(serieActual);
+  await cargarVisibilidadTorneoInterno();
+  render();
+}
+
+function seleccionarClubAdmin(clubId){
+  if(!clubId)return;
+  fijarClubActual(clubId);
+}
+
 async function cargarJugadoresClub(){
-  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado');
+  if(!clubActual){jugadoresClub=[];return;}
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado').eq('club_id',clubActual);
   jugadoresClub=res.error?[]:res.data;
 }
 
 async function cargarTorneosDeSerie(serie){
-  var res=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').eq('serie',serie).order('temporada',{ascending:false});
+  if(!clubActual){torneosSerie=[];return;}
+  var res=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').eq('serie',serie).eq('club_id',clubActual).order('temporada',{ascending:false});
   torneosSerie=res.error?[]:res.data;
 }
 
@@ -211,16 +267,35 @@ async function calcularPuntosBaseSerie(serie){
   return pts;
 }
 
+// Resuelve la temporada activa del club actual (para crear torneos
+// internos sin depender de un id fijo). Si no hay ninguna temporada
+// marcada activa=true para este club, devuelve null y crearTorneo()
+// avisa en vez de insertar con un valor invalido.
+async function obtenerTemporadaActivaDelClub(){
+  if(!clubActual)return null;
+  try{
+    var res=await window.supabaseClient.from('temporadas').select('id').eq('club_id',clubActual).eq('activa',true).limit(1).maybeSingle();
+    return (!res.error&&res.data)?res.data.id:null;
+  }catch(e){return null;}
+}
+
 async function crearTorneo(){
+  if(!clubActual){setMsg('err','Selecciona primero el club a administrar.');return;}
   var temporada=parseInt(document.getElementById('inTemporada').value,10);
   var periodo=(document.getElementById('inPeriodo').value||'').trim()||null;
   if(!temporada){setMsg('err','Ingresa la temporada (año).');return;}
   guardando=true;render();
+  var temporadaId=await obtenerTemporadaActivaDelClub();
+  if(!temporadaId){
+    guardando=false;
+    setMsg('err','No se encontro una temporada activa para este club. Crea/activa una temporada primero.');
+    return;
+  }
   var res=await window.supabaseClient.from('competiciones').insert({
-  tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,
-  club_id:'00647d2d-f3fc-4148-bf9c-a6ac40c3fbee',
-  temporada_id:'ee5d0142-dabf-49bf-8ff8-220ec05ec1ba'
-}).select().maybeSingle();
+    tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,
+    club_id:clubActual,
+    temporada_id:temporadaId
+  }).select().maybeSingle();
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
   await cargarTorneosDeSerie(serieActual);
@@ -400,9 +475,19 @@ function render(){
     return;
   }
   var h='<div class="row" style="justify-content:space-between;margin-bottom:1rem">'
-    +'<span class="sub" style="margin:0">Conectado como <b style="color:var(--bl)">'+esc(usuarioActual.nombre||usuarioActual.email)+'</b></span>'
+    +'<span class="sub" style="margin:0">Conectado como <b style="color:var(--bl)">'+esc(usuarioActual.nombre||usuarioActual.email)+'</b>'
+    +(adminClubIdFijo?'':' <span class="clubpill">Super-admin</span>')+'</span>'
     +'<button class="btn gl" onclick="logout()">Salir</button></div>';
 
+  // Super-admin sin club elegido todavia: mostrar selector y no seguir
+  // renderizando nada mas hasta que se elija.
+  if(!adminClubIdFijo&&!clubActual){
+    h+=renderSelectorClub();
+    el.innerHTML=h;
+    return;
+  }
+
+  h+=renderClubActualBanner();
   h+=renderVisibilidadTorneoInterno();
 
   if(mensaje){
@@ -415,6 +500,32 @@ function render(){
     h+=renderSelectorYListado();
   }
   el.innerHTML=h;
+}
+
+function renderSelectorClub(){
+  var opts='<option value="">Selecciona un club...</option>';
+  clubesDisponibles.forEach(function(c){
+    opts+='<option value="'+esc(c.id)+'">'+esc(c.nombre)+'</option>';
+  });
+  return '<div class="card"><b>¿Que club vas a administrar?</b>'
+    +'<p class="sub">Tu cuenta es administradora universal: elige un club para ver y editar solo sus torneos internos.</p>'
+    +'<select class="clubsel" onchange="seleccionarClubAdmin(this.value)">'+opts+'</select></div>';
+}
+
+function renderClubActualBanner(){
+  if(!adminClubIdFijo){
+    // Super-admin con club ya elegido: mostrar de cual se trata y dar
+    // opcion de cambiar sin tener que recargar la pagina.
+    var opts='';
+    clubesDisponibles.forEach(function(c){
+      opts+='<option value="'+esc(c.id)+'" '+(c.id===clubActual?'selected':'')+'>'+esc(c.nombre)+'</option>';
+    });
+    return '<div class="card" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">'
+      +'<span class="clubpill">Administrando</span>'
+      +'<select class="clubsel" onchange="seleccionarClubAdmin(this.value)">'+opts+'</select>'
+      +'</div>';
+  }
+  return '<div class="card" style="display:flex;align-items:center;gap:.7rem"><span class="clubpill">Tu club</span><b>'+esc(clubActualNombre)+'</b></div>';
 }
 
 function renderVisibilidadTorneoInterno(){
