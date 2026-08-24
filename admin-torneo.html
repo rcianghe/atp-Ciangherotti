@@ -249,7 +249,7 @@ function seleccionarSerie(s){
 async function calcularPuntosBaseSerie(serie){
   var res=await window.supabaseClient.from('resultados')
     .select('jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,serie,torneo_partido_id')
-    .eq('serie',serie).is('torneo_partido_id',null); // solo partidos de la escalerilla, no de un interno anterior
+    .eq('serie',serie).eq('club_id',clubActual).is('torneo_partido_id',null); // solo partidos de la escalerilla, no de un interno anterior
   var pts={};
   if(!res.error){
     res.data.forEach(function(r){
