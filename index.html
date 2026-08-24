@@ -1387,6 +1387,13 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
   window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Fase 1: este archivo sirve UN club especifico (Club de Tenis Estadio
+  // Quilicura). Todas las queries a tablas que ya tienen club_id (desde
+  // la Fase 0) deben filtrar explicitamente por esta constante, para que
+  // el sitio nunca dependa de "es la unica fila que existe" -- eso deja
+  // de ser cierto en cuanto exista un segundo club en el mismo proyecto
+  // de Supabase.
+  var CLUB_ACTUAL_ID = '00647d2d-f3fc-4148-bf9c-a6ac40c3fbee';
 </script>
 
 <script>
@@ -2289,7 +2296,7 @@ var jugadoresSupabaseListo=false; // true recien cuando DATA.players tiene los U
 var TEMPORADA_ACTIVA_ID=null;
 async function obtenerTemporadaActivaId(){
   if(TEMPORADA_ACTIVA_ID)return TEMPORADA_ACTIVA_ID;
-  var res=await window.supabaseClient.from('temporadas').select('id').eq('activa',true).limit(1).maybeSingle();
+  var res=await window.supabaseClient.from('temporadas').select('id').eq('club_id',CLUB_ACTUAL_ID).eq('activa',true).limit(1).maybeSingle();
   if(res.error||!res.data){
     console.warn('No se pudo resolver la temporada activa.',res.error);
     return null;
@@ -2314,7 +2321,8 @@ async function cargarJugadoresYResultadosSupabase(){
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
       .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha,hora,cancha,foto_resultado_url')
-      .eq('temporada_id',temporadaId);
+      .eq('temporada_id',temporadaId)
+      .eq('club_id',CLUB_ACTUAL_ID);
     if(jugRes.error||resRes.error){
       console.warn('Supabase (inscripciones/resultados) devolvio error, se mantienen los datos previos.',jugRes.error,resRes.error);
       toggleRankErr(true);
@@ -2391,7 +2399,8 @@ async function cargarFichasSupabase(){
   if(!window.supabaseClient)return;
   try{
     var res=await window.supabaseClient.from('fichas_tecnicas')
-      .select('jugador_id,nivel,mano,superficie,golpe,disponible,disponibilidad_desafios,comuna_laboral,comuna_particular');
+      .select('jugador_id,nivel,mano,superficie,golpe,disponible,disponibilidad_desafios,comuna_laboral,comuna_particular')
+      .eq('club_id',CLUB_ACTUAL_ID);
     if(res.error){
       console.warn('Supabase (fichas_tecnicas) devolvio error, se mantienen los datos previos.',res.error);
       return;
@@ -2454,7 +2463,8 @@ async function cargarDesafiosSupabase(){
   if(!window.supabaseClient)return;
   try{
     var res=await window.supabaseClient.from('desafios')
-      .select('id,de_id,para_id,dia,hora,cancha,mensaje,estado,afiche_url,afiche_resultado_url,live_url,created_at');
+      .select('id,de_id,para_id,dia,hora,cancha,mensaje,estado,afiche_url,afiche_resultado_url,live_url,created_at')
+      .eq('club_id',CLUB_ACTUAL_ID);
     if(res.error){
       console.warn('Supabase (desafios) devolvio error, se mantienen los datos previos.',res.error);
       return;
@@ -2537,7 +2547,7 @@ function aplicarVisibilidadTorneoInterno(){
 async function cargarVisibilidadTorneoInterno(){
   if(!window.supabaseClient)return;
   try{
-    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').maybeSingle();
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
     if(res.error){
       console.warn('No se pudo cargar la visibilidad del Torneo Interno, se asume visible.',res.error);
       return;
@@ -2552,7 +2562,7 @@ async function cargarVisibilidadTorneoInterno(){
 async function cargarFixtureSizeSupabase(){
   if(!window.supabaseClient)return;
   try{
-    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','fixture_size').maybeSingle();
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','fixture_size').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
     if(res.error){
       console.warn('No se pudo cargar el tamaño de fixture, se usa el valor por defecto.',res.error);
       return;
@@ -2758,8 +2768,8 @@ function rTorneoInterno(){
 async function cargarTorneosInternos(){
   if(!window.supabaseClient)return;
   try{
-    var tRes=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').order('temporada',{ascending:false});
-    var pRes=await window.supabaseClient.from('torneo_partidos').select('*');
+    var tRes=await window.supabaseClient.from('competiciones').select('*').eq('club_id',CLUB_ACTUAL_ID).eq('tipo','interno').order('temporada',{ascending:false});
+    var pRes=await window.supabaseClient.from('torneo_partidos').select('*').eq('club_id',CLUB_ACTUAL_ID);
     if(tRes.error||pRes.error){
       console.warn('No se pudo cargar el Torneo Interno, se mantienen los datos previos.',tRes.error,pRes.error);
       return;
@@ -3652,13 +3662,15 @@ async function getTitulos(nombre){
       .from('jugadores')
       .select('id')
       .eq('nombre', nombreLimpio)
+      .eq('club_id', CLUB_ACTUAL_ID)
       .maybeSingle();
 
     if(!jugadorRes.error && jugadorRes.data){
       var res = await window.supabaseClient
         .from('titulos')
         .select('*')
-        .eq('jugador_id', jugadorRes.data.id);
+        .eq('jugador_id', jugadorRes.data.id)
+        .eq('club_id', CLUB_ACTUAL_ID);
 
       if(!res.error && res.data){
         var t = res.data.map(function(row){
