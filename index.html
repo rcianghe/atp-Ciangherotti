@@ -1174,7 +1174,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
       <div class="heroTopStack">
         <div class="htbox">
           <div class="htag">Temporada 2026</div>
-          <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y">QUILICURA</span></h1>
+          <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y" id="heroTagline">QUILICURA</span></h1>
         </div>
         <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
           <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
@@ -1323,9 +1323,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
     <div class="galb">
-      <a class="galbtn" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album CTQ Afiches</a>
-      <a class="galbtn" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
-      <a class="galbtn" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
+      <a class="galbtn" id="galLinkAfiches" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album CTQ Afiches</a>
+      <a class="galbtn" id="galLinkVintage" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
+      <a class="galbtn" id="galLinkCompeticion" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
     </div>
   </div>
 </section>
@@ -1394,6 +1394,19 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   // de ser cierto en cuanto exista un segundo club en el mismo proyecto
   // de Supabase.
   var CLUB_ACTUAL_ID = '00647d2d-f3fc-4148-bf9c-a6ac40c3fbee';
+
+  // Fase 2: valores de branding del club, con el mismo default que hoy
+  // esta hardcodeado (asi el sitio se ve identico ANTES de que Supabase
+  // responda). cargarConfigClubSupabase() los sobreescribe apenas llega
+  // la fila real de "clubes" -- si por algun motivo Supabase no responde,
+  // el sitio sigue funcionando con estos valores, igual que siempre.
+  var CLUB_NOMBRE = 'Club de Tenis Estadio Quilicura';
+  var CLUB_NOMBRE_CORTO = 'CTQ Escalerilla';
+  var CLUB_LOGO_URL = 'logo-club-tenis-estadio-quilicura.jpg';
+  var CLUB_MASCOTA_URL = 'jugadores/big-3.PNG';
+  var CLUB_TROFEO_URL = 'trofeo-torneo-interno-quilicura.PNG';
+  var CLUB_HERO_TAGLINE = 'QUILICURA';
+  var CLUB_OG_IMAGE_URL = 'https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg';
 </script>
 
 <script>
@@ -2110,7 +2123,7 @@ function calcularJugadorDelMes(){
     var racha=calcularRachaActual(historialTodos[jugador]);
     if(racha.tipo!=='W'||racha.cantidad<1)continue;
     if(!mejor||racha.cantidad>mejor.cantidad||(racha.cantidad===mejor.cantidad&&pJugador.pts>mejor.pts)){
-      mejor={nombre:jugador,serie:pJugador.serie,cantidad:racha.cantidad};
+      mejor={nombre:jugador,serie:pJugador.serie,cantidad:racha.cantidad,fotoCuerpoUrl:pJugador.fotoCuerpoUrl};
     }
   }
   return mejor;
@@ -2254,15 +2267,14 @@ function rJugadorDelMes(){
   if(!jm){el.classList.remove('show');return;}
   document.getElementById('hjmNombre').textContent=jm.nombre;
   document.getElementById('hjmDelta').textContent=fraseDestacado(jm.nombre)+' - '+jm.cantidad+(jm.cantidad===1?' victoria seguida':' victorias seguidas')+' - Serie '+jm.serie;
-  // Foto de cuerpo: se busca en FOTOS_JUGADORES por nombre, igual que el
-  // resto del sitio (ranking, perfil). Si el jugador destacado no tiene
-  // foto cargada, simplemente no se muestra (la tarjeta sigue funcionando
-  // solo con texto, como antes).
+  // Foto de cuerpo: viene directo del jugador (jugadores.foto_cuerpo_url
+  // en Supabase, ya incluido en DATA.players). Si el jugador destacado no
+  // tiene foto cargada, simplemente no se muestra (la tarjeta sigue
+  // funcionando solo con texto, como antes).
   var fotoEl=document.getElementById('hjmFoto');
   if(fotoEl){
-    var fotoData=FOTOS_JUGADORES[jm.nombre];
-    if(fotoData&&fotoData.cuerpo){
-      fotoEl.src=fotoData.cuerpo;
+    if(jm.fotoCuerpoUrl){
+      fotoEl.src=jm.fotoCuerpoUrl;
       fotoEl.alt=jm.nombre;
       fotoEl.style.display='block';
     }else{
@@ -2317,7 +2329,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugRes=await window.supabaseClient
-      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha)')
+      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url)')
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
       .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha,hora,cancha,foto_resultado_url')
@@ -2329,7 +2341,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugadoresRaw=jugRes.data.map(function(i){
-      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||''};
+      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||'',avatarUrl:i.jugadores.avatar_url||'',fotoCuerpoUrl:i.jugadores.foto_cuerpo_url||''};
     });
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
@@ -2360,7 +2372,7 @@ async function cargarJugadoresYResultadosSupabase(){
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl};
     });
     DATA.results=resultadosRaw.map(function(r){
       var scoreCrudo=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
@@ -2573,6 +2585,87 @@ async function cargarFixtureSizeSupabase(){
   }
 }
 
+// ============================================================
+// FASE 2: CONFIGURACION DE MARCA DEL CLUB DESDE SUPABASE
+// ============================================================
+// Reemplaza lo que antes vivia hardcodeado en el JS (nombre del club,
+// colores, logo, mascota del hero, trofeo, numero de WhatsApp, zonas
+// de entrega de la tienda y links de galeria) por datos reales de la
+// tabla "clubes". Si Supabase no responde, NO se toca nada: las
+// constantes ya arrancan con el mismo valor que hoy esta hardcodeado
+// (ver declaracion de CLUB_NOMBRE / CLUB_LOGO_URL / etc. mas arriba),
+// asi que el sitio nunca se rompe ni se ve distinto por un fallo de red.
+async function cargarConfigClubSupabase(){
+  if(!window.supabaseClient)return;
+  try{
+    var res=await window.supabaseClient.from('clubes')
+      .select('nombre,nombre_corto,logo_url,whatsapp_numero,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,tema,zonas_entrega,albumes_galeria')
+      .eq('id',CLUB_ACTUAL_ID).maybeSingle();
+    if(res.error||!res.data){
+      console.warn('No se pudo cargar la configuracion del club, se mantienen los valores por defecto.',res.error);
+      return;
+    }
+    var c=res.data;
+    if(c.nombre)CLUB_NOMBRE=c.nombre;
+    if(c.nombre)CLUB_JUGADOR=c.nombre; // "Club actual" en el perfil del jugador
+    if(c.nombre_corto)CLUB_NOMBRE_CORTO=c.nombre_corto;
+    if(c.logo_url)CLUB_LOGO_URL=c.logo_url;
+    if(c.whatsapp_numero)WA=c.whatsapp_numero;
+    if(c.mascota_hero_url)CLUB_MASCOTA_URL=c.mascota_hero_url;
+    if(c.trofeo_url)CLUB_TROFEO_URL=c.trofeo_url;
+    if(c.hero_tagline)CLUB_HERO_TAGLINE=c.hero_tagline;
+    if(c.og_image_url)CLUB_OG_IMAGE_URL=c.og_image_url;
+    if(Array.isArray(c.zonas_entrega)&&c.zonas_entrega.length)METRO=c.zonas_entrega;
+
+    aplicarBrandingClub(c.tema||null,c.albumes_galeria||null);
+  }catch(err){
+    console.warn('Sin conexion al cargar la configuracion del club.',err);
+  }
+}
+
+// Aplica al DOM lo que ya no depende de un re-render (colores CSS via
+// variables, logo, meta tags, tagline del hero, links de galeria). Todo
+// lo que SI se reconstruye en cada render (mascota del hero, trofeo,
+// "Club actual" en el perfil) simplemente lee las variables de arriba
+// la proxima vez que esa funcion vuelva a correr -- no hace falta
+// forzar un re-render aca.
+function aplicarBrandingClub(tema,albumes){
+  if(tema){
+    var root=document.documentElement.style;
+    if(tema.primario)root.setProperty('--v',tema.primario);
+    if(tema.primario_oscuro)root.setProperty('--vd',tema.primario_oscuro);
+    if(tema.primario_claro)root.setProperty('--vl',tema.primario_claro);
+    if(tema.acento)root.setProperty('--am',tema.acento);
+  }
+  document.title=CLUB_NOMBRE+' - Escalerilla 2026';
+  var metaDesc=document.querySelector('meta[name="description"]');
+  if(metaDesc)metaDesc.setAttribute('content','Ranking en vivo de la Escalerilla por Series 2026 de '+CLUB_NOMBRE+'. Jugadores, resultados, partidos pendientes y estadisticas de las Series A, B y C.');
+  var ogSite=document.querySelector('meta[property="og:site_name"]');
+  if(ogSite)ogSite.setAttribute('content',CLUB_NOMBRE);
+  var ogTitle=document.querySelector('meta[property="og:title"]');
+  if(ogTitle)ogTitle.setAttribute('content',CLUB_NOMBRE+' - Escalerilla 2026');
+  var ogDesc=document.querySelector('meta[property="og:description"]');
+  if(ogDesc)ogDesc.setAttribute('content','Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.');
+  var ogImg=document.querySelector('meta[property="og:image"]');
+  if(ogImg)ogImg.setAttribute('content',CLUB_OG_IMAGE_URL);
+  var twTitle=document.querySelector('meta[name="twitter:title"]');
+  if(twTitle)twTitle.setAttribute('content',CLUB_NOMBRE+' - Escalerilla 2026');
+  var twImg=document.querySelector('meta[name="twitter:image"]');
+  if(twImg)twImg.setAttribute('content',CLUB_OG_IMAGE_URL);
+
+  var logos=document.querySelectorAll('.splash-logo,.lc');
+  for(var i=0;i<logos.length;i++)logos[i].src=CLUB_LOGO_URL;
+
+  var tagEl=document.getElementById('heroTagline');
+  if(tagEl)tagEl.textContent=CLUB_HERO_TAGLINE;
+
+  if(albumes){
+    var la=document.getElementById('galLinkAfiches');if(la&&albumes.afiches)la.href=albumes.afiches;
+    var lv=document.getElementById('galLinkVintage');if(lv&&albumes.vintage)lv.href=albumes.vintage;
+    var lc=document.getElementById('galLinkCompeticion');if(lc&&albumes.competicion_mes)lc.href=albumes.competicion_mes;
+  }
+}
+
 function tintKeys(){return Object.keys(TORNEOS_INTERNOS);}
 function tintCambiar(k){tintActual=k;rTorneoInterno();}
 
@@ -2601,7 +2694,7 @@ function rTintEstadoYCampeon(t){
   var camp=document.getElementById('tintCampeon');
   if(!camp)return;
   TINT_CAMPEON_ACTUAL=t;
-  var img='<img class="trofeo-ic" src="trofeo-torneo-interno-quilicura.PNG" alt="Trofeo Torneo Interno Quilicura" loading="lazy">';
+  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo Torneo Interno" loading="lazy">';
   var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="abrirCampeonModal()" onkeydown="'+kbActivate('abrirCampeonModal()')+'"';
   if(t.campeon){
     camp.innerHTML='<div class="tint-campeon" '+attrs+'>'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
@@ -2619,7 +2712,7 @@ function abrirCampeonModal(){
   var modal=document.getElementById('tintCampeonModal');
   var card=document.getElementById('tintCampeonModalCard');
   if(!modal||!card)return;
-  var img='<img class="trofeo-ic" src="trofeo-torneo-interno-quilicura.PNG" alt="Trofeo Torneo Interno Quilicura">';
+  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo Torneo Interno">';
   if(t.campeon){
     card.className='tint-campeon-modal-card';
     card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 Serie '+esc(t.serie)+'</div><div class="nom">'+esc(t.campeon)+'</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
@@ -2656,10 +2749,10 @@ function actualizarMetaDinamico(){
   }
   var title,desc;
   if(campeonReciente){
-    title='🏆 '+campeonReciente.campeon+' es el campeon de la Serie '+campeonReciente.serie+' — CTQ';
+    title='🏆 '+campeonReciente.campeon+' es el campeon de la Serie '+campeonReciente.serie+' — '+CLUB_NOMBRE_CORTO;
     desc='Torneo Interno '+(campeonReciente.periodo?campeonReciente.periodo+' ':'')+campeonReciente.temporada+'. Revisa el bracket completo y el ranking en vivo del club.';
   }else{
-    title='Club de Tenis Estadio Quilicura - Escalerilla 2026';
+    title=CLUB_NOMBRE+' - Escalerilla 2026';
     desc='Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.';
   }
   ogTitle.setAttribute('content',title);
@@ -2842,6 +2935,7 @@ function startLiveRefresh(){
         });
       });
       cargarVisibilidadTorneoInterno();
+      cargarConfigClubSupabase();
     }
   },LIVE_REFRESH_MS);
   document.addEventListener('visibilitychange',function(){
@@ -2854,6 +2948,7 @@ function startLiveRefresh(){
         });
       });
       cargarVisibilidadTorneoInterno();
+      cargarConfigClubSupabase();
     }
   });
 }
@@ -2913,6 +3008,7 @@ function init(){
   if("scrollRestoration" in history)history.scrollRestoration="manual";
   rAll();
   window.scrollTo(0,0);
+  cargarConfigClubSupabase();
   cargarFixtureSizeSupabase().then(function(){
     cargarJugadoresYResultadosSupabase().then(function(){
       cargarFichasSupabase();
@@ -2959,7 +3055,7 @@ function rHeroStats(){
   animarContador(document.getElementById("sr"),jugados);
   var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - Escalerilla 2026 - "+activos+" jugadores activos - "+jugados+" partidos jugados";
   var elHm=document.getElementById("heroMascotImg");
-  if(elHm){elHm.src="jugadores/big-3.PNG";elHm.style.display="block";}
+  if(elHm){elHm.src=CLUB_MASCOTA_URL;elHm.style.display="block";}
   rJugadorDelMes();
   construirTickerHero();
 }
@@ -3107,11 +3203,10 @@ function rRanking(){
     var rs=p.retirado?" style=\"opacity:0.4;\"":"";
     var esMio=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
     var claseSerie="serie"+esc(p.serie);
-    var foto=FOTOS_JUGADORES[p.nombre];
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
     iniP=iniP.toUpperCase();
-    var fotoH=(foto&&foto.cara)
-      ?"<img class=\"rfoto\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rfoto-i','"+jsAttr(p.nombre)+"')\">"
+    var fotoH=p.avatarUrl
+      ?"<img class=\"rfoto\" src=\""+p.avatarUrl+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rfoto-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"rfoto-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
 
     // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
@@ -3142,8 +3237,8 @@ function rRanking(){
     h+="<td>"+trH+"</td></tr>";
 
     // --- tarjeta (mobile) ---
-    var fotoCardH=(foto&&foto.cara)
-      ?"<img class=\"rcard-avatar\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rcard-avatar-i','"+jsAttr(p.nombre)+"')\">"
+    var fotoCardH=p.avatarUrl
+      ?"<img class=\"rcard-avatar\" src=\""+p.avatarUrl+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rcard-avatar-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"rcard-avatar-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
     hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
@@ -3210,11 +3305,10 @@ function rPodio(){
   var h='<div class="podio">';
   for(var i=0;i<3;i++){
     var p=top3[i];
-    var foto=FOTOS_JUGADORES[p.nombre];
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
     iniP=iniP.toUpperCase();
-    var avatarH=(foto&&foto.cara)
-      ?"<img class=\"podio-avatar\" src=\""+foto.cara+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','podio-avatar-i','"+jsAttr(p.nombre)+"')\">"
+    var avatarH=p.avatarUrl
+      ?"<img class=\"podio-avatar\" src=\""+p.avatarUrl+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','podio-avatar-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"podio-avatar-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
     var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
@@ -3299,9 +3393,9 @@ function exportarRankingImagen(){
     var p=top3[idx];
     if(!p)return;
     var esCampeon=idx===0,tam=esCampeon?100:78;
-    var foto=FOTOS_JUGADORES[p.nombre],iniP=inicialesDe(p.nombre);
-    var avatarH=(foto&&foto.cara)
-      ?'<img src="'+foto.cara+'" crossorigin="anonymous" onerror="this.style.display=\'none\'" style="width:'+tam+'px;height:'+tam+'px;border-radius:50%;object-fit:cover;border:4px solid '+coloresBorde[idx]+'">'
+    var iniP=inicialesDe(p.nombre);
+    var avatarH=p.avatarUrl
+      ?'<img src="'+p.avatarUrl+'" crossorigin="anonymous" onerror="this.style.display=\'none\'" style="width:'+tam+'px;height:'+tam+'px;border-radius:50%;object-fit:cover;border:4px solid '+coloresBorde[idx]+'">'
       :'<div style="width:'+tam+'px;height:'+tam+'px;border-radius:50%;border:4px solid '+coloresBorde[idx]+';background:#3a3a3a;display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',sans-serif;color:#f5f5f0;font-size:'+Math.round(tam*.36)+'px">'+esc(iniP)+'</div>';
     podioH+='<div style="display:flex;flex-direction:column;align-items:center;width:130px">'
       +'<div style="font-size:22px;margin-bottom:4px">'+medallas[idx]+'</div>'+avatarH
@@ -3326,8 +3420,8 @@ function exportarRankingImagen(){
   var wrap=document.createElement('div');
   wrap.style.cssText='background:#0e0e0e;padding:28px 26px;width:820px;font-family:Barlow,Arial,sans-serif;box-sizing:border-box';
   wrap.innerHTML='<div style="text-align:center;margin-bottom:20px">'
-    +'<img src="logo-club-tenis-estadio-quilicura.jpg" crossorigin="anonymous" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:8px">'
-    +'<div style="font-family:\'Bebas Neue\',sans-serif;color:#5BBF2A;font-size:12px;letter-spacing:3px;text-transform:uppercase">Club de Tenis Estadio Quilicura</div>'
+    +'<img src="'+CLUB_LOGO_URL+'" crossorigin="anonymous" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:8px">'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;color:#5BBF2A;font-size:12px;letter-spacing:3px;text-transform:uppercase">'+esc(CLUB_NOMBRE)+'</div>'
     +'<div style="font-family:\'Bebas Neue\',sans-serif;color:#f5f5f0;font-size:34px;letter-spacing:2px;line-height:1.1">'+titulo+'</div>'
     +'<div style="font-family:\'Barlow Condensed\',Arial,sans-serif;color:#9a9a9a;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Actualizado el '+fechaHoy+'</div>'
     +'</div>'+podioH+listaH
@@ -3713,165 +3807,17 @@ function getRivalStats(nombre){
 
 
 
-// Tabla de fotos por jugador. Todas las fotos, incluida la de Ricardo,
-// son rutas relativas a archivos alojados en el mismo repo de GitHub junto al
-// index.html - mas liviano que embeber en base64.
-// cara: avatar circular. cuerpo: figura completa flotante (opcional).
-var FOTOS_JUGADORES={
-  "Ricardo Ciangherotti":{
-    cara:"jugadores/cara-ricardo-ciangherotti.PNG",
-    cuerpo:"jugadores/cuerpo-ricardo-ciangherotti.PNG"
-  },
-  "Marco Toledo":{
-    cara:"jugadores/cara-marco-toledo.png",
-    cuerpo:"jugadores/cuerpo-marco-toledo.png"
-  },   
-  "Manuel Cubillos":{
-    cara:"jugadores/cara-manuel-cubillos.JPG",
-    cuerpo:"jugadores/cuerpo-manuel-cubillos.PNG"
-  },
-  "Ivan Huina":{
-    cara:"jugadores/cara-ivan-huina.JPG",
-    cuerpo:"jugadores/cuerpo-ivan-huina.PNG"
-  },
-  "Hector Varela":{
-    cara:"jugadores/cara-hector-varela.jpg",
-    cuerpo:"jugadores/cuerpo-hector-varela.PNG"
-  },
-  "Hector Leiva":{
-    cara:"jugadores/cara-hector-leiva.jpg",
-    cuerpo:"jugadores/cuerpo-hector-leiva.PNG"
-  },
-  "Diego Ugarte":{
-    cara:"jugadores/cara-diego-ugarte.jpg",
-    cuerpo:"jugadores/cuerpo-diego-ugarte.PNG"
-  },
-  "Franco Montero":{
-    cara:"jugadores/cara-franco-montero.jpg",
-    cuerpo:"jugadores/cuerpo-franco-montero.PNG"
-  },
-  "Eric Cabezas":{
-    cara:"jugadores/cara-eric-cabezas.jpg",
-    cuerpo:"jugadores/cuerpo-eric-cabezas.PNG"
-  },
-  "Victor Lopez":{
-    cara:"jugadores/cara-victor-lopez.jpg",
-    cuerpo:"jugadores/cuerpo-victor-lopez.PNG"
-  },
-  "Carlos Videla":{
-    cara:"jugadores/cara-carlos-videla.jpg",
-    cuerpo:"jugadores/cuerpo-carlos-videla.PNG"
-  },
-  "Cristian Crisostomo":{
-    cara:"jugadores/cara-cristian-crisostomo.JPG",
-    cuerpo:"jugadores/cuerpo-cristian-crisostomo.PNG"
-  },
-  "Luis Duran":{
-    cara:"jugadores/cara-luis-duran.jpg",
-    cuerpo:"jugadores/cuerpo-luis-duran.PNG"
-  },
-  "Gonzalo Reyes":{
-    cara:"jugadores/cara-gonzalo-reyes.jpg",
-    cuerpo:"jugadores/cuerpo-gonzalo-reyes.PNG"
-  },
-  "David Llevi":{
-    cara:"jugadores/cara-david-llevi.jpg",
-    cuerpo:"jugadores/cuerpo-david-llevi.PNG"
-  },
-  "Alex Gonzalez":{
-    cara:"jugadores/cara-alex-gonzalez.JPG",
-    cuerpo:"jugadores/cuerpo-alex-gonzalez.PNG"
-  },
-  "Oscar Medina":{
-    cara:"jugadores/cara-oscar-medina.jpg",
-    cuerpo:"jugadores/cuerpo-oscar-medina.PNG"
-  },
-  "Patricio Orellana":{
-    cara:"jugadores/cara-patricio-orellana.jpg",
-    cuerpo:"jugadores/cuerpo-patricio-orellana.PNG"
-  },
-  "Cristian Vargas":{
-    cara:"jugadores/cara-cristian-vargas.jpg",
-    cuerpo:"jugadores/cuerpo-cristian-vargas.PNG"
-  },
-  "Marcelo Lastra":{
-    cara:"jugadores/cara-marcelo-lastra.JPG",
-    cuerpo:"jugadores/cuerpo-marcelo-lastra.PNG"
-  },
-  "J Pablo Sta Cruz":{
-    cara:"jugadores/cara-j-pablo-sta-cruz.PNG",
-    cuerpo:"jugadores/cuerpo-j-pablo-sta-cruz.PNG"
-  },
-  "Fernando Tello":{
-    cara:"jugadores/cara-fernando-tello.jpg",
-    cuerpo:"jugadores/cuerpo-fernando-tello.PNG"
-  },
-  "Daniel Tripainao":{
-    cara:"jugadores/cara-daniel-tripainao.jpg",
-    cuerpo:"jugadores/cuerpo-daniel-tripainao.PNG"
-  },
-  "Juan Espina":{
-    cara:"jugadores/cara-juan-espina.jpg",
-    cuerpo:"jugadores/cuerpo-juan-espina.PNG"
-  },
-  "Cristobal Tello":{
-    cara:"jugadores/cara-cristobal-tello.jpg",
-    cuerpo:"jugadores/cuerpo-cristobal-tello.PNG"
-  },
-  "Douglas Diaz":{
-    cara:"jugadores/cara-douglas-diaz.jpg",
-    cuerpo:"jugadores/cuerpo-douglas-diaz.PNG"
-  },
-  "Humberto Cabezas":{
-    cara:"jugadores/cara-humberto-cabezas.jpg",
-    cuerpo:"jugadores/cuerpo-humberto-cabezas.PNG"
-  },
-  "Humberto Varas":{
-    cara:"jugadores/cara-humberto-varas.PNG",
-    cuerpo:"jugadores/cuerpo-humberto-varas.PNG"
-  },
-  "Luis Vega":{
-    cara:"jugadores/cara-luis-vega.jpg",
-    cuerpo:"jugadores/cuerpo-luis-vega.PNG"
-  },
-  "German Sendra":{
-    cara:"jugadores/cara-german-sendra.jpg",
-    cuerpo:"jugadores/cuerpo-german-sendra.PNG"
-  },
-  "Cristian Vega":{
-    cara:"jugadores/cara-cristian-vega.jpg",
-    cuerpo:"jugadores/cuerpo-cristian-vega.PNG"
-  },
-  "German Lara":{
-    cara:"jugadores/cara-german-lara.JPG",
-    cuerpo:"jugadores/cuerpo-german-lara.PNG"
-  },
-  "Felipe Alvarado":{
-    cara:"jugadores/cara-felipe-alvarado.jpg",
-    cuerpo:"jugadores/cuerpo-felipe-alvarado.PNG"
-  },
-  "Luis Quiroz":{
-    cara:"jugadores/cara-luis-quiroz.jpg",
-    cuerpo:"jugadores/cuerpo-luis-quiroz.PNG"
-  },
-  "Nicolas Gomez":{
-    cara:"jugadores/cara-nicolas-gomez.jpg",
-    cuerpo:"jugadores/cuerpo-nicolas-gomez.PNG"
-  },
-  "Ruben Sanchez":{
-    cara:"jugadores/cara-ruben-sanchez.jpg",
-    cuerpo:"jugadores/cuerpo-ruben-sanchez.PNG"
-  },
-  "Israel Muñoz":{
-    cara:"jugadores/cara-israel-munoz.jpg",
-    cuerpo:"jugadores/cuerpo-israel-munoz.PNG"
-  }
-};
+// Fase 2: FOTOS_JUGADORES (objeto hardcodeado con ~40 jugadores) se
+// elimino de aqui. Las fotos ahora viven en Supabase, columnas
+// jugadores.avatar_url (cara) y jugadores.foto_cuerpo_url (cuerpo),
+// y llegan ya incluidas en cada objeto de DATA.players como
+// p.avatarUrl / p.fotoCuerpoUrl -- ver cargarJugadoresYResultadosSupabase().
 
-// Club actual de cada jugador. Hoy todos pertenecen a CTQ Quilicura;
-// cuando entren clubes externos (Fase 3) este mapa pasa a venir del
-// backend (Sheet/Supabase) en lugar de estar fijo aqui.
-var CLUB_JUGADOR="Club De Tenis Quilicura";
+// Club actual de cada jugador. Valor por defecto = mismo nombre que
+// clubes.nombre en Supabase; cargarConfigClubSupabase() lo sobreescribe
+// apenas responde la base (ver Fase 2). Si el club cambia de nombre, el
+// unico lugar que hay que tocar es la fila en la tabla "clubes".
+var CLUB_JUGADOR="Club de Tenis Estadio Quilicura";
 
 // Ficha tecnica opcional por jugador: nivel, mano dominante, superficie
 // favorita, golpe favorito. Se completa a criterio de cada jugador o del
@@ -4676,15 +4622,14 @@ async function _showProfileImpl(nombre,scroll){
     }
     sparkH="<div class=\"sparkwrap\"><div class=\"rmt\">Evolucion de puntos"+deltaTxt+"</div>"+sparklineSVG(evolucion,300,56)+"</div>";
   }
-  var fotoJugador=FOTOS_JUGADORES[nombre];
-  var avatarH="<div class=\"pavwrap\">"+((fotoJugador&&fotoJugador.cara)
-    ?"<div class=\"pav foto\"><img src=\""+fotoJugador.cara+"\" alt=\""+esc(nombre)+"\" onerror=\"pavImgFallback(this,'"+jsAttr(ini)+"','"+jsAttr(nombre)+"')\"></div>"
+  var avatarH="<div class=\"pavwrap\">"+(p.avatarUrl
+    ?"<div class=\"pav foto\"><img src=\""+p.avatarUrl+"\" alt=\""+esc(nombre)+"\" onerror=\"pavImgFallback(this,'"+jsAttr(ini)+"','"+jsAttr(nombre)+"')\"></div>"
     :"<div class=\"pav\""+styleIniciales(nombre)+">"+esc(ini)+"</div>")
     +"<div class=\"pavrank\">#"+rp+"</div></div>";
-  var heroFigH=(fotoJugador&&fotoJugador.cuerpo)
-    ?"<img class=\"herofig\" src=\""+fotoJugador.cuerpo+"\" alt=\"\" onerror=\"this.style.display='none'\">"
+  var heroFigH=p.fotoCuerpoUrl
+    ?"<img class=\"herofig\" src=\""+p.fotoCuerpoUrl+"\" alt=\"\" onerror=\"this.style.display='none'\">"
     :"";
-  var tieneFigura=!!(fotoJugador&&fotoJugador.cuerpo);
+  var tieneFigura=!!p.fotoCuerpoUrl;
   var dispFicha=getFicha(p.nombre).disponible;
   var isDisp=dispFicha!==false; // por defecto disponible salvo que el jugador lo desactive (booleano real desde Supabase)
   var esPropioPerfil=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
@@ -4733,7 +4678,7 @@ async function _showProfileImpl(nombre,scroll){
     +"<div class=\"rvc dif\"><div class=\"rvl\">Rival mas dificil</div>"+difH+"</div></div>"
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div>"
     +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>"
-    +"<div class=\"ppcbadge\"><img src=\"logo-club-tenis-estadio-quilicura.jpg\" alt=\"\"></div>"
+    +"<div class=\"ppcbadge\"><img src=\""+CLUB_LOGO_URL+"\" alt=\"\"></div>"
     +"</div>";
   if(scroll!==false)document.getElementById("perfil").scrollIntoView({behavior:"smooth"});
   restaurarChatAbiertoSiCorresponde();
