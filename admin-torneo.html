@@ -107,6 +107,21 @@ var torneoInternoVisible=true; // por defecto visible, hasta que se confirme lo 
 var visibilidadCargando=false;
 var visibilidadTablaDisponible=true; // false si "configuracion_sitio" aun no existe (falta correr la migracion)
 
+// ---- Fase 4: Torneos de plataforma (ChileTenis Pro, Nivel 2) ----
+// A diferencia del Torneo Interno (siempre de UN club), estos torneos
+// tienen competiciones.club_id = null y organizacion_id apuntando a
+// ChileTenis Pro. Cualquier jugador de cualquier club puede participar.
+// Solo un admin universal (adminClubIdFijo === null) puede administrarlos.
+var vistaPlataforma=false;      // true = viendo/administrando torneos de plataforma en vez de los del club
+var jugadoresTodos=[];          // jugadores de TODOS los clubes (para el seeding cross-club)
+var jugadoresTodosCargados=false;
+var torneosPlataforma=[];       // listado de competiciones tipo=plataforma
+// torneoAbierto / partidos / seedList / mpSeleccion se REUSAN tal cual
+// para torneos de plataforma: toda la maquinaria de bracket (generar
+// Ronda 1, avanzar ronda, registrar/deshacer resultado) es identica sin
+// importar si el torneo tiene club_id o no, asi que no hace falta
+// duplicarla.
+
 // Codigos de error de PostgREST para "no existe la tabla"/"no existe la
 // columna" (42P01 / 42703): asi distinguimos "falta correr la migracion"
 // de un fallo de red real.
@@ -302,6 +317,69 @@ async function crearTorneo(){
   abrirTorneo(res.data);
 }
 
+// ============================================================
+// FASE 4: TORNEOS DE PLATAFORMA (ChileTenis Pro, Nivel 2)
+// ============================================================
+// Entra/sale del modo "ChileTenis Pro": solo disponible para admins
+// universales (adminClubIdFijo === null). No toca clubActual ni nada
+// de lo que ya esta cargado del club -- al volver, el modo club sigue
+// exactamente donde estaba.
+async function entrarModoPlataforma(){
+  if(adminClubIdFijo)return; // resguardo: solo super-admin
+  vistaPlataforma=true;torneoAbierto=null;partidos=[];mensaje=null;
+  render();
+  if(!jugadoresTodosCargados)await cargarJugadoresTodos();
+  await cargarTorneosPlataforma();
+  render();
+}
+function volverModoClub(){
+  vistaPlataforma=false;torneoAbierto=null;partidos=[];mensaje=null;render();
+}
+
+async function cargarJugadoresTodos(){
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,club_id,clubes(nombre)');
+  jugadoresTodos=res.error?[]:res.data.map(function(j){
+    return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado,club_id:j.club_id,clubNombre:(j.clubes&&j.clubes.nombre)||''};
+  });
+  jugadoresTodosCargados=true;
+}
+
+async function cargarTorneosPlataforma(){
+  var res=await window.supabaseClient.from('competiciones').select('*').eq('tipo','plataforma').is('club_id',null).order('temporada',{ascending:false});
+  torneosPlataforma=res.error?[]:res.data;
+}
+
+function abrirTorneoPlataformaIdx(idx){abrirTorneo(torneosPlataforma[idx]);}
+
+async function crearTorneoPlataforma(){
+  var temporada=parseInt(document.getElementById('inTemporadaPlataforma').value,10);
+  var nombreTorneo=(document.getElementById('inNombrePlataforma').value||'').trim()||null;
+  if(!temporada){setMsg('err','Ingresa la temporada (año).');return;}
+  guardando=true;render();
+  // club_id y serie quedan null a proposito (torneo de plataforma, sin
+  // club dueno ni series por serie de escalerilla). organizacion_id se
+  // completa solo via el DEFAULT de la base (fn_organizacion_plataforma_default).
+  var res=await window.supabaseClient.from('competiciones').insert({
+    tipo:'plataforma',temporada:temporada,periodo:nombreTorneo,
+    club_id:null,serie:null
+  }).select().maybeSingle();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
+  await cargarTorneosPlataforma();
+  abrirTorneo(res.data);
+}
+
+// Seeding cross-club: a diferencia del Torneo Interno (ordenado por
+// puntos de la escalerilla del club), aca no hay un puntaje comun entre
+// clubes distintos todavia -- se lista alfabeticamente y el admin
+// reordena a mano con las mismas flechas que ya existen en renderSeeding().
+async function prepararSeedingPlataforma(){
+  if(!jugadoresTodosCargados)await cargarJugadoresTodos();
+  var activos=jugadoresTodos.filter(function(j){return j.estado!=='Retirado -50%';});
+  activos.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+  seedList=activos.map(function(j){return {id:j.id,nombre:j.nombre,pts:0,club:j.clubNombre,incluido:true};});
+}
+
 function abrirTorneoIdx(idx){abrirTorneo(torneosSerie[idx]);}
 async function abrirTorneo(t){
   torneoAbierto=t;mensaje=null;mpSeleccion=null;
@@ -317,6 +395,7 @@ async function cargarPartidos(torneoId){
 }
 
 async function prepararSeeding(){
+  if(torneoAbierto&&torneoAbierto.club_id==null){await prepararSeedingPlataforma();return;}
   var pts=await calcularPuntosBaseSerie(serieActual);
   var jugadoresSerie=jugadoresClub.filter(function(j){return j.serie===serieActual&&j.estado!=='Retirado -50%';});
   jugadoresSerie.sort(function(a,b){return (pts[b.id]||0)-(pts[a.id]||0);});
@@ -324,7 +403,8 @@ async function prepararSeeding(){
 }
 
 function nombreDe(id){
-  var j=jugadoresClub.filter(function(x){return x.id===id;})[0];
+  var j=jugadoresClub.filter(function(x){return x.id===id;})[0]
+    ||jugadoresTodos.filter(function(x){return x.id===id;})[0];
   return j?j.nombre:'?';
 }
 
@@ -420,7 +500,7 @@ async function eliminarTorneo(){
   var res=await window.supabaseClient.rpc('eliminar_torneo_interno',{p_torneo_id:torneoAbierto.id});
   guardando=false;
   if(res.error){setMsg('err','No se pudo eliminar: '+res.error.message);return;}
-  await cargarTorneosDeSerie(serieActual);
+  if(vistaPlataforma)await cargarTorneosPlataforma();else await cargarTorneosDeSerie(serieActual);
   volverListado();
 }
 
@@ -477,7 +557,20 @@ function render(){
   var h='<div class="row" style="justify-content:space-between;margin-bottom:1rem">'
     +'<span class="sub" style="margin:0">Conectado como <b style="color:var(--bl)">'+esc(usuarioActual.nombre||usuarioActual.email)+'</b>'
     +(adminClubIdFijo?'':' <span class="clubpill">Super-admin</span>')+'</span>'
-    +'<button class="btn gl" onclick="logout()">Salir</button></div>';
+    +'<div class="row" style="gap:.5rem">'
+    +(!adminClubIdFijo?('<button class="btn '+(vistaPlataforma?'gl':'az')+'" onclick="'+(vistaPlataforma?'volverModoClub()':'entrarModoPlataforma()')+'">'+(vistaPlataforma?'← Volver a mi club':'🌐 ChileTenis Pro')+'</button>'):'')
+    +'<button class="btn gl" onclick="logout()">Salir</button></div></div>';
+
+  // Modo plataforma (ChileTenis Pro): se revisa ANTES que el selector de
+  // club, porque un super-admin puede entrar aca sin haber elegido
+  // ningun club todavia (los torneos de plataforma no dependen de uno).
+  if(vistaPlataforma){
+    h+=renderPlataformaBanner();
+    if(mensaje)h+='<div class="msg '+(mensaje.tipo==='ok'?'ok':'err')+'">'+esc(mensaje.texto)+'</div>';
+    h+=torneoAbierto?renderTorneoAbierto():renderSelectorYListadoPlataforma();
+    el.innerHTML=h;
+    return;
+  }
 
   // Super-admin sin club elegido todavia: mostrar selector y no seguir
   // renderizando nada mas hasta que se elija.
@@ -572,6 +665,36 @@ function renderSelectorYListado(){
   return h;
 }
 
+// ---- Fase 4: banner + listado/creacion en modo ChileTenis Pro ----
+function renderPlataformaBanner(){
+  return '<div class="card" style="display:flex;align-items:center;gap:.7rem;border-color:rgba(46,125,209,.5)">'
+    +'<span class="clubpill" style="background:rgba(46,125,209,.18);color:#7ab5e8;border-color:rgba(46,125,209,.4)">🌐 ChileTenis Pro</span>'
+    +'<b>Torneos de plataforma</b>'
+    +'<span class="sub" style="margin:0">Sin club dueno &middot; jugadores de cualquier club pueden participar</span>'
+    +'</div>';
+}
+
+function renderSelectorYListadoPlataforma(){
+  var h='<div class="card"><b>Torneos de ChileTenis Pro</b>';
+  if(!torneosPlataforma.length){
+    h+='<p class="sub" style="margin-bottom:0">Todavia no hay ningun torneo de plataforma creado.</p>';
+  }else{
+    torneosPlataforma.forEach(function(t,idx){
+      h+='<div class="torneo-item"><span>Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')+' <span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></span>'
+        +'<button class="btn az" onclick="abrirTorneoPlataformaIdx('+idx+')">Abrir</button></div>';
+    });
+  }
+  h+='</div>';
+
+  h+='<div class="card"><b>Crear nuevo torneo de plataforma</b>'
+    +'<div class="row" style="margin-top:.7rem">'
+    +'<input type="number" id="inTemporadaPlataforma" placeholder="Temporada (ej: 2026)" value="'+new Date().getFullYear()+'">'
+    +'<input type="text" id="inNombrePlataforma" placeholder="Nombre (ej: Copa ChileTenis Pro Apertura)">'
+    +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="crearTorneoPlataforma()">'+(guardando?'Creando...':'Crear torneo')+'</button>'
+    +'</div><p class="sub" style="margin-bottom:0">No tiene serie ni club: cualquier jugador activo de cualquier club puede ser incluido al armar el cuadro.</p></div>';
+  return h;
+}
+
 function renderTorneoAbierto(){
   var t=torneoAbierto;
   var h='<button class="backbtn" onclick="volverListado()">&larr; Volver al listado</button>';
@@ -593,14 +716,18 @@ function renderTorneoAbierto(){
 }
 
 function renderSeeding(){
+  var esPlataforma=torneoAbierto&&torneoAbierto.club_id==null;
   var h='<div class="card"><b>Armar cuadro — orden de siembra</b>'
-    +'<p class="sub">Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno. Los 2 primeros de la lista quedan con <i>bye</i> en la Ronda 1, segun el reglamento.</p>'
+    +'<p class="sub">'+(esPlataforma
+      ?'Lista alfabetica de jugadores activos de todos los clubes. Ordena con las flechas segun el criterio que uses (ranking, sorteo, etc.) y desmarca a quien no vaya a jugar.'
+      :'Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno.')
+    +' Los 2 primeros de la lista quedan con <i>bye</i> en la Ronda 1, segun el reglamento.</p>'
     +'<div class="seedlist">';
   seedList.forEach(function(s,idx){
     h+='<div class="seedrow'+(s.incluido?'':' excluido')+'">'
       +'<span class="num">'+(idx+1)+'</span>'
-      +'<span class="nm">'+esc(s.nombre)+'</span>'
-      +'<span class="pts">'+s.pts+' pts</span>'
+      +'<span class="nm">'+esc(s.nombre)+(esPlataforma&&s.club?' <span class="pts" style="color:#7ab5e8">· '+esc(s.club)+'</span>':'')+'</span>'
+      +(esPlataforma?'':'<span class="pts">'+s.pts+' pts</span>')
       +'<button class="iconbtn" onclick="moverSeed('+idx+',-1)">&uarr;</button>'
       +'<button class="iconbtn" onclick="moverSeed('+idx+',1)">&darr;</button>'
       +'<button class="iconbtn" onclick="toggleSeedIncluido('+idx+')">'+(s.incluido?'&times;':'+')+'</button>'
