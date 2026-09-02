@@ -225,7 +225,7 @@ section{padding:4rem 1.5rem}
 .pav.foto{padding:0;overflow:hidden;background:var(--ng);animation:fxIn .7s ease-out both, fxRingPulse 3s ease-in-out .7s infinite}
 .pav.foto img{width:100%;height:100%;object-fit:cover;object-position:top center;animation:fxBreathe 5s ease-in-out infinite}
 .pherowrap{position:relative}
-.herofig{display:none}
+.herofig{display:none;background:transparent}
 @media (min-width:680px){
   .pherowrap.hasfig{min-height:380px;padding-right:210px}
   .herofig{display:block;position:absolute;right:6px;bottom:-8px;width:220px;height:360px;object-fit:contain;object-position:bottom center;pointer-events:auto;z-index:2;
@@ -241,7 +241,7 @@ section{padding:4rem 1.5rem}
 .hjmContent{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:1.3rem 1.5rem;position:relative;z-index:2;text-align:left}
 .hjmFotoWrap{position:relative;width:180px;flex:none;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
 .hjmFotoWrap::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 55% 35%,rgba(91,191,42,.4),transparent 72%)}
-.hjmFoto{position:relative;z-index:2;height:100%;max-height:220px;width:auto;object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));display:none}
+.hjmFoto{position:relative;z-index:2;height:100%;max-height:220px;width:auto;object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));display:none;background:transparent}
 .hjmtop{display:flex;align-items:center;gap:.4rem}
 .hjmi{font-size:1.1rem;line-height:1}
 .hjmt{font-family:'Barlow Condensed',sans-serif;font-size:.64rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gl)}
@@ -3852,9 +3852,13 @@ async function handleAvatarFile(tipo,nombre,jugadorId,inputEl){
   avatarSubiendo[key]=true;
   refrescarPerfilActual();
   var maxDim=tipo==='cara'?640:1100;
+  // La foto de cuerpo suele venir recortada sin fondo (PNG/WebP con
+  // transparencia): se pide WebP para conservar el canal alfa. La cara
+  // sigue en JPEG como antes (foto normal, sin transparencia, mas liviana).
+  var formatoDeseado=tipo==='cuerpo'?'image/webp':'image/jpeg';
   comprimirImagenResultado(file,maxDim,.85,async function(base64,mimeType){
     try{
-      var ext=mimeType.indexOf('png')>-1?'png':'jpg';
+      var ext=mimeType.indexOf('webp')>-1?'webp':(mimeType.indexOf('png')>-1?'png':'jpg');
       var bytes=Uint8Array.from(atob(base64),function(c){return c.charCodeAt(0);});
       var path=CLUB_ACTUAL_ID+'/'+jugadorId+'/'+tipo+'.'+ext;
       var up=await window.supabaseClient.storage.from('jugadores').upload(path,bytes,{contentType:mimeType,upsert:true});
@@ -3889,7 +3893,7 @@ async function handleAvatarFile(tipo,nombre,jugadorId,inputEl){
     alert("No se pudo leer la imagen. Intenta con otra foto.");
     delete avatarSubiendo[key];
     refrescarPerfilActual();
-  });
+  },formatoDeseado);
 }
 
 // Club actual de cada jugador. Valor por defecto = mismo nombre que
@@ -4569,7 +4573,18 @@ async function handleResultadoFile(id,inputEl){
 
 // Reduce tamaño/calidad de la imagen en el navegador antes de enviarla
 // (evita subidas pesadas y timeouts en Apps Script).
-function comprimirImagenResultado(file,maxDim,calidad,cb,cbError){
+// "formato" es opcional (default 'image/jpeg', igual que antes). Para
+// imagenes con transparencia (ej. la foto de cuerpo recortada sin fondo)
+// hay que pasar 'image/webp' o 'image/png': si se fuerza JPEG, el canvas
+// no tiene canal alfa y el navegador rellena lo transparente con negro
+// solido (el "recuadro negro" alrededor del recorte).
+// Como no todos los navegadores soportan codificar a WebP via canvas, no
+// confiamos ciegamente en el "formato" pedido: se lee el mime REAL que
+// quedo en el dataURL resultante (si el navegador no pudo, cae solo a
+// PNG, nunca "silenciosamente" a JPEG) y se lo devolvemos a cb() para
+// que quien llama guarde la extension correcta.
+function comprimirImagenResultado(file,maxDim,calidad,cb,cbError,formato){
+  formato=formato||"image/jpeg";
   var reader=new FileReader();
   reader.onload=function(e){
     var img=new Image();
@@ -4579,8 +4594,9 @@ function comprimirImagenResultado(file,maxDim,calidad,cb,cbError){
       var cv=document.createElement("canvas");
       cv.width=cw;cv.height=ch;
       cv.getContext("2d").drawImage(img,0,0,cw,ch);
-      var dataUrl=cv.toDataURL("image/jpeg",calidad);
-      cb(dataUrl.split(",")[1],"image/jpeg");
+      var dataUrl=cv.toDataURL(formato,calidad);
+      var mimeReal=dataUrl.substring(5,dataUrl.indexOf(";")); // "data:image/webp;base64,..." -> "image/webp"
+      cb(dataUrl.split(",")[1],mimeReal||formato);
     };
     img.onerror=function(){if(cbError)cbError();};
     img.src=e.target.result;
