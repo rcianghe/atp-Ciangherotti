@@ -171,6 +171,15 @@ tbody tr:last-child td{border-bottom:none;}
 .subtle-link{font-size:12.5px;color:var(--accent-dark);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
 .advisory{background:var(--clay-soft);border:1px solid #E3B7A6;border-radius:9px;padding:12px 14px;font-size:12.5px;color:#7A3520;margin-bottom:18px;line-height:1.5;}
 .advisory code{background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;}
+/* ---------- Campo tipo "fileurl": URL + subida directa a Supabase Storage ---------- */
+.fileurl-row{display:flex;gap:8px;align-items:center;}
+.fileurl-row input[type=text]{flex:1;}
+.fileurl-upload-btn{flex:none;background:var(--accent-soft);color:var(--accent-dark);border:1.5px solid var(--accent);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;white-space:nowrap;}
+.fileurl-upload-btn:hover{background:var(--accent);color:#fff;}
+.fileurl-upload-btn:disabled{opacity:.55;cursor:default;}
+.fileurl-preview{margin-top:8px;}
+.fileurl-preview img{max-width:100%;max-height:140px;border-radius:8px;display:block;border:1px solid var(--line);}
+.fileurl-preview video{max-width:100%;max-height:140px;border-radius:8px;display:block;border:1px solid var(--line);}
 </style>
 </head>
 <body>
@@ -343,6 +352,69 @@ async function onClubFilterChange(v){
 }
 
 /* =========================================================================
+   SUBIDA DE ARCHIVOS A SUPABASE STORAGE (bucket "afiches")
+   =========================================================================
+   Reemplaza el flujo anterior de "pegar un link de Google Drive", que dejo
+   de servir para incrustar contenido (Drive bloquea el framing en sitios
+   externos por su propia Content-Security-Policy). Ahora los campos de tipo
+   'fileurl' (afiche_url, afiche_resultado_url, foto_resultado_url) permiten
+   subir el archivo directo a un bucket publico de Supabase y el campo de
+   texto queda con la URL publica resultante -- pero sigue aceptando pegar
+   una URL a mano si se prefiere (ej. un link de YouTube).
+
+   Carpeta usada dentro del bucket: {club_id}/{timestamp}-{nombre archivo}.
+   club_id sale de: el club fijo del admin (adminClubIdActual) si esta
+   definido, o si es super-admin, el club elegido en el selector de arriba
+   (selectedClubId). Si ninguno esta definido, se pide elegir un club antes
+   de subir (la policy de Storage exige esa carpeta para autorizar el INSERT). */
+let adminClubIdActual = null; // se completa en doLogin/checkExistingSession desde admins.club_id
+
+function carpetaClubParaSubida(){
+  return adminClubIdActual || selectedClubId || null;
+}
+
+async function subirArchivoFileUrl(fieldKey, inputFileEl){
+  const file = inputFileEl.files && inputFileEl.files[0];
+  if(!file) return;
+  const folder = carpetaClubParaSubida();
+  if(!folder){
+    toast('Elige un club en el selector de la izquierda antes de subir un archivo.', true);
+    inputFileEl.value = '';
+    return;
+  }
+  const btn = document.getElementById('fu_btn_'+fieldKey);
+  const textInput = document.getElementById('f_'+fieldKey);
+  if(btn){ btn.disabled = true; btn.textContent = 'Subiendo…'; }
+  try{
+    const ext = (file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+    const path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error: upErr } = await sb.storage.from('afiches').upload(path, file, { contentType: file.type || undefined, upsert:false });
+    if(upErr) throw upErr;
+    const { data: pub } = sb.storage.from('afiches').getPublicUrl(path);
+    if(textInput) textInput.value = pub.publicUrl;
+    renderFileurlPreview(fieldKey, pub.publicUrl);
+    toast('Archivo subido correctamente.');
+  }catch(err){
+    console.warn('Error subiendo archivo a Storage.', err);
+    toast('No se pudo subir el archivo: '+(err.message||'error desconocido'), true);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '⬆ Subir archivo'; }
+    inputFileEl.value = '';
+  }
+}
+
+function renderFileurlPreview(fieldKey, url){
+  const prev = document.getElementById('fu_preview_'+fieldKey);
+  if(!prev) return;
+  if(!url){ prev.innerHTML=''; return; }
+  const esVideo = /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(url.split('?')[0]);
+  prev.innerHTML = esVideo
+    ? `<video src="${escAttr(url)}" controls muted></video>`
+    : `<img src="${escAttr(url)}" alt="Vista previa" onerror="this.replaceWith(document.createTextNode('No se pudo previsualizar el archivo.'))">`;
+}
+function onFileurlTextChange(fieldKey, val){ renderFileurlPreview(fieldKey, val); }
+
+/* =========================================================================
    ENTIDADES — un solo motor genérico de CRUD para las 16 tablas
    ========================================================================= */
 const ENTITIES = {
@@ -414,8 +486,8 @@ const ENTITIES = {
       {key:'cancha',label:'Cancha (número)',type:'text'},
       {key:'mensaje',label:'Mensaje',type:'textarea'},
       {key:'estado',label:'Estado',type:'select',options:['Pendiente','Aceptado','Rechazado','Cancelado','Expirado']},
-      {key:'afiche_url',label:'Afiche URL (video/foto reto)',type:'text'},
-      {key:'afiche_resultado_url',label:'Afiche resultado URL',type:'text'},
+      {key:'afiche_url',label:'Afiche (foto o video del reto)',type:'fileurl'},
+      {key:'afiche_resultado_url',label:'Afiche resultado',type:'fileurl'},
       {key:'live_url',label:'Live URL',type:'text'},
     ]},
 
@@ -444,7 +516,7 @@ const ENTITIES = {
       {key:'fecha',label:'Fecha',type:'date'},
       {key:'hora',label:'Hora',type:'text'},
       {key:'cancha',label:'Cancha',type:'text'},
-      {key:'foto_resultado_url',label:'Foto resultado URL',type:'text'},
+      {key:'foto_resultado_url',label:'Foto resultado',type:'fileurl'},
       {key:'desafio_id',label:'ID desafío vinculado (opcional)',type:'text'},
       {key:'torneo_partido_id',label:'ID partido de torneo vinculado (opcional)',type:'text'},
     ]},
@@ -642,7 +714,7 @@ const ENTITIES = {
     ],
     fields:[
       {key:'titulo',label:'Título',type:'text'},
-      {key:'url_foto',label:'URL de la foto',type:'text',required:true},
+      {key:'url_foto',label:'Foto',type:'fileurl',required:true},
       {key:'dia',label:'Día (texto libre)',type:'text'},
     ]},
 
@@ -808,6 +880,7 @@ async function doLogin(){
     return;
   }
   currentUser = { ...data.user, adminName: adminRow.nombre };
+  adminClubIdActual = adminRow.club_id || null; // null = super-admin, se usara el selector de club para las subidas
   btn.textContent='Ingresar'; btn.disabled=false;
   enterApp();
 }
@@ -822,7 +895,7 @@ async function checkExistingSession(){
   const { data } = await sb.auth.getSession();
   if(data.session){
     const { data: adminRow } = await sb.from('admins').select('*').eq('user_id', data.session.user.id).maybeSingle();
-    if(adminRow){ currentUser = { ...data.session.user, adminName: adminRow.nombre }; enterApp(); return; }
+    if(adminRow){ currentUser = { ...data.session.user, adminName: adminRow.nombre }; adminClubIdActual = adminRow.club_id || null; enterApp(); return; }
   }
   document.getElementById('loginScreen').style.display='flex';
 }
@@ -1066,8 +1139,15 @@ function openModalForm(record){
   if(currentEntity==='admins' && !editingId){
     extra = `<div class="advisory" style="margin-bottom:16px;">Para agregar un admin necesitas el <b>User ID</b> de esa cuenta en Supabase Auth (Authentication → Users en el dashboard de Supabase). El super admin no puede crear usuarios nuevos por seguridad — primero la persona debe registrarse en la web.</div>`;
   }
+  if(e.fields.some(f=>f.type==='fileurl') && !carpetaClubParaSubida()){
+    extra += `<div class="advisory" style="margin-bottom:16px;">Para poder subir archivos, elige primero un club en el selector de la izquierda (arriba del menú). Igual puedes pegar una URL a mano si prefieres.</div>`;
+  }
   body.innerHTML = extra + e.fields.map(f=>renderField(f, record)).join('');
   document.getElementById('modalOverlay').classList.add('show');
+  // Vistas previas iniciales para los campos fileurl que ya tienen valor
+  e.fields.filter(f=>f.type==='fileurl').forEach(f=>{
+    if(record[f.key]) renderFileurlPreview(f.key, record[f.key]);
+  });
 }
 function renderField(f, record){
   const raw = record[f.key];
@@ -1095,6 +1175,18 @@ function renderField(f, record){
   if(f.type==='taglist'){
     const strVal = Array.isArray(val)? val.join(', ') : (val||'');
     return `<div class="field"><label>${f.label}</label><input id="f_${f.key}" type="text" value="${escAttr(strVal)}" ${disabled}><div class="hint">Ej: lunAM, mieAM, sabPM</div></div>`;
+  }
+  if(f.type==='fileurl'){
+    return `<div class="field">
+      <label>${f.label}${f.required?' *':''}</label>
+      <div class="fileurl-row">
+        <input id="f_${f.key}" type="text" placeholder="URL (o sube un archivo)" value="${escAttr(val)}" oninput="onFileurlTextChange('${f.key}', this.value)" ${disabled}>
+        <label class="fileurl-upload-btn" id="fu_btn_${f.key}" for="fu_file_${f.key}">⬆ Subir archivo</label>
+        <input type="file" id="fu_file_${f.key}" accept="image/*,video/*" style="display:none" onchange="subirArchivoFileUrl('${f.key}', this)">
+      </div>
+      <div class="hint">Se sube directo a Supabase Storage (bucket público "afiches"). También puedes pegar una URL (ej. de YouTube).</div>
+      <div class="fileurl-preview" id="fu_preview_${f.key}"></div>
+    </div>`;
   }
   const inputType = f.type==='number'?'number':(f.type==='date'?'date':(f.type==='email'?'email':'text'));
   return `<div class="field"><label>${f.label}${f.required?' *':''}</label><input id="f_${f.key}" type="${inputType}" value="${escAttr(val)}" ${disabled}></div>`;
