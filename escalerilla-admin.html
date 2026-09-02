@@ -420,13 +420,14 @@ function onFileurlTextChange(fieldKey, val){ renderFileurlPreview(fieldKey, val)
 const ENTITIES = {
 
   jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
-    select:'id,nombre,email,telefono,serie,estado,activo,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,clubes(nombre)',
+    select:'id,nombre,email,telefono,serie,estado,activo,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
       {key:'nombre',label:'Nombre'},
       {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">Serie ${v||'—'}</span>`},
       {key:'estado',label:'Estado',render:v=>badgeEstadoJugador(v)},
       {key:'clubes',label:'Club',render:v=>v?.nombre||'<span class="hint">—</span>'},
+      {key:'pais',label:'País',render:(v,r)=>v?`${r.bandera_iso?banderaEmoji(r.bandera_iso)+' ':''}${v}`:'<span class="hint">—</span>'},
       {key:'encargado',label:'Encargado'},
       {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
     ],
@@ -441,6 +442,8 @@ const ENTITIES = {
       {key:'comuna_particular',label:'Comuna particular',type:'text'},
       {key:'comuna_laboral',label:'Comuna laboral',type:'text'},
       {key:'link_cancha',label:'Link de cancha (mapa)',type:'text'},
+      {key:'pais',label:'País (opcional)',type:'text'},
+      {key:'bandera_iso',label:'Código país ISO (2 letras, ej: CL, AR, IT)',type:'text'},
       {key:'activo',label:'Jugador activo',type:'bool',default:true},
     ]},
 
@@ -745,6 +748,11 @@ const NAV_GROUPS = ['Resumen','Competición','Club','Sistema'];
    HELPERS DE FORMATO / BADGES
    ========================================================================= */
 function fmtCLP(n){ return n==null?'—':'$'+Number(n).toLocaleString('es-CL'); }
+function banderaEmoji(iso2){
+  if(!iso2 || !/^[A-Za-z]{2}$/.test(iso2)) return '';
+  var cp = iso2.toUpperCase().split('').map(c=>0x1F1E6+(c.charCodeAt(0)-65));
+  return String.fromCodePoint(cp[0],cp[1]);
+}
 function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 function badgeEstadoJugador(v){
   if(v==='Activo') return '<span class="badge badge-green">Activo</span>';
