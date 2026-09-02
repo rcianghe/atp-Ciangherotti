@@ -3813,6 +3813,76 @@ function getRivalStats(nombre){
 // y llegan ya incluidas en cada objeto de DATA.players como
 // p.avatarUrl / p.fotoCuerpoUrl -- ver cargarJugadoresYResultadosSupabase().
 
+// ---- Auto-subida de foto propia (bucket "jugadores" en Supabase Storage) ----
+// Mismo patron que handleResultadoFile()/comprimirImagenResultado() (ya
+// existentes para las fotos de resultado): comprime en el navegador,
+// sube al bucket bajo {club_id}/{jugador_id}/cara|cuerpo.ext (protegido
+// por policy: solo el propio jugador puede escribir en su carpeta), y
+// guarda la URL publica resultante en jugadores.avatar_url / foto_cuerpo_url.
+// Requiere el bucket "jugadores" (publico para lectura) y las policies
+// jugadores_select_publico / jugadores_insert_propio / jugadores_update_propio
+// ya creadas en Supabase Storage.
+var avatarSubiendo={};
+function rAvatarUploadBtns(nombre,jugadorId){
+  if(!jugadorVinculado||jugadorVinculado.nombre!==nombre||!jugadorId)return "";
+  var idSafe=domSafe(jugadorId);
+  var kCara=jugadorId+'-cara',kCuerpo=jugadorId+'-cuerpo';
+  return "<div style=\"margin-top:.6rem;display:flex;gap:.6rem;flex-wrap:wrap\">"
+    +"<label class=\"desresbtn\" for=\"avfile-cara-"+idSafe+"\">"+(avatarSubiendo[kCara]?"Subiendo...":"\uD83D\uDCF7 Cambiar foto")+"</label>"
+    +"<input type=\"file\" accept=\"image/*\" id=\"avfile-cara-"+idSafe+"\" style=\"display:none\""+(avatarSubiendo[kCara]?" disabled":"")+" onchange=\"handleAvatarFile('cara','"+jsAttr(nombre)+"','"+jsAttr(jugadorId)+"',this)\">"
+    +"<label class=\"desresbtn\" for=\"avfile-cuerpo-"+idSafe+"\">"+(avatarSubiendo[kCuerpo]?"Subiendo...":"\uD83E\uDDCD Cambiar foto de cuerpo")+"</label>"
+    +"<input type=\"file\" accept=\"image/*\" id=\"avfile-cuerpo-"+idSafe+"\" style=\"display:none\""+(avatarSubiendo[kCuerpo]?" disabled":"")+" onchange=\"handleAvatarFile('cuerpo','"+jsAttr(nombre)+"','"+jsAttr(jugadorId)+"',this)\">"
+    +"</div>";
+}
+async function handleAvatarFile(tipo,nombre,jugadorId,inputEl){
+  var file=inputEl.files&&inputEl.files[0];
+  if(!file)return;
+  if(!/^image\//.test(file.type)){alert("Selecciona una imagen.");return;}
+  if(!jugadorVinculado||jugadorVinculado.nombre!==nombre){alert("Solo puedes cambiar tu propia foto.");return;}
+  var key=jugadorId+'-'+tipo;
+  avatarSubiendo[key]=true;
+  refrescarPerfilActual();
+  var maxDim=tipo==='cara'?640:1100;
+  comprimirImagenResultado(file,maxDim,.85,async function(base64,mimeType){
+    try{
+      var ext=mimeType.indexOf('png')>-1?'png':'jpg';
+      var bytes=Uint8Array.from(atob(base64),function(c){return c.charCodeAt(0);});
+      var path=CLUB_ACTUAL_ID+'/'+jugadorId+'/'+tipo+'.'+ext;
+      var up=await window.supabaseClient.storage.from('jugadores').upload(path,bytes,{contentType:mimeType,upsert:true});
+      if(up.error){
+        console.warn('No se pudo subir la foto.',up.error);
+        alert("No se pudo subir la foto. Intenta de nuevo.");
+      }else{
+        var pub=window.supabaseClient.storage.from('jugadores').getPublicUrl(path);
+        var url=pub.data.publicUrl+'?t='+Date.now(); // cache-bust: por si se reemplaza la foto con el mismo nombre
+        var campo=tipo==='cara'?'avatar_url':'foto_cuerpo_url';
+        var upd={};upd[campo]=url;
+        var res=await window.supabaseClient.from('jugadores').update(upd).eq('id',jugadorId).select().maybeSingle();
+        if(!res.error&&res.data){
+          for(var i=0;i<DATA.players.length;i++){
+            if(DATA.players[i].id===jugadorId){
+              if(tipo==='cara')DATA.players[i].avatarUrl=url;else DATA.players[i].fotoCuerpoUrl=url;
+              break;
+            }
+          }
+        }else{
+          console.warn('La foto se subio pero no se pudo vincular al jugador.',res.error);
+          alert("La foto se subio pero no se pudo guardar en tu perfil. Intenta de nuevo.");
+        }
+      }
+    }catch(err){
+      console.warn('Sin conexion al subir la foto.',err);
+      alert("Sin conexion. Intenta de nuevo.");
+    }
+    delete avatarSubiendo[key];
+    refrescarPerfilActual();
+  },function(){
+    alert("No se pudo leer la imagen. Intenta con otra foto.");
+    delete avatarSubiendo[key];
+    refrescarPerfilActual();
+  });
+}
+
 // Club actual de cada jugador. Valor por defecto = mismo nombre que
 // clubes.nombre en Supabase; cargarConfigClubSupabase() lo sobreescribe
 // apenas responde la base (ver Fase 2). Si el club cambia de nombre, el
@@ -4656,6 +4726,7 @@ async function _showProfileImpl(nombre,scroll){
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
     +"<h2>"+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
+    +rAvatarUploadBtns(p.nombre,p.id)
     +"</div></div>"
     +"<div class=\"pbody\">"
     +pinfoH
