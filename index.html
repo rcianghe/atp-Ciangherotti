@@ -1274,7 +1274,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 
 <section id="resultados">
   <div class="container">
-    <div class="sh fi2"><div class="se">Historial completo</div><h2 class="st">Resultados</h2><div class="sl"></div></div>
+    <div class="sh fi2"><div class="se">Lo que se viene</div><h2 class="st">Proximos Partidos</h2><div class="sl"></div></div>
+    <div class="rl" id="rlProximos"></div>
+    <div class="sh fi2" style="margin-top:2.4rem"><div class="se">Historial completo</div><h2 class="st">Resultados</h2><div class="sl"></div></div>
     <div class="rl" id="rl"></div>
   </div>
 </section>
@@ -1383,6 +1385,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
      para que window.supabaseClient ya exista cuando init() corre y
      getTitulos()/contarTitulos() consultan la tabla "titulos". -->
 <script src="lib/supabase.min.js/supabase.min.js"></script>
+<!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
+     Fuente unica de verdad -- ver match-result-card.js. -->
+<script src="match-result-card.js"></script>
 <script>
   var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
@@ -2329,10 +2334,10 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugRes=await window.supabaseClient
-      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url)')
+      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url,pais,bandera_iso)')
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
-      .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,fecha,hora,cancha,foto_resultado_url')
+      .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,estado_partido,fecha,hora,cancha,foto_resultado_url')
       .eq('temporada_id',temporadaId)
       .eq('club_id',CLUB_ACTUAL_ID);
     if(jugRes.error||resRes.error){
@@ -2341,7 +2346,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugadoresRaw=jugRes.data.map(function(i){
-      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||'',avatarUrl:i.jugadores.avatar_url||'',fotoCuerpoUrl:i.jugadores.foto_cuerpo_url||''};
+      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||'',avatarUrl:i.jugadores.avatar_url||'',fotoCuerpoUrl:i.jugadores.foto_cuerpo_url||'',pais:i.jugadores.pais||'',banderaIso:i.jugadores.bandera_iso||''};
     });
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
@@ -2362,6 +2367,7 @@ async function cargarJugadoresYResultadosSupabase(){
         jugador1:idANombre[r.jugador1_id],jugador2:idANombre[r.jugador2_id],
         set1:r.set1,set2:r.set2,set3:r.set3,
         ganador:idANombre[r.ganador_id],tipo:r.tipo,
+        estadoPartido:r.estado_partido||'finalizado',
         fotoResultado:r.foto_resultado_url||''
       };
     });
@@ -2372,12 +2378,29 @@ async function cargarJugadoresYResultadosSupabase(){
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl,pais:j.pais,banderaIso:j.banderaIso};
+    });
+
+    // Objetos "match" normalizados para MatchResultCard (match-result-card.js).
+    // Se arman aca, una sola vez por carga, reusando normalizarMatchDesdeResultado()
+    // tanto para partidos ya jugados como para los pendientes (estado "programado").
+    var jugadoresPorId=normalizarJugadoresById(DATA.players);
+    DATA.resultadosParaTarjeta=jugadosRaw.map(function(r){
+      var m=normalizarMatchDesdeResultado(r,jugadoresPorId,{});
+      m.fecha=fechaDDMMYYYY(r.fecha);
+      m.hora=r.hora?r.hora.substring(0,5):'';
+      return m;
+    });
+    DATA.matchesParaTarjeta=pendientesRaw.map(function(r){
+      var m=normalizarMatchDesdeResultado(r,jugadoresPorId,{});
+      m.fecha=fechaDDMMYYYY(r.fecha);
+      m.hora=r.hora?r.hora.substring(0,5):'';
+      return m;
     });
     DATA.results=resultadosRaw.map(function(r){
       var scoreCrudo=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
       var score=scorePerspectiva(scoreCrudo,r.jugador1,r.ganador);
-      return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1,fotoResultado:r.fotoResultado||''};
+      return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1,estadoPartido:r.estadoPartido||'finalizado',fotoResultado:r.fotoResultado||''};
     });
 
     DATA.matches=pendientesRaw.map(function(r){
@@ -3063,7 +3086,7 @@ function rHeroStats(){
 var perfilInicialRenderizado=false;
 function rAll(){
   rHeroStats();
-  rRanking();rMatches();rResults();rStore();populateH2H();rTopMatagigantes();rAfichesGrandes();
+  rRanking();rMatches();rProximosPartidos();rResults();rStore();populateH2H();rTopMatagigantes();rAfichesGrandes();
   var nombreAMostrar=null;
   if(currentProfileName){
     // ya hay un jugador seleccionado (por el usuario o por una carga previa): lo mantenemos
@@ -3208,6 +3231,9 @@ function rRanking(){
     var fotoH=p.avatarUrl
       ?"<img class=\"rfoto\" src=\""+p.avatarUrl+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','rfoto-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"rfoto-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
+    var banderaMini=(p.banderaIso&&typeof mrcBanderaEmoji==='function')
+      ?"<span style=\"margin-right:.3rem\" title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span>"
+      :"";
 
     // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
     var rachaMini="",formaH="";
@@ -3230,7 +3256,7 @@ function rRanking(){
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
     h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
-    h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+esc(p.nombre)+ret+"</span></div></td>";
+    h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+banderaMini+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
     h+="<td class=\"pb\">"+p.pts+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
     h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+formaH+"</div></td>";
@@ -3243,7 +3269,7 @@ function rRanking(){
     hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
       +fotoCardH
-      +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
+      +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+banderaMini+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
       +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span><span>"+trH+"</span></div></div>"
       +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div>"+formaH+"</div>"
       +"</div>";
@@ -3314,7 +3340,7 @@ function rPodio(){
     var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
     h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", Serie "+esc(p.serie)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"this.parentNode.innerHTML='"+["🥇","🥈","🥉"][i]+"';this.parentNode.style.fontSize='2.4rem';this.parentNode.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
-      +"<div class=\"podio-name\">"+esc(p.nombre)+"</div>"
+      +"<div class=\"podio-name\">"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
       +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
       +"</div>";
@@ -3704,17 +3730,53 @@ function rAfichesGrandes(){
   }
 }
 
+// Identidad visual del club para la tarjeta: reusa las mismas variables
+// ya cargadas por cargarConfigClubSupabase()/aplicarBrandingClub(), asi
+// la tarjeta se ve "de marca" sin volver a consultar Supabase.
+function clubParaTarjeta(){
+  return {nombre:CLUB_NOMBRE, logo_url:CLUB_LOGO_URL};
+}
+
+// Partidos programados (fixture pendiente) con la misma tarjeta, en
+// estado "programado". Solo muestra los que ya tienen a los dos
+// jugadores confirmados (evita una lista larga de "Por definir vs Por
+// definir" que no aporta nada util al visitante), ordenados por fecha
+// mas proxima primero.
+function rProximosPartidos(){
+  var list=document.getElementById("rlProximos");
+  if(!list)return;
+  if(typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
+  var opts={idioma:'es',compact:true,mostrarClub:false,club:clubParaTarjeta()};
+  var datos=(DATA.matchesParaTarjeta||[]).filter(function(m){return m.jugador1&&m.jugador2;});
+  datos.sort(function(a,b){return parseFechaDDMMYYYY(a.fecha||'')-parseFechaDDMMYYYY(b.fecha||'');});
+  var h="";
+  for(var i=0;i<datos.length;i++){
+    if(typeof renderMatchResultCard==='function')h+=renderMatchResultCard(datos[i],opts);
+  }
+  list.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;padding:1.2rem\">No hay proximos partidos confirmados por ahora.</p>";
+}
+
 function rResults(){
   var list=document.getElementById("rl");
+  if(!list)return;
+  if(typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
+  var opts={idioma:'es',compact:true,mostrarClub:false,club:clubParaTarjeta()};
+  var datos=DATA.resultadosParaTarjeta||[];
   var h="";
-  for(var i=DATA.results.length-1;i>=0;i--){
-    var r=DATA.results[i];
-    h+="<div class=\"rr\"><div class=\"rdate\">"+esc(r.fecha)+"</div>";
-    h+="<div class=\"rpl\"><span class=\"rw\">"+esc(r.ganador)+"</span><span class=\"rvs\">def.</span><span class=\"rlo\">"+esc(r.perdedor)+"</span></div>";
-    h+="<div class=\"rsb\">"+esc(r.score)+"</div>";
-    h+="<span class=\"sb "+esc(r.serie)+"\" style=\"font-size:.65rem;padding:.1rem .4rem;\">"+esc(r.serie)+"</span></div>";
+  for(var i=datos.length-1;i>=0;i--){
+    if(typeof renderMatchResultCard==='function'){
+      h+=renderMatchResultCard(datos[i],opts);
+    }else{
+      // Respaldo si el script del componente no cargo por algun motivo de red.
+      var r=DATA.results[i];
+      if(!r)continue;
+      h+="<div class=\"rr\"><div class=\"rdate\">"+esc(r.fecha)+"</div>";
+      h+="<div class=\"rpl\"><span class=\"rw\">"+esc(r.ganador)+"</span><span class=\"rvs\">def.</span><span class=\"rlo\">"+esc(r.perdedor)+"</span></div>";
+      h+="<div class=\"rsb\">"+esc(r.score)+"</div>";
+      h+="<span class=\"sb "+esc(r.serie)+"\" style=\"font-size:.65rem;padding:.1rem .4rem;\">"+esc(r.serie)+"</span></div>";
+    }
   }
-  list.innerHTML=h;
+  list.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;padding:2rem\">Aun no hay resultados registrados.</p>";
 }
 
 function filterPS(val){
@@ -4750,7 +4812,7 @@ async function _showProfileImpl(nombre,scroll){
   document.getElementById("pcc").innerHTML=
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
-    +"<h2>"+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
+    +"<h2>"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
     +rAvatarUploadBtns(p.nombre,p.id)
     +"</div></div>"
     +"<div class=\"pbody\">"
