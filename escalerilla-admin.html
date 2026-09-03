@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
+     Fuente unica de verdad -- ver match-result-card.js. Reemplaza la copia
+     que antes vivia inline en este mismo archivo. -->
+<script src="match-result-card.js"></script>
 <style>
 :root{
   --bg:#F6F4EE; --panel:#FFFFFF; --ink:#17231C; --ink-soft:#5B6B60; --line:#E1DDCE;
@@ -183,40 +187,17 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* =========================================================================
    MATCH RESULT CARD (MRC) — componente visual reutilizable de resultados.
-   Recibe match + player1 + player2 + club + tournament (ver renderMatchResultCard).
-   Los colores se leen del club (tema.primario / tema.acento / color_tema) via
-   variables CSS, asi que un mismo componente se ve distinto por club sin
-   tocar el codigo (punto 4 del prompt ChileTenis PRO).
+   Fuente unica de verdad: match-result-card.js (incluido mas arriba, junto
+   a los demas scripts). Sus estilos internos los inyecta la funcion
+   ensureMatchResultCardStyles() en tiempo de ejecucion; aqui solo queda el
+   layout propio del admin para acomodar varias tarjetas en el panel
+   "Ultimos resultados" del dashboard.
    ========================================================================= */
-.mrc-card{--mrc-primary:#5BBF2A;--mrc-accent:#5BBF2A;background:linear-gradient(180deg,#0E1A13 0%,#152016 100%);border-radius:14px;color:#fff;overflow:hidden;font-family:var(--body);box-shadow:0 10px 26px -12px rgba(0,0,0,.35);max-width:420px;width:100%;}
-.mrc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,.06);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.7);}
-.mrc-head img{width:18px;height:18px;border-radius:4px;object-fit:cover;flex:none;}
-.mrc-head span.mrc-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mrc-head .mrc-status{margin-left:auto;font-weight:700;padding:2px 9px;border-radius:20px;font-size:10.5px;text-transform:none;letter-spacing:0;flex:none;}
-.mrc-status.st-programado{background:#3A4A3F;color:#CFE0D3;}
-.mrc-status.st-en_juego{background:#B8860B;color:#231a00;}
-.mrc-status.st-finalizado{background:var(--mrc-accent);color:#0E1A13;}
-.mrc-status.st-w_o,.mrc-status.st-retirado{background:#B65332;color:#fff;}
-.mrc-status.st-cancelado,.mrc-status.st-suspendido{background:#5B6B60;color:#fff;}
-.mrc-row{display:flex;align-items:center;gap:10px;padding:11px 14px;}
-.mrc-row + .mrc-row{border-top:1px solid rgba(255,255,255,.07);}
-.mrc-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;background:#233026;border:1.5px solid rgba(255,255,255,.15);}
-.mrc-avatar.ph{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.55);}
-.mrc-player{flex:1;min-width:0;display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;}
-.mrc-player .flag{font-size:14px;flex:none;}
-.mrc-player .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mrc-player.winner .name{color:var(--mrc-accent);}
-.mrc-sets{display:flex;gap:5px;flex:none;}
-.mrc-set{font-family:var(--mono);background:rgba(255,255,255,.08);min-width:24px;text-align:center;padding:3px 6px;border-radius:5px;font-size:12.5px;font-weight:700;}
-.mrc-set.win{background:var(--mrc-accent);color:#0E1A13;}
-.mrc-note{padding:2px 14px 10px;font-size:11px;color:rgba(255,255,255,.6);text-align:center;}
-.mrc-foot{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;background:rgba(0,0,0,.18);font-size:11px;color:rgba(255,255,255,.6);}
-.mrc-card.mrc-compact{max-width:none;border-radius:10px;}
-.mrc-card.mrc-compact .mrc-row{padding:8px 12px;}
 .mrc-list{display:flex;flex-direction:column;gap:10px;padding:12px;}
 </style>
 </head>
 <body>
+
 
 <!-- ===================== LOGIN ===================== -->
 <div id="loginScreen">
@@ -837,104 +818,51 @@ function bracketRowActions(r){
 }
 
 /* =========================================================================
-   MATCH RESULT CARD — componente conceptual reutilizable.
-   renderMatchResultCard(match, player1, player2, club, tournament, opts)
-   No es una imagen estatica: se arma en cada llamada a partir de los datos
-   reales del partido (estado_partido, sets, avatar_url, bandera_iso, tema
-   del club). La misma funcion sirve para el dashboard, la tabla de
-   resultados y la llave del torneo — y a futuro para la web publica.
+   MATCH RESULT CARD — ahora vive en match-result-card.js (fuente unica de
+   verdad, compartida con index.html). Aca solo quedan pequeños adaptadores
+   que traducen filas de Supabase (con sus joins j1/j2) a lo que espera
+   normalizarMatchDesdeResultado()/normalizarMatchDesdeTorneoPartido().
    ========================================================================= */
-const MRC_I18N = {
-  es:{ programado:'Programado', en_juego:'En juego', finalizado:'Finalizado', w_o:'W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido', retiradoDe:n=>`${n} retirado`, vs:'Por definir' },
-  en:{ programado:'Scheduled', en_juego:'Live', finalizado:'Finished', w_o:'W.O.', retirado:'Retired', cancelado:'Cancelled', suspendido:'Suspended', retiradoDe:n=>`${n} retired`, vs:'TBD' },
-  it:{ programado:'Programmato', en_juego:'In corso', finalizado:'Finito', w_o:'W.O.', retirado:'Ritirato', cancelado:'Annullato', suspendido:'Sospeso', retiradoDe:n=>`${n} ritirato`, vs:'Da definire' },
+const ESTADO_PARTIDO_LABELS = {
+  programado:'Programado', en_juego:'En juego', finalizado:'Finalizado',
+  w_o:'W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido'
 };
-// Idioma de la tarjeta. Hoy fijo en 'es' para el panel admin; el mismo
-// componente puede recibir el idioma del jugador que la visualiza sin
-// afectar a otros (punto 12 del prompt ChileTenis PRO).
-let mrcLang = 'es';
-function mrcT(key){ return (MRC_I18N[mrcLang]||MRC_I18N.es)[key] ?? key; }
-
 function badgeEstadoPartido(v){
   const estado = v || 'programado';
   const map = {programado:'badge-gray',en_juego:'badge-warn',finalizado:'badge-green',w_o:'badge-clay',retirado:'badge-clay',cancelado:'badge-red',suspendido:'badge-red'};
-  return `<span class="badge ${map[estado]||'badge-gray'}">${mrcT(estado)}</span>`;
+  return `<span class="badge ${map[estado]||'badge-gray'}">${ESTADO_PARTIDO_LABELS[estado]||estado}</span>`;
 }
 
-function mrcPlayerAvatar(p){
-  if(p?.avatar_url) return `<img class="mrc-avatar" src="${escAttr(p.avatar_url)}" alt="" onerror="this.outerHTML='<div class=\\'mrc-avatar ph\\'>${(p.nombre||'?').trim().charAt(0).toUpperCase()}</div>'">`;
-  return `<div class="mrc-avatar ph">${(p?.nombre||'?').trim().charAt(0).toUpperCase()}</div>`;
+// Arma el mini-mapa {id: {id,nombre,avatarUrl,banderaIso,pais}} que pide
+// normalizarJugadoresById(), a partir de una fila ya resuelta por Supabase
+// con sus joins j1/j2 (select '...,j1:jugador1_id(nombre,avatar_url,bandera_iso),j2:jugador2_id(...)').
+function jugadoresByIdDesdeFila(r){
+  const out = {};
+  if(r.jugador1_id) out[r.jugador1_id] = {id:r.jugador1_id, nombre:r.j1?.nombre, avatarUrl:r.j1?.avatar_url, banderaIso:r.j1?.bandera_iso, pais:r.j1?.pais};
+  if(r.jugador2_id) out[r.jugador2_id] = {id:r.jugador2_id, nombre:r.j2?.nombre, avatarUrl:r.j2?.avatar_url, banderaIso:r.j2?.bandera_iso, pais:r.j2?.pais};
+  return out;
 }
-
-function renderMatchResultCard(match, player1, player2, club, tournament, opts={}){
-  const compact = !!opts.compact;
-  const tipoWO = String(match.tipo||'').toLowerCase()==='w.o.';
-  let estado = match.estado_partido || (match.ganador_id ? 'finalizado' : 'programado');
-  if(tipoWO && estado==='finalizado') estado='w_o';
-  const tema = (club && typeof club.tema==='object' && club.tema) || {};
-  const primary = tema.primario || club?.color_tema || '#5BBF2A';
-  const accent = tema.acento || primary;
-  const ganadorId = match.ganador_id;
-  const sets = [match.set1, match.set2, match.set3].filter(Boolean);
-
-  function setsHtml(pid){
-    if(!sets.length) return '';
-    return `<div class="mrc-sets">${sets.map(s=>{
-      const parts = String(s).split('-').map(n=>parseInt(n,10));
-      const [a,b] = parts;
-      const validNums = Number.isFinite(a) && Number.isFinite(b);
-      const won = validNums && (String(pid)===String(match.jugador1_id) ? a>b : b>a);
-      return `<span class="mrc-set ${won?'win':''}">${escAttr(s)}</span>`;
-    }).join('')}</div>`;
-  }
-  function playerRow(p, pid){
-    const isWinner = ganadorId && String(ganadorId)===String(pid);
-    const flag = p?.bandera_iso ? banderaEmoji(p.bandera_iso) : '';
-    const nombre = p?.nombre || `<span class="hint" style="color:rgba(255,255,255,.5)">${mrcT('vs')}</span>`;
-    return `<div class="mrc-row">
-      ${mrcPlayerAvatar(p)}
-      <div class="mrc-player ${isWinner?'winner':''}">${flag?`<span class="flag">${flag}</span>`:''}<span class="name">${nombre}</span></div>
-      ${setsHtml(pid)}
-    </div>`;
-  }
-
-  let noteHtml = '';
-  if(estado==='retirado' && ganadorId){
-    const retiradoNombre = String(ganadorId)===String(match.jugador1_id) ? player2?.nombre : player1?.nombre;
-    if(retiradoNombre) noteHtml = `<div class="mrc-note">${mrcT('retiradoDe')(retiradoNombre)}</div>`;
-  }
-
-  const fechaHtml = [match.fecha, match.hora].filter(Boolean).join(' · ');
-  const canchaHtml = match.cancha ? `Cancha ${escAttr(match.cancha)}` : '';
-  const titulo = tournament?.label || club?.nombre || 'ChileTenis PRO';
-
-  return `<div class="mrc-card ${compact?'mrc-compact':''}" style="--mrc-primary:${escAttr(primary)};--mrc-accent:${escAttr(accent)}">
-    <div class="mrc-head">
-      ${club?.logo_url?`<img src="${escAttr(club.logo_url)}" alt="">`:''}
-      <span class="mrc-title">${titulo}</span>
-      <span class="mrc-status st-${estado}">${mrcT(estado)}</span>
-    </div>
-    ${playerRow(player1, match.jugador1_id)}
-    ${playerRow(player2, match.jugador2_id)}
-    ${noteHtml}
-    ${(fechaHtml||canchaHtml)?`<div class="mrc-foot"><span>${fechaHtml||''}</span><span>${canchaHtml||''}</span></div>`:''}
-  </div>`;
-}
-
-/* ---- Arma los objetos player/club a partir de una fila ya resuelta por
-   Supabase (con sus joins j1/j2/club) y muestra la tarjeta en el modal ---- */
 function buildClubForCard(clubId){
   return (lookups.clubesFull||[]).find(c=>String(c.id)===String(clubId)) || null;
+}
+// Fila -> match normalizado, detectando si viene de "resultados" o de
+// "torneo_partidos" (unico lugar del admin que necesita saber cual de las
+// dos tablas esta mirando; el componente en si no lo necesita saber).
+function matchDesdeFilaAdmin(entityKey, r, torneoNombre){
+  const jugadoresById = jugadoresByIdDesdeFila(r);
+  return entityKey==='torneo_partidos'
+    ? normalizarMatchDesdeTorneoPartido(r, jugadoresById, {torneoNombre})
+    : normalizarMatchDesdeResultado(r, jugadoresById, {torneoNombre});
 }
 function previewMatchCard(entityKey, id){
   const r = rowsCache.find(x=>String(x[ENTITIES[entityKey].pk])===String(id));
   if(!r) return;
-  const player1 = { nombre:r.j1?.nombre, avatar_url:r.j1?.avatar_url, bandera_iso:r.j1?.bandera_iso };
-  const player2 = { nombre:r.j2?.nombre, avatar_url:r.j2?.avatar_url, bandera_iso:r.j2?.bandera_iso };
-  const club = buildClubForCard(r.club_id || adminClubIdActual || selectedClubId);
-  const tournament = entityKey==='torneo_partidos' ? { label: lookups.competiciones.find(c=>c.id===r.torneo_id)?.label } : null;
+  const club = buildClubForCard(r.club_id || adminClubIdActual || selectedClubId) || {nombre:'ChileTenis PRO'};
+  const torneoNombre = entityKey==='torneo_partidos' ? lookups.competiciones.find(c=>c.id===r.torneo_id)?.label : null;
+  const match = matchDesdeFilaAdmin(entityKey, r, torneoNombre);
+  if(typeof ensureMatchResultCardStyles==='function') ensureMatchResultCardStyles();
   document.getElementById('modalTitle').textContent = 'Vista previa · Tarjeta de resultado';
-  document.getElementById('modalBody').innerHTML = `<div style="display:flex;justify-content:center;">${renderMatchResultCard(r, player1, player2, club, tournament)}</div>`;
+  document.getElementById('modalBody').innerHTML = `<div style="display:flex;justify-content:center;">${renderMatchResultCard(match, {idioma:'es', club})}</div>`;
   document.getElementById('modalSaveBtn').style.display='none';
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1178,9 +1106,10 @@ async function showDashboard(){
     <div class="panel-head"><h3>Últimos resultados</h3><button class="subtle-link" onclick="showEntity('resultados')">Ver todos →</button></div>
     <div class="mrc-list">
     ${(ultimos&&ultimos.length)? ultimos.map(r=>
-      renderMatchResultCard(r, r.j1, r.j2, buildClubForCard(r.club_id), null, {compact:true})
+      renderMatchResultCard(matchDesdeFilaAdmin('resultados', r, null), {idioma:'es', compact:true, club:buildClubForCard(r.club_id)||{nombre:'ChileTenis PRO'}})
     ).join('') : '<div class="empty-state">Sin resultados aún</div>'}
     </div>`;
+  if(typeof ensureMatchResultCardStyles==='function') ensureMatchResultCardStyles();
 }
 
 /* =========================================================================
