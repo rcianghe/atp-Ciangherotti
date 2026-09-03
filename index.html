@@ -2337,7 +2337,7 @@ async function cargarJugadoresYResultadosSupabase(){
       .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url,pais,bandera_iso)')
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
-      .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,estado_partido,fecha,hora,cancha,foto_resultado_url')
+      .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,estado_partido,fecha,hora,cancha,foto_resultado_url,created_at')
       .eq('temporada_id',temporadaId)
       .eq('club_id',CLUB_ACTUAL_ID);
     if(jugRes.error||resRes.error){
@@ -2355,6 +2355,12 @@ async function cargarJugadoresYResultadosSupabase(){
     // Partidos sin ganador_id -> pendientes (DATA.matches, ex hoja "Partidos").
     var jugadosRaw=resRes.data.filter(function(r){return r.ganador_id;});
     var pendientesRaw=resRes.data.filter(function(r){return !r.ganador_id;});
+    // Orden pedido para RESULTADOS / HISTORIAL COMPLETO: por fecha/hora de
+    // creacion (created_at) descendente, el ultimo partido ingresado siempre
+    // arriba de todo. Se ordena aca una sola vez porque tanto DATA.results
+    // como DATA.resultadosParaTarjeta (mas abajo) se arman a partir de este
+    // mismo arreglo ya ordenado.
+    jugadosRaw.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});
 
     function fechaDDMMYYYY(f){
       var p=(f||'').split('-');
@@ -3761,9 +3767,13 @@ function rResults(){
   if(!list)return;
   if(typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
   var opts={idioma:'es',compact:true,mostrarClub:false,club:clubParaTarjeta()};
+  // DATA.resultadosParaTarjeta y DATA.results ya vienen ordenados por
+  // created_at descendente (ver cargarJugadoresYResultadosSupabase), asi
+  // que se recorren tal cual, sin invertir: el ultimo partido ingresado
+  // queda arriba de todo.
   var datos=DATA.resultadosParaTarjeta||[];
   var h="";
-  for(var i=datos.length-1;i>=0;i--){
+  for(var i=0;i<datos.length;i++){
     if(typeof renderMatchResultCard==='function'){
       h+=renderMatchResultCard(datos[i],opts);
     }else{
