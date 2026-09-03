@@ -321,6 +321,19 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<div class="modal-overlay" id="fixtureModalOverlay">
+  <div class="modal" style="width:920px">
+    <div class="modal-head">
+      <h3>Carga Masiva de Fixture</h3>
+      <button class="modal-close" onclick="closeFixtureModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="fixtureModalBody" style="max-height:72vh"></div>
+    <div class="modal-foot" id="fixtureModalFoot">
+      <button class="btn btn-ghost" onclick="closeFixtureModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -871,6 +884,304 @@ const _closeModalOriginal = closeModal;
 closeModal = function(){ _closeModalOriginal(); document.getElementById('modalSaveBtn').style.display=''; };
 
 /* =========================================================================
+   CARGA MASIVA DE FIXTURE (imágenes/archivos → resultados "programado")
+   =========================================================================
+   Flujo:
+   1) El admin adjunta capturas/documentos del fixture como referencia visual.
+      Hoy esas imágenes NO se leen automáticamente (no hay un servicio de
+      OCR/visión conectado a este panel todavía) — sirven para transcribir
+      cómodo desde la misma pantalla. El texto tabular se pega/escribe en
+      el cuadro de abajo, una fila por partido.
+   2) fxParseTexto() reconoce fecha, horario, cancha, serie y hasta dos
+      nombres de jugador por línea. Tolera pegado desde una hoja de cálculo
+      (columnas separadas por tabulador) o texto escrito a mano (2+
+      espacios entre columnas), y celdas vacías (bye / rival aún sin
+      definir).
+   3) Cada nombre se resuelve contra los jugadores INSCRITOS en la
+      temporada activa del club (la misma fuente que usa el sitio público
+      para armar "Próximos Partidos"), por coincidencia exacta o parcial
+      normalizada (sin tildes/mayúsculas/espacios extra). Lo que no calza
+      queda marcado para que el admin lo corrija a mano con un selector
+      antes de confirmar — nunca se inserta un jugador adivinado a ciegas.
+   4) Al confirmar, se insertan en "resultados" con estado_partido:
+      'programado' y ganador_id:null. Eso es exactamente lo que
+      DATA.matchesParaTarjeta / rProximosPartidos() en index.html usan
+      para listar un partido en "Próximos Partidos": no hace falta tocar
+      nada más del frontend, aparecen solos en el próximo refresco (cada
+      5 min, o al instante si hay Realtime activo sobre "resultados").
+   ========================================================================= */
+var fxRows = [];
+var fxArchivos = []; // solo para previsualización local, no se procesan ni se suben
+var fxClubId = null;
+var fxTemporadaId = null;
+var fxJugadoresIndice = null; // {lista:[{id,nombre,norm}], temporadaNombre}
+var fxInsertando = false;
+
+function fxNormNombre(s){
+  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+}
+
+async function fxResolverClubYTemporada(){
+  fxClubId = carpetaClubParaSubida();
+  fxTemporadaId = null;
+  fxJugadoresIndice = null;
+  if(!fxClubId) return {error:'club'};
+  var tRes = await sb.from('temporadas').select('id,nombre').eq('club_id', fxClubId).eq('activa', true).limit(1).maybeSingle();
+  if(tRes.error || !tRes.data) return {error:'temporada'};
+  fxTemporadaId = tRes.data.id;
+  var iRes = await sb.from('inscripciones').select('jugador_id,jugadores!inner(id,nombre)').eq('temporada_id', fxTemporadaId);
+  if(iRes.error) return {error:'jugadores'};
+  var lista = (iRes.data||[]).map(function(x){ return {id:x.jugadores.id, nombre:x.jugadores.nombre, norm:fxNormNombre(x.jugadores.nombre)}; });
+  fxJugadoresIndice = {lista:lista, temporadaNombre:tRes.data.nombre};
+  return {ok:true};
+}
+
+// Coincidencia exacta primero; si no hay, coincidencia parcial (todas las
+// palabras del texto tipeado están contenidas en el nombre de un único
+// jugador). Si hay 0 o más de 1 candidato, se deja sin resolver a propósito
+// -- es preferible que el admin elija a mano antes que adivinar mal.
+function fxBuscarJugadorId(nombreTexto){
+  if(!nombreTexto || !fxJugadoresIndice) return null;
+  var norm = fxNormNombre(nombreTexto);
+  if(!norm) return null;
+  var exacto = fxJugadoresIndice.lista.find(function(j){return j.norm===norm;});
+  if(exacto) return exacto.id;
+  var tokens = norm.split(' ').filter(Boolean);
+  var candidatos = fxJugadoresIndice.lista.filter(function(j){
+    var jt = j.norm.split(' ').filter(Boolean);
+    return tokens.length && tokens.every(function(t){return jt.indexOf(t)>-1;});
+  });
+  return candidatos.length===1 ? candidatos[0].id : null;
+}
+
+function fxParseLinea(linea){
+  var cols = linea.indexOf('\t')>-1 ? linea.split('\t') : linea.split(/ {2,}/);
+  cols = cols.map(function(c){return (c||'').trim();});
+  var fila = {fechaTexto:null, horaTexto:null, cancha:null, serie:null, nombres:[]};
+  cols.forEach(function(c){
+    if(!c) return;
+    var mFecha = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/.exec(c);
+    var mHora = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/.exec(c);
+    var mCancha = /cancha\s*(\S+)/i.exec(c);
+    var mSerie = /^serie\s*([a-zA-Z])$/i.exec(c);
+    if(mFecha && !fila.fechaTexto){
+      fila.fechaTexto = ('0'+mFecha[1]).slice(-2)+'-'+('0'+mFecha[2]).slice(-2)+'-'+mFecha[3];
+    } else if(mHora && !fila.horaTexto){
+      fila.horaTexto = c.replace(/\s+/g,'');
+    } else if(mCancha){
+      fila.cancha = mCancha[1];
+    } else if(mSerie){
+      fila.serie = mSerie[1].toUpperCase();
+    } else if(/^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)$/i.test(c)){
+      // día de la semana: informativo, no se guarda (se puede recalcular de la fecha)
+    } else if(/turno/i.test(c)){
+      // "Primer/Segundo/Tercer turno": informativo; "resultados" no tiene
+      // columna propia para esto hoy, así que no se persiste.
+    } else {
+      fila.nombres.push(c);
+    }
+  });
+  fila.j1Texto = fila.nombres[0] || '';
+  fila.j2Texto = fila.nombres[1] || '';
+  return fila;
+}
+
+function fxFechaISO(ddmmaaaa){
+  if(!ddmmaaaa) return null;
+  var p = ddmmaaaa.split('-');
+  return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : null;
+}
+
+function fxParseTexto(texto){
+  return texto.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean).map(function(linea){
+    var f = fxParseLinea(linea);
+    return {
+      lineaOriginal: linea,
+      fechaTexto: f.fechaTexto, horaTexto: f.horaTexto, cancha: f.cancha, serie: f.serie,
+      j1Texto: f.j1Texto, j2Texto: f.j2Texto,
+      j1Id: fxBuscarJugadorId(f.j1Texto), j2Id: fxBuscarJugadorId(f.j2Texto)
+    };
+  });
+}
+
+function openFixtureModal(){
+  fxRows = []; fxArchivos = [];
+  document.getElementById('fixtureModalBody').innerHTML = '<p class="hint">Verificando club y temporada activa…</p>';
+  document.getElementById('fixtureModalFoot').innerHTML = '<button class="btn btn-ghost" onclick="closeFixtureModal()">Cerrar</button>';
+  document.getElementById('fixtureModalOverlay').classList.add('show');
+  fxResolverClubYTemporada().then(function(r){
+    if(r.error==='club'){
+      document.getElementById('fixtureModalBody').innerHTML = '<div class="fx-club-warning">⚠️ Elige un club en el selector de la izquierda antes de cargar un fixture: esta acción necesita saber para qué club y temporada se crean los partidos.</div>';
+      return;
+    }
+    if(r.error==='temporada'){
+      document.getElementById('fixtureModalBody').innerHTML = '<div class="fx-club-warning">⚠️ Este club no tiene ninguna temporada marcada como activa. Actívala primero en la sección "Temporadas" y vuelve a intentarlo.</div>';
+      return;
+    }
+    if(r.error==='jugadores'){
+      document.getElementById('fixtureModalBody').innerHTML = '<div class="fx-club-warning">⚠️ No se pudo cargar la lista de jugadores inscritos. Intenta de nuevo.</div>';
+      return;
+    }
+    fxRenderStep1();
+  });
+}
+function closeFixtureModal(){
+  document.getElementById('fixtureModalOverlay').classList.remove('show');
+}
+
+function fxRenderStep1(){
+  var club = (lookups.clubesFull||[]).find(function(c){return c.id===fxClubId;});
+  document.getElementById('fixtureModalBody').innerHTML = `
+    <div class="fx-step">
+      <div class="fx-step-label">Club / temporada</div>
+      <div class="hint">${escAttr(club?club.nombre:'Club')} · Temporada activa: <b>${escAttr(fxJugadoresIndice.temporadaNombre)}</b> · ${fxJugadoresIndice.lista.length} jugadores inscritos</div>
+    </div>
+    <div class="fx-step">
+      <div class="fx-step-label">1. Capturas o documentos del fixture (referencia)</div>
+      <label class="fx-drop" id="fxDrop" for="fxFileInput">
+        📎 Arrastra o toca para adjuntar imágenes/PDF del fixture — quedan solo como referencia visual mientras transcribes, hoy no se leen automáticamente.
+        <input type="file" id="fxFileInput" accept="image/*,application/pdf" multiple onchange="fxAgregarArchivos(this.files)">
+      </label>
+      <div class="fx-thumbs" id="fxThumbs"></div>
+    </div>
+    <div class="fx-step">
+      <div class="fx-step-label">2. Pega o escribe el fixture (una fila por partido)</div>
+      <div class="hint" style="margin-bottom:6px">Columnas en cualquier orden, separadas por tabulador o 2+ espacios: fecha (DD-MM-AAAA), día, horario (HH:MM-HH:MM), "Cancha N", "Serie X", Jugador 1, Jugador 2, turno. Deja vacío un jugador si esa fila todavía no tiene rival definido.</div>
+      <textarea class="fx-textarea" id="fxTexto" placeholder="05-09-2026  Sábado  09:00-10:30  Cancha 2  Serie C
+05-09-2026  Sábado  09:00-10:30  Cancha 3  Serie C  Marcelo Lastra  German Sendra"></textarea>
+    </div>
+  `;
+  fxRenderThumbs();
+  document.getElementById('fixtureModalFoot').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeFixtureModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="fxAnalizar()">Analizar texto →</button>
+  `;
+}
+
+function fxAgregarArchivos(fileList){
+  Array.from(fileList||[]).forEach(function(f){ fxArchivos.push(f); });
+  fxRenderThumbs();
+}
+function fxQuitarArchivo(idx){ fxArchivos.splice(idx,1); fxRenderThumbs(); }
+function fxRenderThumbs(){
+  var el = document.getElementById('fxThumbs');
+  if(!el) return;
+  el.innerHTML = fxArchivos.map(function(f, i){
+    var esImg = /^image\//.test(f.type);
+    return `<div class="fx-thumb">${esImg?`<img src="${URL.createObjectURL(f)}">`:`<div class="fx-thumb-file">📄<br>${escAttr(f.name.slice(0,16))}</div>`}<button onclick="fxQuitarArchivo(${i})" title="Quitar">×</button></div>`;
+  }).join('');
+}
+
+function fxAnalizar(){
+  var texto = (document.getElementById('fxTexto')||{}).value || '';
+  if(!texto.trim()){ toast('Pega o escribe al menos una fila del fixture.', true); return; }
+  fxRows = fxParseTexto(texto);
+  fxRenderStep2();
+}
+
+function fxOpcionesJugador(seleccionId){
+  var opts = '<option value="">— Sin jugador (bye) —</option>';
+  fxJugadoresIndice.lista.forEach(function(j){
+    opts += `<option value="${j.id}" ${String(seleccionId)===String(j.id)?'selected':''}>${escAttr(j.nombre)}</option>`;
+  });
+  return opts;
+}
+
+function fxValidarFila(f){
+  var errores = [];
+  if(!f.fechaTexto) errores.push('fecha');
+  if(!f.serie) errores.push('serie');
+  if(!f.j1Id && !f.j2Id) errores.push('sin_jugadores');
+  return errores;
+}
+
+function fxRenderStep2(){
+  var filasHtml = fxRows.map(function(f, i){
+    var errores = fxValidarFila(f);
+    var claseFila = (errores.indexOf('fecha')>-1||errores.indexOf('serie')>-1) ? 'fx-row-error' : (errores.indexOf('sin_jugadores')>-1?'fx-row-warn':'');
+    return `<tr class="${claseFila}">
+      <td>${f.fechaTexto?escAttr(f.fechaTexto):'<span class="fx-pillerr">Sin fecha</span>'}</td>
+      <td><input type="text" value="${escAttr(f.horaTexto||'')}" onchange="fxRows[${i}].horaTexto=this.value"></td>
+      <td><input type="text" value="${escAttr(f.cancha||'')}" style="max-width:60px" onchange="fxRows[${i}].cancha=this.value"></td>
+      <td><select onchange="fxRows[${i}].serie=this.value||null">
+        <option value="">?</option>
+        ${['A','B','C'].map(function(s){return `<option value="${s}" ${f.serie===s?'selected':''}>${s}</option>`;}).join('')}
+      </select></td>
+      <td><select onchange="fxRows[${i}].j1Id=this.value||null">${fxOpcionesJugador(f.j1Id)}</select>${(f.j1Texto&&!f.j1Id)?`<div class="hint">texto leído: "${escAttr(f.j1Texto)}"</div>`:''}</td>
+      <td><select onchange="fxRows[${i}].j2Id=this.value||null">${fxOpcionesJugador(f.j2Id)}</select>${(f.j2Texto&&!f.j2Id)?`<div class="hint">texto leído: "${escAttr(f.j2Texto)}"</div>`:''}</td>
+      <td><button class="icon-btn danger" title="Quitar fila" onclick="fxQuitarFila(${i})">🗑</button></td>
+    </tr>`;
+  }).join('');
+
+  var listas = fxRows.filter(function(f){
+    var e = fxValidarFila(f);
+    return e.indexOf('fecha')===-1 && e.indexOf('serie')===-1 && e.indexOf('sin_jugadores')===-1;
+  }).length;
+
+  document.getElementById('fixtureModalBody').innerHTML = `
+    <div class="fx-summary">
+      <span>📋 <b>${fxRows.length}</b> fila(s) leídas</span>
+      <span style="color:var(--accent-dark)">✓ <b>${listas}</b> lista(s) para insertar</span>
+      <span class="hint">En rojo: falta fecha o serie. En amarillo: ningún jugador reconocido todavía. Corrige con los selectores antes de confirmar.</span>
+    </div>
+    <div class="fx-table-wrap">
+      <table class="fx-table">
+        <thead><tr><th>Fecha</th><th>Hora</th><th>Cancha</th><th>Serie</th><th>Jugador 1</th><th>Jugador 2</th><th></th></tr></thead>
+        <tbody>${filasHtml || '<tr><td colspan="7" class="hint" style="padding:16px">No se reconoció ninguna fila en el texto pegado.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('fixtureModalFoot').innerHTML = `
+    <button class="btn btn-ghost" onclick="fxRenderStep1()">← Volver al texto</button>
+    <button class="btn btn-primary" id="fxInsertBtn" onclick="fxInsertar()" ${fxInsertando?'disabled':''}>${fxInsertando?'Insertando…':'Insertar partidos ('+listas+')'}</button>
+  `;
+}
+
+function fxQuitarFila(i){
+  fxRows.splice(i,1);
+  fxRenderStep2();
+}
+
+async function fxInsertar(){
+  if(fxInsertando) return;
+  var payloads = [];
+  fxRows.forEach(function(f){
+    var errores = fxValidarFila(f);
+    if(errores.indexOf('fecha')>-1 || errores.indexOf('serie')>-1 || errores.indexOf('sin_jugadores')>-1) return;
+    payloads.push({
+      club_id: fxClubId, temporada_id: fxTemporadaId, serie: f.serie,
+      jugador1_id: f.j1Id || null, jugador2_id: f.j2Id || null,
+      fecha: fxFechaISO(f.fechaTexto), hora: f.horaTexto || null, cancha: f.cancha || null,
+      ganador_id: null, estado_partido: 'programado'
+    });
+  });
+  if(!payloads.length){ toast('No hay ninguna fila lista para insertar.', true); return; }
+  fxInsertando = true;
+  fxRenderStep2();
+  try{
+    var res = await sb.from('resultados').insert(payloads);
+    if(res.error){
+      console.warn('No se pudo insertar el fixture.', res.error);
+      toast('No se pudo insertar el fixture: '+res.error.message, true);
+      fxInsertando = false;
+      fxRenderStep2();
+      return;
+    }
+    toast(`Se cargaron ${payloads.length} partido(s) como "Programado". Deberían verse en "Próximos Partidos" del sitio en el próximo refresco.`);
+    fxInsertando = false;
+    closeFixtureModal();
+    if(currentEntity==='resultados') fetchAndRenderRows();
+    showDashboard();
+  }catch(err){
+    console.warn('Sin conexión al insertar el fixture.', err);
+    toast('Sin conexión. Intenta de nuevo.', true);
+    fxInsertando = false;
+    fxRenderStep2();
+  }
+}
+
+/* =========================================================================
    AUTH
    ========================================================================= */
 /* ---- Navegación entre formularios de la pantalla de login ---- */
@@ -1091,7 +1402,12 @@ async function showDashboard(){
   `;
 
   document.getElementById('panelPendientes').innerHTML = `
-    <div class="panel-head"><h3>Desafíos pendientes</h3><button class="subtle-link" onclick="showEntity('desafios')">Ver todos →</button></div>
+    <div class="panel-head"><h3>Desafíos pendientes</h3>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="subtle-link" onclick="openFixtureModal()">📤 Cargar Desafíos</button>
+        <button class="subtle-link" onclick="showEntity('desafios')">Ver todos →</button>
+      </div>
+    </div>
     <table><tbody>
     ${pendientesDesafios.length? pendientesDesafios.map(d=>`
       <tr><td><b>${d.de?.nombre||'?'}</b> vs <b>${d.para?.nombre||'?'}</b><br><span class="hint">${d.dia||''} ${d.hora||''}</span></td>
