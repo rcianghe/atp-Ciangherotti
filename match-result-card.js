@@ -108,9 +108,17 @@ function mrcEsc(s){
 }
 
 function mrcBanderaEmoji(iso2){
+  // OJO: esto ya NO devuelve un emoji de bandera (dos "regional indicator
+  // symbols" Unicode). El emoji se ve como bandera en iOS/Android/macOS,
+  // pero Windows no trae fuente de emoji con banderas y en su lugar
+  // muestra las dos letras del codigo pais sueltas (ej. "CL"), que es
+  // justo el problema de "en el notebook sale CL en vez de la bandera".
+  // La solucion consistente entre plataformas es usar una IMAGEN real de
+  // bandera (via flagcdn.com, gratuito y sin key) en vez de depender de
+  // que el sistema operativo tenga esos glifos instalados.
   if(!iso2 || !/^[A-Za-z]{2}$/.test(iso2)) return '';
-  var cp = iso2.toUpperCase().split('').map(function(c){ return 0x1F1E6 + (c.charCodeAt(0) - 65); });
-  return String.fromCodePoint(cp[0], cp[1]);
+  var code = iso2.toLowerCase();
+  return '<img class="mrc-bandera-img" src="https://flagcdn.com/24x18/'+code+'.png" srcset="https://flagcdn.com/48x36/'+code+'.png 2x" width="18" height="14" alt="" loading="lazy" onerror="this.style.display=\'none\'">';
 }
 
 function mrcHashStr(s){
@@ -345,7 +353,8 @@ function ensureMatchResultCardStyles(){
     + '.mrc-jnombre{font-size:.86rem;font-weight:600;color:var(--mrc-bl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;align-items:center;gap:.3rem}'
     + '.mrc-jugador:last-child .mrc-jnombre{flex-direction:row-reverse}'
     + '.mrc-jnombre-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-    + '.mrc-bandera{font-size:.9rem;flex-shrink:0}'
+    + '.mrc-bandera{font-size:.9rem;flex-shrink:0;display:inline-flex;align-items:center}'
+    + '.mrc-bandera-img{display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.18);vertical-align:middle}'
     + '.mrc-winbadge{font-size:.75rem;flex-shrink:0}'
     + '.mrc-centro{flex-shrink:0;min-width:44px;text-align:center;font-weight:700;color:var(--mrc-gl)}'
     + '.mrc-centro-sets{font-family:inherit;font-size:1.15rem;color:var(--mrc-bl);letter-spacing:1px}'
