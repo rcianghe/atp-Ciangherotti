@@ -1125,10 +1125,10 @@ function fxRenderStep1(){
     </div>
     <div class="fx-step">
       <div class="fx-step-label">1. Capturas o documentos del fixture (referencia)</div>
-      <label class="fx-drop" id="fxDrop">
+      <label class="fx-drop" id="fxDrop" for="fxFileInput">
         📎 Arrastra o toca para adjuntar fotos del fixture — se leen automáticamente con IA y los partidos quedan listos para revisar abajo. Los PDF aún no se leen solos: quedan solo de referencia.
-        <input type="file" id="fxFileInput" accept="image/*,application/pdf" multiple onchange="fxAgregarArchivos(this.files)">
       </label>
+      <input type="file" id="fxFileInput" accept="image/*,application/pdf" multiple style="display:none" onchange="fxAgregarArchivos(this.files)">
       <div class="fx-thumbs" id="fxThumbs"></div>
       <div class="hint" id="fxEstadoLectura"></div>
     </div>
