@@ -126,6 +126,12 @@ a{color:var(--accent-dark);}
 .panel-head h3{font-family:var(--display);font-size:15px;margin:0;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 @media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+@media(max-width:1300px){.three-col{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.three-col{grid-template-columns:1fr;}}
+.panel-fixture{display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(160deg,var(--panel) 60%,var(--accent-bg,rgba(91,191,42,.08)) 100%);}
+.panel-fixture .panel-body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:10px;}
+.panel-fixture .n{font-family:var(--display);font-size:28px;line-height:1;}
 
 /* ---------- Table ---------- */
 .table-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
@@ -1477,7 +1483,7 @@ async function showDashboard(){
   document.getElementById('viewSubtitle').textContent = clubNombreDash ? `Estado general — ${clubNombreDash}` : 'Estado general de todos los clubes';
   document.getElementById('topbarActions').innerHTML='';
   const content = document.getElementById('content');
-  content.innerHTML = '<div class="stat-grid" id="statGrid"></div><div class="two-col"><div class="panel" id="panelPendientes"></div><div class="panel" id="panelUltimos"></div></div>';
+  content.innerHTML = '<div class="stat-grid" id="statGrid"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
 
   const clubIdsDash = selectedClubId ? await getClubJugadorIds(selectedClubId) : null;
   let memQueryDash = sb.from('membresias').select('id,estado',{count:'exact'});
@@ -1493,9 +1499,11 @@ async function showDashboard(){
   if(selectedClubId) titQueryDash = titQueryDash.eq('club_id', selectedClubId);
   let compQueryDash = sb.from('competiciones').select('id,estado',{count:'exact'});
   if(selectedClubId) compQueryDash = compQueryDash.eq('club_id', selectedClubId);
+  let progQueryDash = sb.from('resultados').select('id',{count:'exact'}).eq('estado_partido','programado');
+  if(selectedClubId) progQueryDash = progQueryDash.eq('club_id', selectedClubId);
 
-  const [jug, des, res, tit, comp, mem] = await Promise.all([
-    jugQueryDash, desQueryDash, resQueryDash, titQueryDash, compQueryDash, memQueryDash,
+  const [jug, des, res, tit, comp, mem, prog] = await Promise.all([
+    jugQueryDash, desQueryDash, resQueryDash, titQueryDash, compQueryDash, memQueryDash, progQueryDash,
   ]);
 
   const activos = (jug.data||[]).filter(x=>x.estado==='Activo').length;
@@ -1514,18 +1522,22 @@ async function showDashboard(){
   `;
 
   document.getElementById('panelPendientes').innerHTML = `
-    <div class="panel-head"><h3>Desafíos pendientes</h3>
-      <div style="display:flex;gap:12px;align-items:center">
-        <button class="subtle-link" onclick="openFixtureModal()">📤 Cargar Desafíos</button>
-        <button class="subtle-link" onclick="showEntity('desafios')">Ver todos →</button>
-      </div>
-    </div>
+    <div class="panel-head"><h3>Desafíos pendientes</h3><button class="subtle-link" onclick="showEntity('desafios')">Ver todos →</button></div>
     <table><tbody>
     ${pendientesDesafios.length? pendientesDesafios.map(d=>`
       <tr><td><b>${d.de?.nombre||'?'}</b> vs <b>${d.para?.nombre||'?'}</b><br><span class="hint">${d.dia||''} ${d.hora||''}</span></td>
       <td style="text-align:right">${badgeEstadoDesafio(d.estado)}</td></tr>
     `).join('') : '<tr><td class="empty-state">No hay desafíos pendientes 🎾</td></tr>'}
     </tbody></table>`;
+
+  document.getElementById('panelFixture').innerHTML = `
+    <div class="panel-head"><h3>📤 Carga masiva del fixture</h3></div>
+    <div class="panel-body">
+      <div class="n">${prog.count??0}</div>
+      <div class="hint" style="margin-top:-6px">partido(s) programado(s) esperando jugarse</div>
+      <div class="hint">Sube una foto o captura del fixture y la IA arma los partidos por ti — solo tienes que revisar y confirmar.</div>
+      <button class="btn btn-primary" style="align-self:flex-start" onclick="openFixtureModal()">📤 Cargar fixture</button>
+    </div>`;
 
   let ultQueryDash = sb.from('resultados').select('id,fecha,hora,cancha,serie,set1,set2,set3,tipo,estado_partido,club_id,jugador1_id,jugador2_id,ganador_id,j1:jugador1_id(nombre,avatar_url,bandera_iso),j2:jugador2_id(nombre,avatar_url,bandera_iso)').order('fecha',{ascending:false}).limit(4);
   if(selectedClubId) ultQueryDash = ultQueryDash.eq('club_id', selectedClubId);
