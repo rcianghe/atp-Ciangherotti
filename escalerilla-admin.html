@@ -1048,21 +1048,63 @@ function fxImagenABase64(file){
   });
 }
 
-// Llama a la Edge Function "extraer-fixture" (Claude con visión) para una sola
-// imagen. Devuelve {partidos:[...]} o {error:'...'} -- nunca lanza excepción.
+// Extrae el mensaje real de un error de sb.functions.invoke(). Cuando la
+// Edge Function responde con un status no-2xx, supabase-js arma un
+// FunctionsHttpError cuyo .message es SIEMPRE el texto genérico "Edge
+// Function returned a non-2xx status code" -- el mensaje util que la propia
+// funcion mando (ej. "El modelo de IA esta saturado...") viaja aparte, en
+// error.context, que es el objeto Response crudo y hay que leerlo a mano.
+async function fxMensajeDeErrorFuncion(err){
+  try{
+    if(err && err.context && typeof err.context.json==='function'){
+      var body = await err.context.json();
+      if(body && body.error) return body.error;
+    }
+  }catch(e){ /* el body no era JSON parseable, seguimos con el fallback */ }
+  return (err && err.message) || String(err);
+}
+
+// Llama a la Edge Function "extraer-fixture" (Gemini con vision) para una
+// sola imagen. Devuelve {partidos:[...]} o {error:'...'} -- nunca lanza
+// excepcion. Gemini Flash devuelve 503 "high demand" con cierta frecuencia
+// por saturacion del lado de Google (no es un error nuestro); la propia
+// Edge Function ya reintenta 3 veces internamente, y aca reintentamos la
+// LLAMADA COMPLETA un par de veces mas si el mensaje indica saturacion,
+// antes de rendirnos y mostrarle el error al usuario.
 async function fxExtraerDeArchivo(file){
   if(!/^image\//.test(file.type)){
     return {error: '"'+file.name+'" es un PDF/documento: por ahora solo las imágenes se leen automáticamente. Puedes transcribirlo a mano abajo.'};
   }
+  var base64;
   try{
-    var base64 = await fxImagenABase64(file);
-    var resp = await sb.functions.invoke('extraer-fixture', {body:{imageBase64: base64, mediaType: file.type}});
-    if(resp.error) return {error: 'No se pudo leer "'+file.name+'": '+(resp.error.message||resp.error)};
-    var data = resp.data || {};
-    if(data.error) return {error: '"'+file.name+'": '+data.error};
-    return {partidos: Array.isArray(data.partidos) ? data.partidos : []};
+    base64 = await fxImagenABase64(file);
   }catch(err){
-    return {error: 'No se pudo procesar "'+file.name+'". Revisa tu conexión e intenta de nuevo.'};
+    return {error: 'No se pudo leer "'+file.name+'" desde el dispositivo. Intenta con otra foto.'};
+  }
+  var MAX_INTENTOS = 3;
+  for(var intento=1; intento<=MAX_INTENTOS; intento++){
+    try{
+      var resp = await sb.functions.invoke('extraer-fixture', {body:{imageBase64: base64, mediaType: file.type}});
+      if(resp.error){
+        var msg = await fxMensajeDeErrorFuncion(resp.error);
+        var saturado = /satura|high demand|503/i.test(msg);
+        if(saturado && intento<MAX_INTENTOS){
+          fxSetEstadoLectura('"'+file.name+'": modelo saturado, reintentando ('+intento+'/'+MAX_INTENTOS+')...');
+          await new Promise(function(r){ setTimeout(r, 1500*intento); });
+          continue;
+        }
+        return {error: 'No se pudo leer "'+file.name+'": '+msg};
+      }
+      var data = resp.data || {};
+      if(data.error) return {error: '"'+file.name+'": '+data.error};
+      return {partidos: Array.isArray(data.partidos) ? data.partidos : []};
+    }catch(err){
+      if(intento<MAX_INTENTOS){
+        await new Promise(function(r){ setTimeout(r, 1500*intento); });
+        continue;
+      }
+      return {error: 'No se pudo procesar "'+file.name+'". Revisa tu conexión e intenta de nuevo.'};
+    }
   }
 }
 
