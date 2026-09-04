@@ -768,6 +768,16 @@ span.diachip{cursor:default;display:inline-block}
 .tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
 .tint-match:hover{border-color:color-mix(in srgb,var(--serie-color) 40%,transparent)}
 .tint-match.final{border-color:color-mix(in srgb,var(--serie-color) 50%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 15%,transparent)}
+/* Cuando el partido se pinta con la MatchResultCard (match-result-card.js)
+   en vez del viejo tint-slot, la propia tarjeta ya trae su fondo/borde, asi
+   que .tint-match se vuelve solo un contenedor invisible para no duplicar
+   el marco (evita el efecto "caja dentro de caja"). El glow especial de la
+   Final se traslada a la tarjeta interior. */
+.tint-match:has(.mrc-card){background:transparent;border:none;overflow:visible;transition:none}
+.tint-match:has(.mrc-card):hover{border-color:transparent}
+.tint-match.final:has(.mrc-card){box-shadow:none}
+.tint-match .mrc-card{margin:0}
+.tint-match.final .mrc-card{border-color:color-mix(in srgb,var(--serie-color) 55%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 18%,transparent)}
 .tint-slot{display:flex;align-items:center;justify-content:space-between;padding:.5rem .6rem;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.05)}
 .tint-slot:last-child{border-bottom:none}
 .tint-slot.win{background:color-mix(in srgb,var(--serie-color) 10%,transparent)}
@@ -2805,6 +2815,20 @@ function rTintBracket(t){
     var navVacio=document.getElementById('tintRondaNav');if(navVacio)navVacio.style.display='none';
     return;
   }
+  // Misma tarjeta de resultado que ya se usa en el panel de administracion
+  // (match-result-card.js / renderMatchResultCard), asi el cuadro publico
+  // del Torneo Interno se ve identico a lo que ya se veia en el admin en
+  // vez de la fila de texto simple de antes (tintSlotHtml).
+  var tieneComponenteTarjeta=(typeof renderMatchResultCard==='function'&&typeof normalizarMatchDesdeTorneoPartido==='function'&&typeof normalizarJugadoresById==='function');
+  if(tieneComponenteTarjeta&&typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
+  var jugadoresById=tieneComponenteTarjeta?normalizarJugadoresById(DATA.players):{};
+  // Se pasa el color de la Serie (rojo/azul/verde, mismo mapa SERIE_COLORES
+  // que ya usan las pestañas y el glow del cuadro) como "tema" del club para
+  // que la tarjeta de partido resalte al ganador con ese mismo color, en vez
+  // del verde generico por defecto.
+  var colorSerieActual=SERIE_COLORES[t.serie]||SERIE_COLORES.C;
+  var optsTarjeta={idioma:'es',compact:true,mostrarClub:false,mostrarTorneo:false,club:{tema:{primario:colorSerieActual,acento:colorSerieActual}}};
+
   var h='';
   t.rondas.forEach(function(matches,ri){
     var esFinal=(matches.length===1&&ri===totalRondas-1);
@@ -2812,15 +2836,21 @@ function rTintBracket(t){
     h+='<div class="tint-ronda" data-ri="'+ri+'"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
     matches.forEach(function(m){
       if(m.bye){
-        h+='<div class="tint-match">'+tintSlotHtml(m.j1,true,null,false)+'<div class="tint-bye">Bye \u2014 pasa directo</div></div>';
+        h+='<div class="tint-match">'+tintSlotHtml(m.j1Nombre,true,null,false)+'<div class="tint-bye">Bye \u2014 pasa directo</div></div>';
         return;
       }
       var cls='tint-match'+(esFinal?' final':'');
-      h+='<div class="'+cls+'">';
-      if(m.mejorPerdedor)h+='<span class="tint-mp">Mejor perdedor</span>';
-      h+=tintSlotHtml(m.j1,!!(m.ganador&&m.ganador===m.j1),m.ganador?m.score:null,!m.j1);
-      h+=tintSlotHtml(m.j2,!!(m.ganador&&m.ganador===m.j2),m.ganador?m.score:null,!m.j2);
-      h+='</div>';
+      if(tieneComponenteTarjeta){
+        var match=normalizarMatchDesdeTorneoPartido(m.raw,jugadoresById,{serie:t.serie});
+        h+='<div class="'+cls+'">'+renderMatchResultCard(match,optsTarjeta)+'</div>';
+      }else{
+        // Respaldo si match-result-card.js no llego a cargar por algun motivo de red.
+        h+='<div class="'+cls+'">';
+        if(m.mejorPerdedor)h+='<span class="tint-mp">Mejor perdedor</span>';
+        h+=tintSlotHtml(m.j1Nombre,!!(m.ganadorId&&m.ganadorId===m.raw.jugador1_id),m.ganadorId?[m.raw.set1,m.raw.set2,m.raw.set3].filter(Boolean).join(' ')||(m.raw.tipo==='W.O.'?'W.O.':null):null,!m.j1Nombre);
+        h+=tintSlotHtml(m.j2Nombre,!!(m.ganadorId&&m.ganadorId===m.raw.jugador2_id),m.ganadorId?[m.raw.set1,m.raw.set2,m.raw.set3].filter(Boolean).join(' ')||(m.raw.tipo==='W.O.'?'W.O.':null):null,!m.j2Nombre);
+        h+='</div>';
+      }
     });
     h+='</div></div>';
   });
@@ -2830,7 +2860,7 @@ function rTintBracket(t){
   var rondaDefault=totalRondas-1;
   if(t.estado!=='finalizado'){
     for(var ri=0;ri<totalRondas;ri++){
-      var pendiente=t.rondas[ri].some(function(m){return !m.bye&&!m.ganador;});
+      var pendiente=t.rondas[ri].some(function(m){return !m.bye&&!m.ganadorId;});
       if(pendiente){rondaDefault=ri;break;}
     }}
   tintRondaMostrada=Math.min(rondaDefault,totalRondas-1);
@@ -2908,10 +2938,15 @@ async function cargarTorneosInternos(){
         var enRonda=partidosDelTorneo.filter(function(p){return p.ronda===r;}).sort(function(a,b){return a.posicion-b.posicion;});
         rondas.push(enRonda.map(function(p){
           return {
-            j1:p.jugador1_id?idANombre[p.jugador1_id]:null,
-            j2:p.jugador2_id?idANombre[p.jugador2_id]:null,
-            ganador:p.ganador_id?idANombre[p.ganador_id]:null,
-            score:[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':null),
+            // "raw" es la fila cruda de torneo_partidos, tal cual la usa
+            // el admin para armar la MatchResultCard (mismo componente,
+            // mismo look). Se guarda ademas de los campos ya derivados de
+            // abajo (que otras funciones del archivo siguen usando para
+            // detectar bye/ronda pendiente/etc, sin tener que tocarlas).
+            raw:p,
+            j1Nombre:p.jugador1_id?idANombre[p.jugador1_id]:null,
+            j2Nombre:p.jugador2_id?idANombre[p.jugador2_id]:null,
+            ganadorId:p.ganador_id||null,
             bye:!!p.es_bye,
             mejorPerdedor:!!p.es_mejor_perdedor
           };
