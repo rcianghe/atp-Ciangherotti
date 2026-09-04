@@ -65,8 +65,12 @@ input[type=text],input[type=number],select{background:var(--g);border:1px solid 
 
 <div id="app"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="lib/supabase.min.js/supabase.min.js"></script>
+<!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
+     Fuente unica de verdad -- ver match-result-card.js. -->
+<script src="match-result-card.js"></script>
 <script>
 var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
@@ -76,6 +80,7 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
 function jsAttr(s){return esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'"));}
 
 var PUNTOS={gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0};
+var ESTADO_PARTIDO_LABELS={programado:'Programado',en_juego:'En juego',finalizado:'Finalizado',w_o:'W.O.',retirado:'Retirado',cancelado:'Cancelado',suspendido:'Suspendido'};
 
 var usuarioActual=null, esAdmin=false, chequeoListo=false;
 var serieActual='A';
@@ -98,6 +103,7 @@ var adminClubIdFijo=null;   // club_id de la fila admins de este usuario (null =
 var clubesDisponibles=[];   // [{id,nombre,slug}] solo se llena para super-admin
 var clubActual=null;        // club_id efectivamente seleccionado/fijo para esta sesion
 var clubActualNombre='';
+var clubActualObj=null;     // fila completa de "clubes" (nombre,logo_url,tema,color_tema) para la identidad visual de MatchResultCard
 
 // ---- Visibilidad publica del Torneo Interno (interruptor activo/inactivo) ----
 // Controla si la seccion "Interno" aparece en el menu y la pagina publica
@@ -222,12 +228,14 @@ async function fijarClubActual(clubId){
   clubActual=clubId;
   var c=clubesDisponibles.filter(function(x){return x.id===clubId;})[0];
   clubActualNombre=c?c.nombre:'';
-  if(!clubActualNombre){
-    try{
-      var res=await window.supabaseClient.from('clubes').select('nombre').eq('id',clubId).maybeSingle();
-      clubActualNombre=(!res.error&&res.data)?res.data.nombre:'';
-    }catch(e){}
-  }
+  clubActualObj=null;
+  try{
+    var res=await window.supabaseClient.from('clubes').select('nombre,logo_url,tema,color_tema').eq('id',clubId).maybeSingle();
+    if(!res.error&&res.data){
+      clubActualObj=res.data;
+      clubActualNombre=res.data.nombre||clubActualNombre;
+    }
+  }catch(e){}
   var sub=document.getElementById('subHeader');
   if(sub)sub.textContent=clubActualNombre||'Club de Tenis Estadio Quilicura';
   torneoAbierto=null;partidos=[];mensaje=null;
@@ -244,7 +252,7 @@ function seleccionarClubAdmin(clubId){
 
 async function cargarJugadoresClub(){
   if(!clubActual){jugadoresClub=[];return;}
-  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado').eq('club_id',clubActual);
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,avatar_url,pais,bandera_iso').eq('club_id',clubActual);
   jugadoresClub=res.error?[]:res.data;
 }
 
@@ -337,9 +345,9 @@ function volverModoClub(){
 }
 
 async function cargarJugadoresTodos(){
-  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,club_id,clubes(nombre)');
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,club_id,clubes(nombre),avatar_url,pais,bandera_iso');
   jugadoresTodos=res.error?[]:res.data.map(function(j){
-    return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado,club_id:j.club_id,clubNombre:(j.clubes&&j.clubes.nombre)||''};
+    return {id:j.id,nombre:j.nombre,serie:j.serie,estado:j.estado,club_id:j.club_id,clubNombre:(j.clubes&&j.clubes.nombre)||'',avatar_url:j.avatar_url,pais:j.pais,bandera_iso:j.bandera_iso};
   });
   jugadoresTodosCargados=true;
 }
@@ -407,6 +415,21 @@ function nombreDe(id){
     ||jugadoresTodos.filter(function(x){return x.id===id;})[0];
   return j?j.nombre:'?';
 }
+// Version "rica" de nombreDe(), en la forma {id,nombre,avatarUrl,banderaIso,pais}
+// que espera normalizarMatchDesdeTorneoPartido()/renderMatchResultCard().
+function jugadorObjDe(id){
+  if(!id)return null;
+  var j=jugadoresClub.filter(function(x){return x.id===id;})[0]
+    ||jugadoresTodos.filter(function(x){return x.id===id;})[0];
+  if(!j)return null;
+  return {id:j.id,nombre:j.nombre,avatarUrl:j.avatar_url||'',banderaIso:j.bandera_iso||'',pais:j.pais||''};
+}
+// Club (o pseudo-club "ChileTenis Pro" en modo plataforma) para pasarle
+// a renderMatchResultCard() como identidad visual de la tarjeta.
+function clubParaTarjetaAdmin(){
+  if(vistaPlataforma)return {nombre:'ChileTenis Pro'};
+  return clubActualObj||{nombre:clubActualNombre||'ChileTenis PRO'};
+}
 
 function moverSeed(idx,delta){
   var j=idx+delta;
@@ -455,6 +478,8 @@ async function guardarResultado(partidoId,jugador1Id,jugador2Id){
   var s2=document.getElementById('s2-'+partidoId).value.trim();
   var s3=document.getElementById('s3-'+partidoId).value.trim();
   var wo=document.getElementById('wo-'+partidoId).checked;
+  var retiradoEl=document.getElementById('ret-'+partidoId);
+  var retirado=retiradoEl?retiradoEl.checked:false;
   var ganadorSel=document.getElementById('gan-'+partidoId).value;
   if(!ganadorSel){setMsg('err','Selecciona quien gano el partido.');return;}
   if(!wo&&!s1){setMsg('err','Ingresa al menos el primer set, o marca W.O.');return;}
@@ -462,7 +487,8 @@ async function guardarResultado(partidoId,jugador1Id,jugador2Id){
   var res=await window.supabaseClient.rpc('registrar_resultado_partido',{
     p_partido_id:partidoId,p_ganador_id:ganadorSel,
     p_set1:wo?null:(s1||null),p_set2:wo?null:(s2||null),p_set3:wo?null:(s3||null),
-    p_tipo:wo?'W.O.':'normal'
+    p_tipo:wo?'W.O.':'normal',
+    p_estado_partido:(!wo&&retirado)?'retirado':'finalizado'
   });
   guardando=false;
   if(res.error){setMsg('err','No se pudo guardar el resultado: '+res.error.message);return;}
@@ -470,6 +496,24 @@ async function guardarResultado(partidoId,jugador1Id,jugador2Id){
   var tRes=await window.supabaseClient.from('competiciones').select('*').eq('id',torneoAbierto.id).maybeSingle();
   if(!tRes.error&&tRes.data)torneoAbierto=tRes.data;
   setMsg('ok','Resultado guardado.');
+}
+
+// Punto 13 del prompt ChileTenis PRO: exportacion grafica de la tarjeta,
+// lista para compartir por WhatsApp/Instagram. Descarga la MISMA tarjeta
+// ya renderizada en pantalla (mismo componente, cero duplicacion visual).
+function descargarTarjetaPartido(partidoId){
+  if(typeof html2canvas==='undefined'){alert('No se pudo cargar la herramienta de exportacion. Intenta de nuevo.');return;}
+  var el=document.getElementById('mrc-wrap-'+partidoId);
+  if(!el){alert('No se encontro la tarjeta para descargar.');return;}
+  html2canvas(el,{backgroundColor:'#0E1A13',scale:2,useCORS:true}).then(function(canvas){
+    var link=document.createElement('a');
+    link.download='resultado-'+partidoId.slice(0,8)+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }).catch(function(err){
+    console.warn('No se pudo generar la imagen.',err);
+    alert('No se pudo generar la imagen. Intenta de nuevo.');
+  });
 }
 
 async function deshacerResultado(partidoId){
@@ -480,6 +524,19 @@ async function deshacerResultado(partidoId){
   if(res.error){setMsg('err','No se pudo deshacer: '+res.error.message);return;}
   await cargarPartidos(torneoAbierto.id);
   setMsg('ok','Resultado deshecho.');
+}
+
+// Marca un partido SIN resultado (todavia sin ganador) como en juego,
+// cancelado o suspendido -- puramente informativo/visual para la
+// MatchResultCard, no toca el avance del cuadro ni registra un ganador.
+// Volver a "Programado" deshace esa marca.
+async function marcarEstadoPartido(partidoId,estado){
+  guardando=true;render();
+  var res=await window.supabaseClient.rpc('marcar_estado_partido_torneo',{p_partido_id:partidoId,p_estado:estado});
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo actualizar el estado: '+res.error.message);return;}
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Partido marcado como '+(ESTADO_PARTIDO_LABELS[estado]||estado).toLowerCase()+'.');
 }
 
 async function reiniciarCuadro(){
@@ -769,9 +826,25 @@ function renderMatchAdmin(p,esFinal){
     return h;
   }
   var j1=p.jugador1_id,j2=p.jugador2_id;
-  h+='<div class="mplayers"><span class="'+(p.ganador_id===j1?'win':'')+'">'+esc(nombreDe(j1))+'</span>'
-    +'<span style="color:var(--gl);font-size:.72rem">vs</span>'
-    +'<span class="'+(p.ganador_id===j2?'win':'')+'">'+esc(nombreDe(j2))+'</span></div>';
+
+  // Vista previa con la MatchResultCard (misma tarjeta que index.html y
+  // escalerilla-admin.html): sirve tanto para partidos ya jugados como
+  // para previsualizar el cruce antes de cargar el resultado.
+  if(typeof renderMatchResultCard==='function'&&typeof normalizarMatchDesdeTorneoPartido==='function'){
+    if(typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
+    var jugadoresById={};
+    var jo1=jugadorObjDe(j1),jo2=jugadorObjDe(j2);
+    if(jo1)jugadoresById[j1]=jo1;
+    if(jo2)jugadoresById[j2]=jo2;
+    var matchNorm=normalizarMatchDesdeTorneoPartido(p,jugadoresById,{serie:torneoAbierto&&torneoAbierto.serie});
+    h+='<div style="margin-bottom:.4rem" id="mrc-wrap-'+p.id+'">'+renderMatchResultCard(matchNorm,{idioma:'es',compact:true,club:clubParaTarjetaAdmin()})+'</div>'
+      +'<div style="margin-bottom:.6rem"><button class="btn gl" onclick="descargarTarjetaPartido(\''+jsAttr(p.id)+'\')">📸 Descargar imagen</button></div>';
+  }else{
+    // Respaldo si el script del componente no cargo por algun motivo de red.
+    h+='<div class="mplayers"><span class="'+(p.ganador_id===j1?'win':'')+'">'+esc(nombreDe(j1))+'</span>'
+      +'<span style="color:var(--gl);font-size:.72rem">vs</span>'
+      +'<span class="'+(p.ganador_id===j2?'win':'')+'">'+esc(nombreDe(j2))+'</span></div>';
+  }
 
   if(p.ganador_id){
     var score=[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':'');
@@ -786,7 +859,16 @@ function renderMatchAdmin(p,esFinal){
       +'<input type="text" id="s2-'+p.id+'" placeholder="Set 2">'
       +'<input type="text" id="s3-'+p.id+'" placeholder="Set 3 (opcional)">'
       +'<label style="font-size:.75rem;color:var(--gl)"><input type="checkbox" id="wo-'+p.id+'"> W.O.</label>'
+      +'<label style="font-size:.75rem;color:var(--gl)"><input type="checkbox" id="ret-'+p.id+'"> Se retir\u00f3 el perdedor</label>'
       +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="guardarResultado(\''+jsAttr(p.id)+'\')">Guardar</button>'
+      +'</div>';
+    var estadoActual=p.estado_partido||'programado';
+    h+='<div class="row" style="margin-top:.5rem;gap:.4rem">'
+      +'<span class="sub" style="margin:0">Marcar sin resultado:</span>'
+      +['en_juego','cancelado','suspendido'].map(function(e){
+        return '<button class="btn '+(estadoActual===e?'v':'gl')+'" '+(guardando?'disabled':'')+' onclick="marcarEstadoPartido(\''+jsAttr(p.id)+'\',\''+e+'\')">'+ESTADO_PARTIDO_LABELS[e]+'</button>';
+      }).join('')
+      +(estadoActual!=='programado'?'<button class="btn gl" '+(guardando?'disabled':'')+' onclick="marcarEstadoPartido(\''+jsAttr(p.id)+'\',\'programado\')">Volver a Programado</button>':'')
       +'</div>';
   }
   h+='</div>';
