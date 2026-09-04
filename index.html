@@ -309,14 +309,13 @@ section{padding:4rem 1.5rem}
 .formspark{display:inline-block;vertical-align:middle;margin-left:.4rem;flex-shrink:0}
 .rcard-right .formspark{margin:.25rem 0 0}
 
-@media(max-width:768px){
-  .rt{display:none}
-  .rcards{display:flex}
-}
-@container ranking-cq (max-width:768px){
-  .rt{display:none}
-  .rcards{display:flex}
-}
+/* Unificado: el diseño de tarjetas (el que se ve en el celular) se usa
+   SIEMPRE, en cualquier tamaño de pantalla. La tabla vieja (.rt) queda
+   oculta de forma permanente para que notebook/escritorio se vea igual
+   que el celular, en vez de mostrar dos disenos distintos segun el
+   ancho de pantalla. */
+.rt{display:none}
+.rcards{display:flex;max-width:640px;margin:0 auto}
 /* === Fase 3: podio + racha inline === */
 .podio{display:flex;align-items:flex-end;justify-content:center;gap:.9rem;margin:0 0 1.8rem;flex-wrap:nowrap}
 .podio-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex:0 1 140px;transition:transform .15s;--podio-glow:var(--v)}
