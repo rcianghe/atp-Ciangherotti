@@ -200,6 +200,35 @@ tbody tr:last-child td{border-bottom:none;}
    "Ultimos resultados" del dashboard.
    ========================================================================= */
 .mrc-list{display:flex;flex-direction:column;gap:10px;padding:12px;}
+
+/* =========================================================================
+   CARGA MASIVA DE FIXTURE — estas reglas faltaban por completo, por eso
+   el dropzone y el resto del modal se veian sin estilo (o el input nativo
+   "Seleccionar archivos / ningun archivo seleccionado" quedaba visible en
+   vez del boton con el icono 📎).
+   ========================================================================= */
+.fx-step{margin-bottom:18px;}
+.fx-step:last-child{margin-bottom:0;}
+.fx-step-label{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.fx-club-warning{background:var(--warn-soft);border:1px solid #E6D08A;border-radius:9px;padding:14px 16px;font-size:13px;color:#7A5B0A;line-height:1.5;}
+.fx-drop{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;
+  border:1.5px dashed var(--accent);border-radius:10px;background:var(--accent-soft);color:var(--accent-dark);
+  font-size:13px;font-weight:500;line-height:1.5;padding:22px 16px;cursor:pointer;
+  transition:background .15s,border-color .15s;-webkit-tap-highlight-color:transparent;}
+.fx-drop:hover,.fx-drop:active{background:#dcf1cd;}
+.fx-drop.fx-drop-over{border-color:var(--accent-dark);background:#cfe9bb;}
+.fx-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.fx-thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#FBFAF6;flex:none;}
+.fx-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.fx-thumb-file{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--ink-soft);text-align:center;padding:2px;line-height:1.25;}
+.fx-thumb button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;
+  background:rgba(14,26,19,.72);color:#fff;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.fx-thumb button:hover{background:var(--danger);}
+.fx-textarea{width:100%;min-height:90px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;
+  font-size:13px;font-family:var(--mono);background:#FBFAF6;color:var(--ink);resize:vertical;}
+.fx-textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+.fx-row-preview{display:flex;flex-direction:column;gap:8px;}
+.fx-omitidas-note{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
 </style>
 </head>
 <body>
@@ -1125,7 +1154,10 @@ function fxRenderStep1(){
     </div>
     <div class="fx-step">
       <div class="fx-step-label">1. Capturas o documentos del fixture (referencia)</div>
-      <label class="fx-drop" id="fxDrop" for="fxFileInput">
+      <label class="fx-drop" id="fxDrop" for="fxFileInput"
+        ondragover="event.preventDefault();this.classList.add('fx-drop-over');"
+        ondragleave="this.classList.remove('fx-drop-over');"
+        ondrop="event.preventDefault();this.classList.remove('fx-drop-over');fxAgregarArchivos(event.dataTransfer.files);">
         📎 Arrastra o toca para adjuntar fotos del fixture — se leen automáticamente con IA y los partidos quedan listos para revisar abajo. Los PDF aún no se leen solos: quedan solo de referencia.
       </label>
       <input type="file" id="fxFileInput" accept="image/*,application/pdf" multiple style="display:none" onchange="fxAgregarArchivos(this.files)">
