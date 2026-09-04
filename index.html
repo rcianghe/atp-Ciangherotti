@@ -751,7 +751,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-bracket-wrap{overflow-x:auto;padding-bottom:1rem}
 .tint-bracket{display:flex;gap:2.6rem;min-width:max-content;padding:.5rem}
 .tint-ronda{display:flex;flex-direction:column;min-width:190px;position:relative}
-.tint-ronda-matches{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;flex:1}
+.tint-ronda-matches{display:flex;flex-direction:column;justify-content:space-around;gap:1rem;flex:1;min-width:0}
 .tint-rondanav{display:none}
 .tint-rondanav-btn{background:var(--g);border:1px solid rgba(255,255,255,.15);color:var(--bl);font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;padding:.5rem 1rem;border-radius:8px;cursor:pointer}
 .tint-rondanav-btn:disabled{opacity:.35;cursor:default}
@@ -765,7 +765,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-ronda:not(:first-child) .tint-match::before{display:none}
 }
 .tint-rondatit{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--serie-color);text-align:center;margin-bottom:.3rem}
-.tint-match{position:relative;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
+.tint-match{position:relative;min-width:0;background:var(--g);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;transition:border-color .2s}
 .tint-match:hover{border-color:color-mix(in srgb,var(--serie-color) 40%,transparent)}
 .tint-match.final{border-color:color-mix(in srgb,var(--serie-color) 50%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 15%,transparent)}
 /* Cuando el partido se pinta con la MatchResultCard (match-result-card.js)
