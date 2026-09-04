@@ -887,23 +887,28 @@ closeModal = function(){ _closeModalOriginal(); document.getElementById('modalSa
    CARGA MASIVA DE FIXTURE (imágenes/archivos → resultados "programado")
    =========================================================================
    Flujo:
-   1) El admin adjunta capturas/documentos del fixture como referencia visual.
-      Hoy esas imágenes NO se leen automáticamente (no hay un servicio de
-      OCR/visión conectado a este panel todavía) — sirven para transcribir
-      cómodo desde la misma pantalla. El texto tabular se pega/escribe en
-      el cuadro de abajo, una fila por partido.
-   2) fxParseTexto() reconoce fecha, horario, cancha, serie y hasta dos
-      nombres de jugador por línea. Tolera pegado desde una hoja de cálculo
-      (columnas separadas por tabulador) o texto escrito a mano (2+
-      espacios entre columnas), y celdas vacías (bye / rival aún sin
-      definir).
+   1) El admin adjunta fotos/capturas del fixture. Cada imagen se manda
+      automáticamente a la Edge Function "extraer-fixture" (Supabase),
+      que usa la API de Claude (visión) para leer la tabla y devolver un
+      arreglo JSON de partidos (fecha, hora, cancha, serie, jugador1,
+      jugador2). Los PDF todavía no se leen automáticamente y solo quedan
+      de referencia visual. También se puede pegar/escribir el fixture a
+      mano en el cuadro de texto como respaldo o complemento.
+   2) fxParseTexto() (ruta manual) y fxPartidoAFila() (ruta automática)
+      normalizan cada fila al mismo formato interno: fecha, horario,
+      cancha, serie y hasta dos nombres de jugador.
    3) Cada nombre se resuelve contra los jugadores INSCRITOS en la
       temporada activa del club (la misma fuente que usa el sitio público
       para armar "Próximos Partidos"), por coincidencia exacta o parcial
       normalizada (sin tildes/mayúsculas/espacios extra). Lo que no calza
       queda marcado para que el admin lo corrija a mano con un selector
       antes de confirmar — nunca se inserta un jugador adivinado a ciegas.
-   4) Al confirmar, se insertan en "resultados" con estado_partido:
+   4) fxFiltrarDuplicados() descarta automáticamente (antes de mostrar la
+      vista previa) cualquier pareja de jugadores que ya tenga un partido
+      cargado en "resultados" para ese club/temporada (jugado o programado),
+      así como repeticiones dentro del mismo lote — para que un fixture
+      escaneado dos veces, o un cruce que ya se jugó, no se duplique.
+   5) Al confirmar, se insertan en "resultados" con estado_partido:
       'programado' y ganador_id:null. Eso es exactamente lo que
       DATA.matchesParaTarjeta / rProximosPartidos() en index.html usan
       para listar un partido en "Próximos Partidos": no hace falta tocar
@@ -993,6 +998,81 @@ function fxFechaISO(ddmmaaaa){
   return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : null;
 }
 
+// "YYYY-MM-DD" (lo que devuelve la IA) -> "DD-MM-AAAA" (formato interno de fxRows)
+function fxFechaTextoDesdeISO(iso){
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((iso||'').toString().trim());
+  return m ? (m[3]+'-'+m[2]+'-'+m[1]) : null;
+}
+
+function fxImagenABase64(file){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onload = function(){ resolve((reader.result||'').split(',')[1] || ''); };
+    reader.onerror = function(){ reject(new Error('No se pudo leer el archivo.')); };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Llama a la Edge Function "extraer-fixture" (Claude con visión) para una sola
+// imagen. Devuelve {partidos:[...]} o {error:'...'} -- nunca lanza excepción.
+async function fxExtraerDeArchivo(file){
+  if(!/^image\//.test(file.type)){
+    return {error: '"'+file.name+'" es un PDF/documento: por ahora solo las imágenes se leen automáticamente. Puedes transcribirlo a mano abajo.'};
+  }
+  try{
+    var base64 = await fxImagenABase64(file);
+    var resp = await sb.functions.invoke('extraer-fixture', {body:{imageBase64: base64, mediaType: file.type}});
+    if(resp.error) return {error: 'No se pudo leer "'+file.name+'": '+(resp.error.message||resp.error)};
+    var data = resp.data || {};
+    if(data.error) return {error: '"'+file.name+'": '+data.error};
+    return {partidos: Array.isArray(data.partidos) ? data.partidos : []};
+  }catch(err){
+    return {error: 'No se pudo procesar "'+file.name+'". Revisa tu conexión e intenta de nuevo.'};
+  }
+}
+
+// Convierte un partido devuelto por la IA al mismo formato de fila que usa
+// la ruta manual (fxParseLinea), resolviendo jugadores contra los inscritos.
+function fxPartidoAFila(p){
+  var j1Texto = (p.jugador1||'').toString().trim();
+  var j2Texto = (p.jugador2||'').toString().trim();
+  return {
+    lineaOriginal: null,
+    fechaTexto: fxFechaTextoDesdeISO(p.fecha),
+    horaTexto: (p.hora||'').toString().trim() || null,
+    cancha: (p.cancha||'').toString().trim() || null,
+    serie: (p.serie||'').toString().trim().toUpperCase() || null,
+    j1Texto: j1Texto, j2Texto: j2Texto,
+    j1Id: fxBuscarJugadorId(j1Texto), j2Id: fxBuscarJugadorId(j2Texto)
+  };
+}
+
+function fxSetEstadoLectura(msg){
+  var el = document.getElementById('fxEstadoLectura');
+  if(el) el.textContent = msg || '';
+}
+
+// Descarta de fxRows cualquier fila cuya pareja de jugadores (en cualquier
+// orden) ya tenga un partido en "resultados" para este club/temporada -- ya
+// sea jugado o previamente programado -- y también repeticiones dentro del
+// mismo lote recién leído. Devuelve cuántas filas se omitieron.
+async function fxFiltrarDuplicados(){
+  var existentes = await sb.from('resultados').select('jugador1_id,jugador2_id').eq('club_id', fxClubId).eq('temporada_id', fxTemporadaId);
+  var setExistente = {};
+  (existentes.data||[]).forEach(function(r){
+    if(r.jugador1_id && r.jugador2_id) setExistente[[r.jugador1_id,r.jugador2_id].sort().join('|')] = true;
+  });
+  var vistos = {}, omitidas = 0;
+  fxRows = fxRows.filter(function(f){
+    if(!f.j1Id || !f.j2Id) return true; // no se puede comparar sin ambos jugadores resueltos
+    var key = [f.j1Id, f.j2Id].sort().join('|');
+    if(setExistente[key] || vistos[key]){ omitidas++; return false; }
+    vistos[key] = true;
+    return true;
+  });
+  return omitidas;
+}
+
 function fxParseTexto(texto){
   return texto.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean).map(function(linea){
     var f = fxParseLinea(linea);
@@ -1040,13 +1120,14 @@ function fxRenderStep1(){
     <div class="fx-step">
       <div class="fx-step-label">1. Capturas o documentos del fixture (referencia)</div>
       <label class="fx-drop" id="fxDrop" for="fxFileInput">
-        📎 Arrastra o toca para adjuntar imágenes/PDF del fixture — quedan solo como referencia visual mientras transcribes, hoy no se leen automáticamente.
+        📎 Arrastra o toca para adjuntar fotos del fixture — se leen automáticamente con IA y los partidos quedan listos para revisar abajo. Los PDF aún no se leen solos: quedan solo de referencia.
         <input type="file" id="fxFileInput" accept="image/*,application/pdf" multiple onchange="fxAgregarArchivos(this.files)">
       </label>
       <div class="fx-thumbs" id="fxThumbs"></div>
+      <div class="hint" id="fxEstadoLectura"></div>
     </div>
     <div class="fx-step">
-      <div class="fx-step-label">2. Pega o escribe el fixture (una fila por partido)</div>
+      <div class="fx-step-label">2. O pega/escribe el fixture a mano (respaldo o filas adicionales)</div>
       <div class="hint" style="margin-bottom:6px">Columnas en cualquier orden, separadas por tabulador o 2+ espacios: fecha (DD-MM-AAAA), día, horario (HH:MM-HH:MM), "Cancha N", "Serie X", Jugador 1, Jugador 2, turno. Deja vacío un jugador si esa fila todavía no tiene rival definido.</div>
       <textarea class="fx-textarea" id="fxTexto" placeholder="05-09-2026  Sábado  09:00-10:30  Cancha 2  Serie C
 05-09-2026  Sábado  09:00-10:30  Cancha 3  Serie C  Marcelo Lastra  German Sendra"></textarea>
@@ -1059,9 +1140,37 @@ function fxRenderStep1(){
   `;
 }
 
-function fxAgregarArchivos(fileList){
-  Array.from(fileList||[]).forEach(function(f){ fxArchivos.push(f); });
+async function fxAgregarArchivos(fileList){
+  var nuevos = Array.from(fileList||[]);
+  nuevos.forEach(function(f){ fxArchivos.push(f); });
   fxRenderThumbs();
+
+  var imagenes = nuevos.filter(function(f){ return /^image\//.test(f.type); });
+  var noImagenes = nuevos.filter(function(f){ return !/^image\//.test(f.type); });
+  if(noImagenes.length) toast(noImagenes.length===1 ? 'El PDF/documento quedó solo de referencia: no se lee automáticamente.' : 'Los PDF/documentos quedaron solo de referencia: no se leen automáticamente.', true);
+  if(!imagenes.length) return;
+
+  fxSetEstadoLectura('🔎 Leyendo '+imagenes.length+' imagen(es) con IA…');
+  var totalNuevas = 0;
+  var errores = [];
+  for (var i=0; i<imagenes.length; i++){
+    var r = await fxExtraerDeArchivo(imagenes[i]);
+    if(r.error){ errores.push(r.error); continue; }
+    (r.partidos||[]).forEach(function(p){
+      if(!p || !p.jugador1 || !p.jugador2) return; // fila incompleta (sin ambos nombres): se ignora, no se inventa
+      fxRows.push(fxPartidoAFila(p));
+      totalNuevas++;
+    });
+  }
+  fxSetEstadoLectura('');
+  if(errores.length) toast(errores[0], true);
+
+  if(totalNuevas>0){
+    var omitidas = await fxFiltrarDuplicados();
+    fxRenderStep2(omitidas);
+  } else if(!errores.length){
+    toast('No se detectaron partidos en la imagen. Puedes escribir el fixture a mano abajo.', true);
+  }
 }
 function fxQuitarArchivo(idx){ fxArchivos.splice(idx,1); fxRenderThumbs(); }
 function fxRenderThumbs(){
@@ -1073,11 +1182,12 @@ function fxRenderThumbs(){
   }).join('');
 }
 
-function fxAnalizar(){
+async function fxAnalizar(){
   var texto = (document.getElementById('fxTexto')||{}).value || '';
   if(!texto.trim()){ toast('Pega o escribe al menos una fila del fixture.', true); return; }
-  fxRows = fxParseTexto(texto);
-  fxRenderStep2();
+  fxRows = fxRows.concat(fxParseTexto(texto));
+  var omitidas = await fxFiltrarDuplicados();
+  fxRenderStep2(omitidas);
 }
 
 function fxOpcionesJugador(seleccionId){
@@ -1096,7 +1206,8 @@ function fxValidarFila(f){
   return errores;
 }
 
-function fxRenderStep2(){
+function fxRenderStep2(omitidasDuplicado){
+  omitidasDuplicado = omitidasDuplicado || 0;
   var filasHtml = fxRows.map(function(f, i){
     var errores = fxValidarFila(f);
     var claseFila = (errores.indexOf('fecha')>-1||errores.indexOf('serie')>-1) ? 'fx-row-error' : (errores.indexOf('sin_jugadores')>-1?'fx-row-warn':'');
@@ -1123,6 +1234,7 @@ function fxRenderStep2(){
     <div class="fx-summary">
       <span>📋 <b>${fxRows.length}</b> fila(s) leídas</span>
       <span style="color:var(--accent-dark)">✓ <b>${listas}</b> lista(s) para insertar</span>
+      ${omitidasDuplicado>0 ? `<span title="Pareja ya cargada en resultados para este club/temporada (jugada o programada)">⏭ <b>${omitidasDuplicado}</b> repetida(s) omitida(s) automáticamente</span>` : ''}
       <span class="hint">En rojo: falta fecha o serie. En amarillo: ningún jugador reconocido todavía. Corrige con los selectores antes de confirmar.</span>
     </div>
     <div class="fx-table-wrap">
