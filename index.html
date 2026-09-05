@@ -712,6 +712,7 @@ span.diachip{cursor:default;display:inline-block}
 .h2hms{flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:600}
 .h2hmd{color:var(--gl);font-size:.7rem}
 #torneo-interno{background:var(--gd);--serie-color:var(--v)}
+#torneo-abierto{background:var(--ng);--serie-color:var(--am)}
 .tint-estado{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gl);margin-bottom:1.4rem}
 .tint-estado b{color:var(--serie-color);animation:estadoGlow 1.8s ease-in-out infinite}
 .tint-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--serie-color);margin-right:.4rem;vertical-align:middle;box-shadow:0 0 6px var(--serie-color),0 0 12px color-mix(in srgb,var(--serie-color) 60%,transparent);animation:tintLiveDot 1.4s ease-in-out infinite}
@@ -789,9 +790,9 @@ span.diachip{cursor:default;display:inline-block}
 .tint-mp{display:block;background:var(--serie-color);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:.15rem .5rem;margin:.3rem .5rem 0;border-radius:.25rem;width:fit-content}
 .tint-ronda:not(:first-child) .tint-match::before{content:"";position:absolute;left:-1.3rem;top:50%;width:1.3rem;height:1px;background:var(--gm)}
 @media(max-width:640px){.tint-bracket{gap:1.6rem}.tint-ronda{min-width:150px}}
-#tintTabs.tabs .tb{background:color-mix(in srgb,var(--serie-color) 25%,transparent);color:var(--serie-color);border:1px solid color-mix(in srgb,var(--serie-color) 45%,transparent);font-weight:700;letter-spacing:1.8px;border-radius:7px;padding:.32rem .9rem}
-#tintTabs.tabs .tb:hover{background:color-mix(in srgb,var(--serie-color) 35%,transparent);color:var(--serie-color)}
-#tintTabs.tabs .tb.active{background:color-mix(in srgb,var(--serie-color) 32%,transparent);color:var(--serie-color);border-color:var(--serie-color);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 40%,transparent)}
+#tintTabs.tabs .tb,#tintTabsAbierto.tabs .tb{background:color-mix(in srgb,var(--serie-color) 25%,transparent);color:var(--serie-color);border:1px solid color-mix(in srgb,var(--serie-color) 45%,transparent);font-weight:700;letter-spacing:1.8px;border-radius:7px;padding:.32rem .9rem}
+#tintTabs.tabs .tb:hover,#tintTabsAbierto.tabs .tb:hover{background:color-mix(in srgb,var(--serie-color) 35%,transparent);color:var(--serie-color)}
+#tintTabs.tabs .tb.active,#tintTabsAbierto.tabs .tb.active{background:color-mix(in srgb,var(--serie-color) 32%,transparent);color:var(--serie-color);border-color:var(--serie-color);box-shadow:0 0 14px color-mix(in srgb,var(--serie-color) 40%,transparent)}
 #galeria{background:var(--ng)}
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .galb{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.2rem}
@@ -943,7 +944,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   header,.mn,footer,.cfab,#hero,#afiches,#resultados,#estadisticas,#galeria,#tienda,
   .tabs,#btnExportRanking,.splash,.gs,.rankerr,.hjm,#topMata,.rcards{display:none!important}
   body{background:#fff;color:#111;padding:0}
-  #ranking,#torneo-interno{background:#fff;padding:1rem 0;page-break-inside:avoid}
+  #ranking,#torneo-interno,#torneo-abierto{background:#fff;padding:1rem 0;page-break-inside:avoid}
   .rt{display:table!important;width:100%;border:1px solid #999}
   .rt th,.rt td{color:#111;border-bottom:1px solid #ccc;padding:.4rem .5rem;font-size:.78rem}
   .rt thead tr{background:#eee;border-bottom:2px solid #333}
@@ -1170,6 +1171,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <a href="#perfil">Jugadores</a>
     <a href="#estadisticas">H2H</a>
     <a href="#torneo-interno" id="navInterno">Interno</a>
+    <a href="#torneo-abierto" id="navAbierto">Abierto</a>
     <a href="#galeria">Galeria</a>
     <a href="#tienda" class="nt">Tienda</a>
   </nav>
@@ -1330,6 +1332,21 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   </div>
 </section>
 
+<section id="torneo-abierto">
+  <div class="container">
+    <div class="sh fi2"><div class="se">Ranking unico A + B + C</div><h2 class="st">Torneo Abierto</h2><div class="sl"></div></div>
+    <div class="tabs" id="tintTabsAbierto" role="tablist" aria-label="Filtrar Torneo Abierto"></div>
+    <div class="tint-estado" id="tintEstadoAbierto"></div>
+    <div id="tintCampeonAbierto"></div>
+    <div class="tint-rondanav" id="tintRondaNavAbierto">
+      <button class="tint-rondanav-btn" id="tintRondaPrevAbierto" onclick="cambiarRondaMostrada('abierto',-1)">&larr; Anterior</button>
+      <div class="tint-rondanav-tit" id="tintRondaTitAbierto"></div>
+      <button class="tint-rondanav-btn" id="tintRondaNextAbierto" onclick="cambiarRondaMostrada('abierto',1)">Siguiente &rarr;</button>
+    </div>
+    <div class="tint-bracket-wrap"><div class="tint-bracket" id="tintBracketAbierto"></div></div>
+  </div>
+</section>
+
 <section id="galeria">
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
@@ -1368,7 +1385,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="fs">Escalerilla por Series 2026</div>
   <div class="fls">
     <a href="#ranking">Ranking</a><a href="#afiches">Afiches</a><a href="#resultados">Resultados</a>
-    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#torneo-interno" id="footerInterno">Interno</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
+    <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#torneo-interno" id="footerInterno">Interno</a><a href="#torneo-abierto" id="footerAbierto">Abierto</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
   </div>
   <div class="fc">Club de Tenis Estadio Quilicura 2026 v3.0</div>
   <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
@@ -1381,6 +1398,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <a class="mni" href="#perfil"><span class="mnio">👤</span><span class="mnil">Jugador</span></a>
   <a class="mni" href="#estadisticas"><span class="mnio">⚔️</span><span class="mnil">H2H</span></a>
   <a class="mni" href="#torneo-interno" id="mnInterno"><span class="mnio">🏆</span><span class="mnil">Interno</span></a>
+  <a class="mni" href="#torneo-abierto" id="mnAbierto"><span class="mnio">🥇</span><span class="mnil">Abierto</span></a>
   <a class="mni" href="#galeria"><span class="mnio">📸</span><span class="mnil">Galeria</span></a>
   <a class="mni" href="#tienda"><span class="mnio">🛒</span><span class="mnil">Tienda</span></a>
 </nav>
@@ -2552,39 +2570,55 @@ async function cargarDesafiosSupabase(){
 // ============================================================
 // TORNEO INTERNO POR SERIES (bracket)
 // ============================================================
-// TORNEOS_INTERNOS: {"A-Apertura-2026":{...}, "B-Unico-2026":{...}, ...}
-// La clave combina serie+periodo+temporada solo para poder tener
-// varias pestañas (una por serie) sin pisarse entre si. Si un torneo
-// no tiene periodo (caso actual, segun el acta: 1 solo al año), se usa
-// "Unico" como parte de la clave, pero NO se muestra en pantalla.
-var TORNEOS_INTERNOS={};
-var tintActual=null;
+// TORNEOS_POR_TIPO: {interno:{"A-Apertura-2026":{...},...}, abierto:{"X-Unico-2026-a1b2c3d4":{...},...}}
+// Un solo motor de datos/render sirve para Torneo Interno Y Torneo
+// Abierto (y a futuro cualquier otro tipo de competiciones): lo unico
+// que cambia entre uno y otro es el "tipo" que se les pasa a las
+// funciones de abajo. La clave interna combina serie+periodo+temporada
+// para poder tener varias pestañas sin pisarse; en 'abierto' la serie
+// es null, asi que se agrega un fragmento del id para diferenciar dos
+// torneos abiertos de la misma temporada.
+var TORNEOS_POR_TIPO={interno:{},abierto:{}};
+var tintActualPorTipo={interno:null,abierto:null};
 // Colores de marca por serie (mismos tonos que .sb.A/.sb.B/.sb.C y el glow
-// del podio): Serie A = rojo, Serie B = azul, Serie C = verde. Se usan para
-// personalizar el diseno del Torneo Interno segun la serie que se esta viendo.
-var SERIE_COLORES={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a'};
+// del podio): Serie A = rojo, Serie B = azul, Serie C = verde. ABIERTO usa
+// el amarillo/lima de marca (--am) ya que no pertenece a una sola serie.
+var SERIE_COLORES={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a',ABIERTO:'#D4E60A'};
+function colorDeTorneo(t){
+  return (t.serie&&SERIE_COLORES[t.serie])?SERIE_COLORES[t.serie]:SERIE_COLORES.ABIERTO;
+}
+// "" para interno (ids historicos, sin sufijo) y "Abierto" para el
+// nuevo tipo -- asi los ids de interno no cambian y no hay riesgo de
+// romper nada de lo que ya funcionaba.
+function sufijoTipo(tipo){return tipo==='interno'?'':'Abierto';}
 
-// ---- Visibilidad publica del Torneo Interno (interruptor activo/inactivo) ----
-// El admin controla esto desde admin-torneo.html. Vive en la tabla
-// "configuracion_sitio" (clave/valor) para que sea el MISMO estado para
-// todos los visitantes, no algo local del dispositivo. Por defecto se
-// asume visible (true) para no romper el sitio antes de correr la
-// migracion, o si la tabla no responde por cualquier motivo.
-var torneoInternoVisible=true;
+// ---- Visibilidad publica por tipo de torneo (interruptor activo/inactivo) ----
+// El admin controla esto desde admin-torneo.html, un interruptor por
+// tipo (Interno / Abierto), cada uno con su propia fila en
+// "configuracion_sitio" (clave/valor) para que sea el MISMO estado
+// para todos los visitantes. Por defecto se asume visible (true) para
+// no romper el sitio si la tabla no responde por cualquier motivo.
+var TORNEO_VISIBLE_CONFIG={
+  interno:{clave:'torneo_interno_visible',seccionId:'torneo-interno',navId:'navInterno',mnId:'mnInterno',footerId:'footerInterno'},
+  abierto:{clave:'torneo_abierto_visible',seccionId:'torneo-abierto',navId:'navAbierto',mnId:'mnAbierto',footerId:'footerAbierto'}
+};
+var torneoVisiblePorTipo={interno:true,abierto:true};
 
-function aplicarVisibilidadTorneoInterno(){
-  var visible=!!torneoInternoVisible;
+function aplicarVisibilidadTorneo(tipo){
+  var cfg=TORNEO_VISIBLE_CONFIG[tipo];
+  if(!cfg)return;
+  var visible=!!torneoVisiblePorTipo[tipo];
   var display=visible?'':'none';
-  var sec=document.getElementById('torneo-interno');
-  var navD=document.getElementById('navInterno');
-  var navM=document.getElementById('mnInterno');
-  var navF=document.getElementById('footerInterno');
+  var sec=document.getElementById(cfg.seccionId);
+  var navD=document.getElementById(cfg.navId);
+  var navM=document.getElementById(cfg.mnId);
+  var navF=document.getElementById(cfg.footerId);
   if(sec)sec.style.display=display;
   if(navD)navD.style.display=display;
   if(navF)navF.style.display=display;
   if(navM)navM.style.display=display;
-  // Reacomoda la grilla del menu inferior mobile (8 columnas fijas) segun
-  // cuantos items queden realmente visibles, para no dejar un hueco vacio.
+  // Reacomoda la grilla del menu inferior mobile segun cuantos items
+  // queden realmente visibles, para no dejar un hueco vacio.
   var mn=document.querySelector('nav.mn');
   if(mn){
     var items=mn.querySelectorAll('.mni');
@@ -2594,18 +2628,20 @@ function aplicarVisibilidadTorneoInterno(){
   }
 }
 
-async function cargarVisibilidadTorneoInterno(){
+async function cargarVisibilidadTorneo(tipo){
   if(!window.supabaseClient)return;
+  var cfg=TORNEO_VISIBLE_CONFIG[tipo];
+  if(!cfg)return;
   try{
-    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','torneo_interno_visible').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave',cfg.clave).eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
     if(res.error){
-      console.warn('No se pudo cargar la visibilidad del Torneo Interno, se asume visible.',res.error);
+      console.warn('No se pudo cargar la visibilidad de '+tipo+', se asume visible.',res.error);
       return;
     }
-    torneoInternoVisible=res.data?(res.data.valor!==false):true;
-    conScrollPreservado(function(){aplicarVisibilidadTorneoInterno();});
+    torneoVisiblePorTipo[tipo]=res.data?(res.data.valor!==false):true;
+    conScrollPreservado(function(){aplicarVisibilidadTorneo(tipo);});
   }catch(err){
-    console.warn('Sin conexion al cargar la visibilidad del Torneo Interno.',err);
+    console.warn('Sin conexion al cargar la visibilidad de '+tipo+'.',err);
   }
 }
 
@@ -2704,38 +2740,46 @@ function aplicarBrandingClub(tema,albumes){
   }
 }
 
-function tintKeys(){return Object.keys(TORNEOS_INTERNOS);}
-function tintCambiar(k){tintActual=k;rTorneoInterno();}
+function tintKeys(tipo){return Object.keys(TORNEOS_POR_TIPO[tipo]||{});}
+function tintCambiar(tipo,k){tintActualPorTipo[tipo]=k;rTorneoSeccion(tipo);}
 
-function rTintTabs(){
-  var el=document.getElementById('tintTabs');
+// Etiqueta de una pestaña/card: usa el nombre personalizado si existe,
+// si no arma uno a partir de la serie (Interno) o dice "Torneo Abierto"
+// (cuando serie es null, como en el Abierto).
+function etiquetaTorneo(t){
+  if(t.nombre)return t.nombre;
+  if(t.serie)return 'Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):'');
+  return 'Torneo Abierto'+(t.periodo?(' \u00b7 '+t.periodo):'');
+}
+
+function rTintTabs(tipo){
+  var el=document.getElementById('tintTabs'+sufijoTipo(tipo));
   if(!el)return;
-  var keys=tintKeys();
+  var keys=tintKeys(tipo);
   if(!keys.length){el.innerHTML='';return;}
   var h='';
   keys.forEach(function(k){
-    var t=TORNEOS_INTERNOS[k];
-    var etiqueta=t.nombre?t.nombre:('Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):''));
-    var esActiva=(k===tintActual);
-    var color=SERIE_COLORES[t.serie]||SERIE_COLORES.C;
-    h+='<button class="tb'+(esActiva?' active':'')+'" style="--serie-color:'+color+'" role="tab" aria-selected="'+(esActiva?'true':'false')+'" onclick="tintCambiar(\''+jsAttr(k)+'\')">'+esc(etiqueta)+'</button>';
+    var t=TORNEOS_POR_TIPO[tipo][k];
+    var esActiva=(k===tintActualPorTipo[tipo]);
+    var color=colorDeTorneo(t);
+    h+='<button class="tb'+(esActiva?' active':'')+'" style="--serie-color:'+color+'" role="tab" aria-selected="'+(esActiva?'true':'false')+'" onclick="tintCambiar(\''+tipo+'\',\''+jsAttr(k)+'\')">'+esc(etiquetaTorneo(t))+'</button>';
   });
   el.innerHTML=h;
 }
 
-var TINT_CAMPEON_ACTUAL=null;
-function rTintEstadoYCampeon(t){
+var TINT_CAMPEON_POR_TIPO={interno:null,abierto:null};
+function rTintEstadoYCampeon(tipo,t){
   var estados={armado:'Cuadro armado, sin iniciar',en_curso:'En curso',finalizado:'Finalizado',cancelado:'Cancelado'};
-  var elEstado=document.getElementById('tintEstado');
+  var elEstado=document.getElementById('tintEstado'+sufijoTipo(tipo));
   var dotH=(t.estado==='en_curso')?'<span class="tint-live-dot" aria-hidden="true"></span>':'';
   var prefijoNombre=t.nombre?(esc(t.nombre)+' \u00b7 '):'';
   if(elEstado)elEstado.innerHTML=prefijoNombre+'Temporada '+esc(t.temporada)+' \u00b7 '+dotH+'<b>'+esc(estados[t.estado]||t.estado)+'</b>';
-  var camp=document.getElementById('tintCampeon');
+  var camp=document.getElementById('tintCampeon'+sufijoTipo(tipo));
   if(!camp)return;
-  TINT_CAMPEON_ACTUAL=t;
-  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo Torneo Interno" loading="lazy">';
-  var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="abrirCampeonModal()" onkeydown="'+kbActivate('abrirCampeonModal()')+'"';
-  var etiquetaCampeon=t.nombre?esc(t.nombre):('Serie '+esc(t.serie));
+  TINT_CAMPEON_POR_TIPO[tipo]=t;
+  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo" loading="lazy">';
+  var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="abrirCampeonModal(\''+tipo+'\')" onkeydown="'+kbActivate("abrirCampeonModal('"+tipo+"')")+'"';
+  var etiquetaCampeon=esc(etiquetaTorneo(t));
   if(t.campeon){
     camp.innerHTML='<div class="tint-campeon" '+attrs+'>'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 '+etiquetaCampeon+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
   }else{
@@ -2743,17 +2787,21 @@ function rTintEstadoYCampeon(t){
   }
 }
 
-// Muestra el trofeo del torneo interno en grande, con animacion 3D,
-// usando los mismos datos ya renderizados en la tarjeta chica
-// (TINT_CAMPEON_ACTUAL, seteado por rTintEstadoYCampeon).
-function abrirCampeonModal(){
-  var t=TINT_CAMPEON_ACTUAL;
+// Muestra el trofeo en grande, con animacion 3D, usando los mismos
+// datos ya renderizados en la tarjeta chica (TINT_CAMPEON_POR_TIPO,
+// seteado por rTintEstadoYCampeon). El modal es compartido entre
+// Interno y Abierto -- solo se abre uno a la vez -- por eso el color
+// de marca se fija directo en la tarjeta (card.style.setProperty) en
+// vez de depender de heredar --serie-color de su seccion contenedora.
+function abrirCampeonModal(tipo){
+  var t=TINT_CAMPEON_POR_TIPO[tipo];
   if(!t)return;
   var modal=document.getElementById('tintCampeonModal');
   var card=document.getElementById('tintCampeonModalCard');
   if(!modal||!card)return;
-  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo Torneo Interno">';
-  var etiquetaModal=t.nombre?esc(t.nombre):('Serie '+esc(t.serie));
+  card.style.setProperty('--serie-color',colorDeTorneo(t));
+  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo">';
+  var etiquetaModal=esc(etiquetaTorneo(t));
   if(t.campeon){
     card.className='tint-campeon-modal-card';
     card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 '+etiquetaModal+'</div><div class="nom">'+esc(t.campeon)+'</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
@@ -2770,28 +2818,28 @@ function cerrarCampeonModal(){
   document.body.style.overflow='';
 }
 
-// Fase 6: Actualiza los meta og:title / og:description en caliente segun el
-// campeon vigente del Torneo Interno (si hay uno) o la serie activa
-// del ranking. No cambia og:image por defecto (requeriria generar una
-// imagen real por campeon, fuera de alcance de esta fase), pero deja
-// el title/description listos para cuando se comparta el link en ese
-// momento puntual.
+// Fase 6: Actualiza los meta og:title / og:description en caliente segun
+// el campeon mas reciente entre Interno y Abierto (si hay alguno) o el
+// dato general del club. No cambia og:image por defecto (requeriria
+// generar una imagen real por campeon, fuera de alcance de esta fase).
 function actualizarMetaDinamico(){
   var ogTitle=document.querySelector('meta[property="og:title"]');
   var ogDesc=document.querySelector('meta[property="og:description"]');
   var twTitle=document.querySelector('meta[name="twitter:title"]');
   var twDesc=document.querySelector('meta[name="twitter:description"]');
   if(!ogTitle)return;
-  var keys=tintKeys();
-  var campeonReciente=null;
-  for(var i=0;i<keys.length;i++){
-    var t=TORNEOS_INTERNOS[keys[i]];
-    if(t&&t.campeon){campeonReciente=t;break;}
-  }
+  var campeonReciente=null,tipoReciente=null;
+  ['interno','abierto'].forEach(function(tipo){
+    if(campeonReciente)return;
+    var mapa=TORNEOS_POR_TIPO[tipo]||{};
+    for(var k in mapa){if(mapa[k].campeon){campeonReciente=mapa[k];tipoReciente=tipo;break;}}
+  });
   var title,desc;
   if(campeonReciente){
-    title='🏆 '+campeonReciente.campeon+' es el campeon de la Serie '+campeonReciente.serie+' — '+CLUB_NOMBRE_CORTO;
-    desc='Torneo Interno '+(campeonReciente.periodo?campeonReciente.periodo+' ':'')+campeonReciente.temporada+'. Revisa el bracket completo y el ranking en vivo del club.';
+    var quien=campeonReciente.serie?('la Serie '+campeonReciente.serie):(campeonReciente.nombre||'el Torneo Abierto');
+    title='🏆 '+campeonReciente.campeon+' es el campeon de '+quien+' — '+CLUB_NOMBRE_CORTO;
+    var etiquetaTipo=tipoReciente==='abierto'?'Torneo Abierto':'Torneo Interno';
+    desc=etiquetaTipo+' '+(campeonReciente.periodo?campeonReciente.periodo+' ':'')+campeonReciente.temporada+'. Revisa el bracket completo y el ranking en vivo del club.';
   }else{
     title=CLUB_NOMBRE+' - Escalerilla 2026';
     desc='Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.';
@@ -2807,30 +2855,30 @@ function tintSlotHtml(nombre,esGanador,score,tbd){
   return '<div class="tint-slot'+(esGanador?' win':'')+'"><span class="nm">'+esc(nombre)+'</span>'+(score?'<span class="sc">'+esc(score)+'</span>':'')+'</div>';
 }
 
-var tintRondaMostrada=0;
-function rTintBracket(t){
-  var el=document.getElementById('tintBracket');
+var tintRondaPorTipo={interno:0,abierto:0};
+function rTintBracket(tipo,t){
+  var el=document.getElementById('tintBracket'+sufijoTipo(tipo));
   if(!el)return;
   var nombresRonda=['Primera ronda','Segunda ronda','Tercera ronda','Semifinal','Final'];
   var totalRondas=t.rondas.length;
   if(!totalRondas){
-    el.innerHTML='<div class="tint-vacio">El cuadro de esta serie todav\u00eda no se ha armado.</div>';
-    var navVacio=document.getElementById('tintRondaNav');if(navVacio)navVacio.style.display='none';
+    el.innerHTML='<div class="tint-vacio">El cuadro todav\u00eda no se ha armado.</div>';
+    var navVacio=document.getElementById('tintRondaNav'+sufijoTipo(tipo));if(navVacio)navVacio.style.display='none';
     return;
   }
   // Misma tarjeta de resultado que ya se usa en el panel de administracion
   // (match-result-card.js / renderMatchResultCard), asi el cuadro publico
-  // del Torneo Interno se ve identico a lo que ya se veia en el admin en
-  // vez de la fila de texto simple de antes (tintSlotHtml).
+  // se ve identico a lo que ya se veia en el admin en vez de la fila de
+  // texto simple de antes (tintSlotHtml).
   var tieneComponenteTarjeta=(typeof renderMatchResultCard==='function'&&typeof normalizarMatchDesdeTorneoPartido==='function'&&typeof normalizarJugadoresById==='function');
   if(tieneComponenteTarjeta&&typeof ensureMatchResultCardStyles==='function')ensureMatchResultCardStyles();
   var jugadoresById=tieneComponenteTarjeta?normalizarJugadoresById(DATA.players):{};
-  // Se pasa el color de la Serie (rojo/azul/verde, mismo mapa SERIE_COLORES
-  // que ya usan las pestañas y el glow del cuadro) como "tema" del club para
-  // que la tarjeta de partido resalte al ganador con ese mismo color, en vez
-  // del verde generico por defecto.
-  var colorSerieActual=SERIE_COLORES[t.serie]||SERIE_COLORES.C;
-  var optsTarjeta={idioma:'es',compact:true,mostrarClub:false,mostrarTorneo:false,club:{tema:{primario:colorSerieActual,acento:colorSerieActual}}};
+  // Se pasa el color del torneo (rojo/azul/verde por Serie, o amarillo
+  // para el Abierto, mismo mapa SERIE_COLORES que ya usan las pestañas)
+  // como "tema" del club para que la tarjeta de partido resalte al
+  // ganador con ese mismo color, en vez del verde generico por defecto.
+  var colorTorneoActual=colorDeTorneo(t);
+  var optsTarjeta={idioma:'es',compact:true,mostrarClub:false,mostrarTorneo:false,club:{tema:{primario:colorTorneoActual,acento:colorTorneoActual}}};
 
   var h='';
   t.rondas.forEach(function(matches,ri){
@@ -2866,73 +2914,85 @@ function rTintBracket(t){
       var pendiente=t.rondas[ri].some(function(m){return !m.bye&&!m.ganadorId;});
       if(pendiente){rondaDefault=ri;break;}
     }}
-  tintRondaMostrada=Math.min(rondaDefault,totalRondas-1);
-  aplicarRondaMostrada(t);
+  tintRondaPorTipo[tipo]=Math.min(rondaDefault,totalRondas-1);
+  aplicarRondaMostrada(tipo,t);
 }
-function aplicarRondaMostrada(t){
+function aplicarRondaMostrada(tipo,t){
   var totalRondas=t.rondas.length;
-  var rondas=document.querySelectorAll('#tintBracket .tint-ronda');
-  rondas.forEach(function(r){r.classList.toggle('activa',parseInt(r.dataset.ri,10)===tintRondaMostrada);});
-  var nav=document.getElementById('tintRondaNav');
+  var sufijo=sufijoTipo(tipo);
+  var rondas=document.querySelectorAll('#tintBracket'+sufijo+' .tint-ronda');
+  var actual=tintRondaPorTipo[tipo];
+  rondas.forEach(function(r){r.classList.toggle('activa',parseInt(r.dataset.ri,10)===actual);});
+  var nav=document.getElementById('tintRondaNav'+sufijo);
   if(nav)nav.style.display=totalRondas>1?'':'none';
-  var tit=document.getElementById('tintRondaTit');
-  if(tit&&rondas[tintRondaMostrada]){
-    var titEl=rondas[tintRondaMostrada].querySelector('.tint-rondatit');
+  var tit=document.getElementById('tintRondaTit'+sufijo);
+  if(tit&&rondas[actual]){
+    var titEl=rondas[actual].querySelector('.tint-rondatit');
     tit.textContent=titEl?titEl.textContent:'';
   }
-  var prevBtn=document.getElementById('tintRondaPrev');
-  var nextBtn=document.getElementById('tintRondaNext');
-  if(prevBtn)prevBtn.disabled=(tintRondaMostrada<=0);
-  if(nextBtn)nextBtn.disabled=(tintRondaMostrada>=totalRondas-1);
+  var prevBtn=document.getElementById('tintRondaPrev'+sufijo);
+  var nextBtn=document.getElementById('tintRondaNext'+sufijo);
+  if(prevBtn)prevBtn.disabled=(actual<=0);
+  if(nextBtn)nextBtn.disabled=(actual>=totalRondas-1);
 }
-function cambiarRondaMostrada(delta){
-  var t=TORNEOS_INTERNOS[tintActual];
+function cambiarRondaMostrada(tipo,delta){
+  var t=TORNEOS_POR_TIPO[tipo][tintActualPorTipo[tipo]];
   if(!t)return;
   var totalRondas=t.rondas.length;
-  tintRondaMostrada=Math.max(0,Math.min(totalRondas-1,tintRondaMostrada+delta));
-  aplicarRondaMostrada(t);
+  tintRondaPorTipo[tipo]=Math.max(0,Math.min(totalRondas-1,tintRondaPorTipo[tipo]+delta));
+  aplicarRondaMostrada(tipo,t);
 }
 
-function rTorneoInterno(){
-  var keys=tintKeys();
-  var elSec=document.getElementById('torneo-interno');
-  var elTabs=document.getElementById('tintTabs');
-  var elEstado=document.getElementById('tintEstado');
-  var elCamp=document.getElementById('tintCampeon');
-  var elBracket=document.getElementById('tintBracket');
+function rTorneoSeccion(tipo){
+  var keys=tintKeys(tipo);
+  var elSec=document.getElementById(tipo==='interno'?'torneo-interno':'torneo-abierto');
+  var elTabs=document.getElementById('tintTabs'+sufijoTipo(tipo));
+  var elEstado=document.getElementById('tintEstado'+sufijoTipo(tipo));
+  var elCamp=document.getElementById('tintCampeon'+sufijoTipo(tipo));
+  var elBracket=document.getElementById('tintBracket'+sufijoTipo(tipo));
   if(!keys.length){
     if(elSec)elSec.style.removeProperty('--serie-color');
     if(elTabs)elTabs.innerHTML='';
     if(elEstado)elEstado.innerHTML='';
     if(elCamp)elCamp.innerHTML='';
-    if(elBracket)elBracket.innerHTML='<div class="tint-vacio">A\u00fan no hay un Torneo Interno programado. Seg\u00fan lo acordado en la reuni\u00f3n de socios, se juega al t\u00e9rmino de la Escalerilla.</div>';
+    if(elBracket)elBracket.innerHTML='<div class="tint-vacio">'+(tipo==='interno'
+      ?'A\u00fan no hay un Torneo Interno programado. Seg\u00fan lo acordado en la reuni\u00f3n de socios, se juega al t\u00e9rmino de la Escalerilla.'
+      :'A\u00fan no hay un Torneo Abierto programado.')+'</div>';
     return;
   }
-  if(!tintActual||!TORNEOS_INTERNOS[tintActual])tintActual=keys[0];
-  var t=TORNEOS_INTERNOS[tintActual];
-  if(elSec)elSec.style.setProperty('--serie-color',SERIE_COLORES[t.serie]||SERIE_COLORES.C);
-  rTintTabs();
-  rTintEstadoYCampeon(t);
-  rTintBracket(t);
+  if(!tintActualPorTipo[tipo]||!TORNEOS_POR_TIPO[tipo][tintActualPorTipo[tipo]])tintActualPorTipo[tipo]=keys[0];
+  var t=TORNEOS_POR_TIPO[tipo][tintActualPorTipo[tipo]];
+  if(elSec)elSec.style.setProperty('--serie-color',colorDeTorneo(t));
+  rTintTabs(tipo);
+  rTintEstadoYCampeon(tipo,t);
+  rTintBracket(tipo,t);
 }
 
-// Carga real desde Supabase (competiciones tipo 'interno' + torneo_partidos), usando
-// DATA.players (ya con UUID reales) para traducir jugador_id -> nombre.
-// Por eso SIEMPRE debe llamarse despues de cargarJugadoresYResultadosSupabase().
+// Carga real desde Supabase (competiciones tipo 'interno' Y 'abierto' +
+// torneo_partidos, en una sola pasada), usando DATA.players (ya con
+// UUID reales) para traducir jugador_id -> nombre. Por eso SIEMPRE debe
+// llamarse despues de cargarJugadoresYResultadosSupabase(). Un solo
+// query cubre ambos tipos de torneo: agregar un tercer tipo en el
+// futuro (interclub, etc.) es sumar un valor a este .in(...) y una
+// entrada a TORNEO_VISIBLE_CONFIG/SERIE_COLORES, sin tocar el resto.
 async function cargarTorneosInternos(){
   if(!window.supabaseClient)return;
   try{
-    var tRes=await window.supabaseClient.from('competiciones').select('*').eq('club_id',CLUB_ACTUAL_ID).eq('tipo','interno').order('temporada',{ascending:false});
+    var tRes=await window.supabaseClient.from('competiciones').select('*').eq('club_id',CLUB_ACTUAL_ID).in('tipo',['interno','abierto']).order('temporada',{ascending:false});
     var pRes=await window.supabaseClient.from('torneo_partidos').select('*').eq('club_id',CLUB_ACTUAL_ID);
     if(tRes.error||pRes.error){
-      console.warn('No se pudo cargar el Torneo Interno, se mantienen los datos previos.',tRes.error,pRes.error);
+      console.warn('No se pudo cargar los torneos, se mantienen los datos previos.',tRes.error,pRes.error);
       return;
     }
     var idANombre={};
     (DATA.players||[]).forEach(function(j){idANombre[j.id]=j.nombre;});
-    var nuevo={};
+    var nuevoPorTipo={interno:{},abierto:{}};
     tRes.data.forEach(function(t){
-      var key=t.serie+'-'+(t.periodo||'Unico')+'-'+t.temporada;
+      var tipoKey=(t.tipo==='abierto')?'abierto':'interno';
+      // El Abierto no tiene serie que lo diferencie de otro Abierto de
+      // la misma temporada/periodo, asi que se agrega un fragmento del
+      // id a la clave para no pisarse entre si.
+      var key=(t.serie||'X')+'-'+(t.periodo||'Unico')+'-'+t.temporada+(t.serie?'':('-'+t.id.slice(0,8)));
       var partidosDelTorneo=pRes.data.filter(function(p){return p.torneo_id===t.id;});
       var rondaMax=0;
       partidosDelTorneo.forEach(function(p){if(p.ronda>rondaMax)rondaMax=p.ronda;});
@@ -2968,13 +3028,16 @@ async function cargarTorneosInternos(){
       // sin necesidad de que alguien vuelva a tocar esa columna a mano.
       var estadoMostrado=t.estado;
       if(estadoMostrado==='finalizado'&&!campeon)estadoMostrado='en_curso';
-      nuevo[key]={id:t.id,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:estadoMostrado,campeon:campeon,rondas:rondas,nombre:t.nombre||null};
+      nuevoPorTipo[tipoKey][key]={id:t.id,tipo:tipoKey,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:estadoMostrado,campeon:campeon,rondas:rondas,nombre:t.nombre||null};
     });
-    TORNEOS_INTERNOS=nuevo;
-    conScrollPreservado(function(){rTorneoInterno();});
+    TORNEOS_POR_TIPO=nuevoPorTipo;
+    conScrollPreservado(function(){
+      rTorneoSeccion('interno');
+      rTorneoSeccion('abierto');
+    });
     actualizarMetaDinamico();
   }catch(err){
-    console.warn('Sin conexion a Supabase para el Torneo Interno.',err);
+    console.warn('Sin conexion a Supabase para los torneos.',err);
   }
 }
 
@@ -3000,7 +3063,7 @@ function startLiveRefresh(){
           cargarTorneosInternos();
         });
       });
-      cargarVisibilidadTorneoInterno();
+      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
       cargarConfigClubSupabase();
     }
   },LIVE_REFRESH_MS);
@@ -3013,7 +3076,7 @@ function startLiveRefresh(){
           cargarTorneosInternos();
         });
       });
-      cargarVisibilidadTorneoInterno();
+      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
       cargarConfigClubSupabase();
     }
   });
@@ -3058,7 +3121,7 @@ function iniciarRealtime(){
 
   var chConfig=window.supabaseClient.channel('rt-configuracion-sitio')
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracion_sitio'},function(){
-      cargarVisibilidadTorneoInterno();
+      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
       cargarFixtureSizeSupabase().then(function(){cargarJugadoresYResultadosSupabase();});
     })
     .subscribe();
@@ -3083,7 +3146,7 @@ function init(){
       ocultarSplash();
     });
   });
-  cargarVisibilidadTorneoInterno();
+  cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
   startLiveRefresh();
   iniciarRealtime();
   initVisitas();
@@ -5409,7 +5472,7 @@ function sendWA(){
   window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
-var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","torneo-interno","galeria","tienda"];
+var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","torneo-interno","torneo-abierto","galeria","tienda"];
 window.addEventListener("scroll",function(){
   var sy=window.scrollY||window.pageYOffset;
   for(var i=0;i<SECS.length;i++){
