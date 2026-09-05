@@ -314,10 +314,12 @@ async function crearTorneo(){
     setMsg('err','No se encontro una temporada activa para este club. Crea/activa una temporada primero.');
     return;
   }
+  var nombrePersonalizado=(document.getElementById('inNombreTorneo').value||'').trim()||null;
   var res=await window.supabaseClient.from('competiciones').insert({
     tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,
     club_id:clubActual,
-    temporada_id:temporadaId
+    temporada_id:temporadaId,
+    nombre:nombrePersonalizado
   }).select().maybeSingle();
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
@@ -707,7 +709,8 @@ function renderSelectorYListado(){
     h+='<p class="sub" style="margin-bottom:0">Todavia no hay ningun torneo interno creado para esta serie.</p>';
   }else{
     torneosSerie.forEach(function(t,idx){
-      h+='<div class="torneo-item"><span>Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')+' <span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></span>'
+      var etiqueta=t.nombre?esc(t.nombre):('Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):''));
+      h+='<div class="torneo-item"><span>'+etiqueta+' <span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></span>'
         +'<button class="btn az" onclick="abrirTorneoIdx('+idx+')">Abrir</button></div>';
     });
   }
@@ -715,10 +718,13 @@ function renderSelectorYListado(){
 
   h+='<div class="card"><b>Crear nuevo torneo — Serie '+esc(serieActual)+'</b>'
     +'<div class="row" style="margin-top:.7rem">'
+    +'<input type="text" id="inNombreTorneo" placeholder="Nombre del torneo (opcional, ej: Copa Aniversario)" style="flex:1;min-width:220px">'
+    +'</div>'
+    +'<div class="row" style="margin-top:.5rem">'
     +'<input type="number" id="inTemporada" placeholder="Temporada (ej: 2026)" value="'+new Date().getFullYear()+'">'
     +'<input type="text" id="inPeriodo" placeholder="Periodo (opcional, ej: Apertura)">'
     +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="crearTorneo()">'+(guardando?'Creando...':'Crear torneo')+'</button>'
-    +'</div><p class="sub" style="margin-bottom:0">Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).</p></div>';
+    +'</div><p class="sub" style="margin-bottom:0">Si dejas el nombre vacio, se muestra como "Serie '+esc(serieActual)+'". Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).</p></div>';
   return h;
 }
 
@@ -752,12 +758,39 @@ function renderSelectorYListadoPlataforma(){
   return h;
 }
 
+var editandoNombreTorneo=false;
+function toggleEditarNombreTorneo(){editandoNombreTorneo=!editandoNombreTorneo;render();}
+async function guardarNombreTorneo(){
+  var nuevo=(document.getElementById('inEditNombreTorneo').value||'').trim()||null;
+  guardando=true;render();
+  var res=await window.supabaseClient.from('competiciones').update({nombre:nuevo}).eq('id',torneoAbierto.id).select().maybeSingle();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo actualizar el nombre: '+res.error.message);return;}
+  torneoAbierto.nombre=nuevo;
+  var idx=torneosSerie.findIndex(function(x){return x.id===torneoAbierto.id;});
+  if(idx>=0)torneosSerie[idx].nombre=nuevo;
+  editandoNombreTorneo=false;
+  setMsg('ok','Nombre del torneo actualizado.');
+}
 function renderTorneoAbierto(){
   var t=torneoAbierto;
   var h='<button class="backbtn" onclick="volverListado()">&larr; Volver al listado</button>';
-  h+='<div class="card"><div class="row" style="justify-content:space-between">'
-    +'<b>Serie '+esc(t.serie)+' &middot; Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')+'</b>'
-    +'<span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></div></div>';
+  var subInfo='Serie '+esc(t.serie)+' &middot; Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'');
+  h+='<div class="card">';
+  if(editandoNombreTorneo){
+    h+='<div class="row" style="margin-bottom:.5rem">'
+      +'<input type="text" id="inEditNombreTorneo" placeholder="Nombre del torneo" value="'+jsAttr(t.nombre||'')+'" style="flex:1;min-width:200px">'
+      +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="guardarNombreTorneo()">'+(guardando?'Guardando...':'Guardar')+'</button>'
+      +'<button class="btn gl" '+(guardando?'disabled':'')+' onclick="toggleEditarNombreTorneo()">Cancelar</button>'
+      +'</div><p class="sub" style="margin:0 0 .5rem">'+subInfo+'</p>';
+  }else{
+    h+='<div class="row" style="justify-content:space-between;align-items:flex-start">'
+      +'<div><b style="font-size:1rem">'+(t.nombre?esc(t.nombre):('Serie '+esc(t.serie)))+'</b>'
+      +'<button class="iconbtn" style="margin-left:.5rem;vertical-align:middle" title="Editar nombre" onclick="toggleEditarNombreTorneo()">&#9998;</button>'
+      +'<p class="sub" style="margin:.2rem 0 0">'+subInfo+'</p></div>'
+      +'<span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></div>';
+  }
+  h+='</div>';
 
   if(!partidos.length){
     h+=renderSeeding();
