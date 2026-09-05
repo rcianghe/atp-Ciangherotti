@@ -229,6 +229,30 @@ tbody tr:last-child td{border-bottom:none;}
 .fx-textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
 .fx-row-preview{display:flex;flex-direction:column;gap:8px;}
 .fx-omitidas-note{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+
+/* ---- Paso 2 del fixture: tabla de revisión antes de insertar ----
+   fxRenderStep2() genera estas clases (fx-summary, fx-table-wrap, fx-table,
+   fx-pillerr, fx-row-error, fx-row-warn) pero no tenían regla propia: la
+   tabla salía con el estilo genérico de <table>, sin el resaltado rojo/
+   amarillo que distingue qué filas necesitan corrección antes de confirmar. */
+.fx-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-bottom:14px;font-size:13px;color:var(--ink);}
+.fx-summary .hint{flex-basis:100%;margin:2px 0 0;}
+.fx-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:9px;}
+.fx-table{min-width:680px;font-size:12.5px;}
+.fx-table th,.fx-table td{padding:7px 8px;white-space:nowrap;}
+.fx-table select,.fx-table input[type=text]{width:100%;padding:5px 6px;border:1.5px solid var(--line);border-radius:6px;font-size:12.5px;font-family:var(--body);background:#fff;color:var(--ink);}
+.fx-table select:focus,.fx-table input[type=text]:focus{outline:none;border-color:var(--accent);}
+.fx-table tbody tr.fx-row-error{background:var(--clay-soft);}
+.fx-table tbody tr.fx-row-warn{background:var(--warn-soft);}
+.fx-table .hint{white-space:normal;font-size:11px;margin-top:3px;}
+.fx-pillerr{display:inline-block;background:var(--danger);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+/* La tabla necesita bastante más ancho que el modal genérico (520px) para
+   mostrar 7 columnas sin apretarse; en mobile el modal ya pasa a hoja de
+   ancho completo por su propia media query, así que este ancho fijo solo
+   aplica en pantallas donde realmente hay sitio. */
+@media(min-width:901px){
+  #fixtureModalOverlay .modal{width:940px;max-width:96vw;}
+}
 </style>
 </head>
 <body>
