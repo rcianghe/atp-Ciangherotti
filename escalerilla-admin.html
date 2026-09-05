@@ -484,11 +484,11 @@ function onFileurlTextChange(fieldKey, val){ renderFileurlPreview(fieldKey, val)
 const ENTITIES = {
 
   jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
-    select:'id,nombre,email,telefono,serie,estado,activo,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,clubes(nombre)',
+    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
       {key:'avatar_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:'<span class="hint">—</span>'},
-      {key:'nombre',label:'Nombre'},
+      {key:'nombre',label:'Nombre',render:(v,r)=>r.es_invitado?`${v} <span class="badge badge-warn">Invitado</span>`:v},
       {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">Serie ${v||'—'}</span>`},
       {key:'estado',label:'Estado',render:v=>badgeEstadoJugador(v)},
       {key:'clubes',label:'Club',render:v=>v?.nombre||'<span class="hint">—</span>'},
@@ -511,6 +511,7 @@ const ENTITIES = {
       {key:'pais',label:'País (opcional)',type:'text'},
       {key:'bandera_iso',label:'Código país ISO (2 letras, ej: CL, AR, IT)',type:'text'},
       {key:'activo',label:'Jugador activo',type:'bool',default:true},
+      {key:'es_invitado',label:'Invitado (escuelita/externo, sin escalerilla propia)',type:'bool',default:false},
     ]},
 
   fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id', clubFilter:'direct',
@@ -593,11 +594,13 @@ const ENTITIES = {
     ]},
 
   competiciones:{ label:'Torneos / competiciones', group:'Competición', table:'competiciones', pk:'id', clubFilter:'direct',
-    select:'id,serie,temporada,periodo,estado,fecha_inicio,tipo,club_id,temporada_id,clubes(nombre)',
-    order:{col:'fecha_inicio',asc:false}, searchCols:[],
+    select:'id,nombre,serie,temporada,periodo,estado,fecha_inicio,tipo,seeding_tipo,club_id,temporada_id,clubes(nombre)',
+    order:{col:'fecha_inicio',asc:false}, searchCols:['nombre'],
     columns:[
+      {key:'nombre',label:'Nombre',render:(v,r)=>v?`<b>${v}</b>`:`<span class="hint">Serie ${r.serie||'—'}</span>`},
       {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
-      {key:'serie',label:'Serie'},
+      {key:'serie',label:'Serie',render:v=>v||'<span class="hint">— (multi-serie)</span>'},
+      {key:'seeding_tipo',label:'Siembra',render:v=>`<span class="badge badge-gray">${v}</span>`},
       {key:'temporada',label:'Año'},
       {key:'periodo',label:'Periodo'},
       {key:'estado',label:'Estado',render:v=>badgeEstadoTorneo(v)},
@@ -605,14 +608,33 @@ const ENTITIES = {
       {key:'_bracket',label:'',render:(v,r)=>`<button class="subtle-link" onclick="viewBracket('${r.id}')">Ver llave →</button>`},
     ],
     fields:[
+      {key:'nombre',label:'Nombre del torneo (opcional)',type:'text'},
       {key:'tipo',label:'Tipo',type:'select',options:['escalerilla','interno','interclub','abierto'],required:true},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'serie',label:'Serie (vacío = multi-serie)',type:'select',options:['','A','B','C']},
+      {key:'seeding_tipo',label:'Tipo de siembra',type:'select',options:['serie','atp','manual'],default:'serie'},
       {key:'temporada',label:'Año',type:'number',required:true},
       {key:'periodo',label:'Periodo',type:'select',options:['','Apertura','Clausura']},
       {key:'estado',label:'Estado',type:'select',options:['armado','en_curso','finalizado','cancelado']},
       {key:'fecha_inicio',label:'Fecha inicio',type:'date'},
       {key:'club_id',label:'Club',type:'fk',lookup:'clubes'},
       {key:'temporada_id',label:'Temporada asociada',type:'fk',lookup:'temporadas'},
+    ]},
+
+  torneo_participantes:{ label:'Participantes de torneo', group:'Competición', table:'torneo_participantes', pk:'id', clubFilter:'direct',
+    select:'id,torneo_id,jugador_id,semilla,club_origen,club_id,jugadores(nombre,serie),competiciones(nombre,serie,temporada)',
+    order:{col:'semilla'}, searchCols:[], filterField:'torneo_id', filterLookup:'competiciones',
+    columns:[
+      {key:'competiciones',label:'Torneo',render:v=>v?(v.nombre||`Serie ${v.serie||'—'} · ${v.temporada}`):'—'},
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'semilla',label:'Semilla/orden'},
+      {key:'club_origen',label:'Club de origen (invitados)'},
+    ],
+    fields:[
+      {key:'torneo_id',label:'Torneo',type:'fk',lookup:'competiciones',required:true},
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'club_id',label:'Club organizador',type:'fk',lookup:'clubes',required:true},
+      {key:'semilla',label:'Semilla / orden de siembra',type:'number'},
+      {key:'club_origen',label:'Club de origen (si es invitado externo)',type:'text'},
     ]},
 
   torneo_partidos:{ label:'Llave de partidos', group:'Competición', table:'torneo_partidos', pk:'id', clubFilter:'direct',
