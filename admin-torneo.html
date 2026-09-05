@@ -252,13 +252,15 @@ function seleccionarClubAdmin(clubId){
 
 async function cargarJugadoresClub(){
   if(!clubActual){jugadoresClub=[];return;}
-  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,avatar_url,pais,bandera_iso').eq('club_id',clubActual);
+  var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,estado,avatar_url,pais,bandera_iso,es_invitado').eq('club_id',clubActual);
   jugadoresClub=res.error?[]:res.data;
 }
 
 async function cargarTorneosDeSerie(serie){
   if(!clubActual){torneosSerie=[];return;}
-  var res=await window.supabaseClient.from('competiciones').select('*').eq('tipo','interno').eq('serie',serie).eq('club_id',clubActual).order('temporada',{ascending:false});
+  var q=window.supabaseClient.from('competiciones').select('*').eq('club_id',clubActual).order('temporada',{ascending:false});
+  q=(serie==='ABIERTO')?q.eq('tipo','abierto'):q.eq('tipo','interno').eq('serie',serie);
+  var res=await q;
   torneosSerie=res.error?[]:res.data;
 }
 
@@ -315,12 +317,11 @@ async function crearTorneo(){
     return;
   }
   var nombrePersonalizado=(document.getElementById('inNombreTorneo').value||'').trim()||null;
-  var res=await window.supabaseClient.from('competiciones').insert({
-    tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,
-    club_id:clubActual,
-    temporada_id:temporadaId,
-    nombre:nombrePersonalizado
-  }).select().maybeSingle();
+  var esAbierto=(serieActual==='ABIERTO');
+  var payload=esAbierto
+    ?{tipo:'abierto',serie:null,temporada:temporada,periodo:periodo,club_id:clubActual,temporada_id:temporadaId,nombre:nombrePersonalizado,seeding_tipo:'atp'}
+    :{tipo:'interno',serie:serieActual,temporada:temporada,periodo:periodo,club_id:clubActual,temporada_id:temporadaId,nombre:nombrePersonalizado};
+  var res=await window.supabaseClient.from('competiciones').insert(payload).select().maybeSingle();
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear el torneo: '+res.error.message);return;}
   await cargarTorneosDeSerie(serieActual);
@@ -406,10 +407,31 @@ async function cargarPartidos(torneoId){
 
 async function prepararSeeding(){
   if(torneoAbierto&&torneoAbierto.club_id==null){await prepararSeedingPlataforma();return;}
+  if(torneoAbierto&&torneoAbierto.tipo==='abierto'){await prepararSeedingAbierto();return;}
   var pts=await calcularPuntosBaseSerie(serieActual);
-  var jugadoresSerie=jugadoresClub.filter(function(j){return j.serie===serieActual&&j.estado!=='Retirado -50%';});
+  var jugadoresSerie=jugadoresClub.filter(function(j){return j.serie===serieActual&&!j.es_invitado&&j.estado!=='Retirado -50%';});
   jugadoresSerie.sort(function(a,b){return (pts[b.id]||0)-(pts[a.id]||0);});
   seedList=jugadoresSerie.map(function(j){return {id:j.id,nombre:j.nombre,pts:pts[j.id]||0,incluido:true};});
+}
+
+// Ranking unico combinado para el Torneo Abierto: Serie A (por puntos
+// base), luego B, luego C, y al final los invitados de la escuelita
+// (jugadores.es_invitado). El admin reordena con las flechas si el
+// nivel real de alguien no calza con "ultimo de la lista".
+async function prepararSeedingAbierto(){
+  var ptsA=await calcularPuntosBaseSerie('A');
+  var ptsB=await calcularPuntosBaseSerie('B');
+  var ptsC=await calcularPuntosBaseSerie('C');
+  function ordenSerie(s,pts){
+    return jugadoresClub.filter(function(j){return j.serie===s&&!j.es_invitado&&j.estado!=='Retirado -50%';})
+      .sort(function(a,b){return (pts[b.id]||0)-(pts[a.id]||0);});
+  }
+  var invitados=jugadoresClub.filter(function(j){return j.es_invitado&&j.estado!=='Retirado -50%';})
+    .sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+  var todos=[].concat(ordenSerie('A',ptsA),ordenSerie('B',ptsB),ordenSerie('C',ptsC),invitados);
+  seedList=todos.map(function(j,i){
+    return {id:j.id,nombre:j.nombre+(j.es_invitado?' (Escuelita)':''),pts:i+1,incluido:true};
+  });
 }
 
 function nombreDe(id){
@@ -441,34 +463,88 @@ function moverSeed(idx,delta){
 }
 function toggleSeedIncluido(idx){seedList[idx].incluido=!seedList[idx].incluido;render();}
 
-// ---- Generar Ronda 1 segun el reglamento: sembrados 1 y 2 con bye,
-// el resto emparejado mas alto vs mas bajo. ----
+// ---- Siembra estilo ATP (distribucion estandar por potencia de 2) ----
+// order[i] = seed (1-indexado) que va en la posicion i+1 del cuadro.
+// Doblado recursivo: separa al maximo a los mejores sembrados (1 arriba
+// del todo, 2 abajo del todo, 3-4 en cuartos opuestos, etc), igual que
+// un cuadro ATP real. Los byes salen solos: cualquier "seed" > cantidad
+// real de jugadores es un slot fantasma, y automaticamente son los
+// mejores sembrados los que quedan con bye (no un numero fijo de 2).
+function ordenSiembraATP(tamCuadro){
+  var orden=[1];
+  while(orden.length<tamCuadro){
+    var size=orden.length*2,nuevo=[];
+    orden.forEach(function(x){nuevo.push(x);nuevo.push(size+1-x);});
+    orden=nuevo;
+  }
+  return orden;
+}
+function siguientePotenciaDeDos(n){var p=1;while(p<n)p*=2;return p;}
+
+function generarCuadroSembrado(seedsOrdenados,torneoId){
+  var P=seedsOrdenados.length;
+  if(P<2)return {error:'Se necesitan al menos 2 jugadores incluidos.'};
+  var D=siguientePotenciaDeDos(P);
+  var orden=ordenSiembraATP(D);
+  var filas=[],pos=0;
+  for(var i=0;i<D;i+=2){
+    var seedA=orden[i],seedB=orden[i+1];
+    var jugA=seedA<=P?seedsOrdenados[seedA-1]:null; // seed>P = slot fantasma
+    var jugB=seedB<=P?seedsOrdenados[seedB-1]:null;
+    if(jugA&&jugB){
+      filas.push({torneo_id:torneoId,ronda:1,posicion:pos++,jugador1_id:jugA.id,jugador2_id:jugB.id,es_bye:false});
+    }else{
+      var real=jugA||jugB;
+      if(!real)continue;
+      filas.push({torneo_id:torneoId,ronda:1,posicion:pos++,jugador1_id:real.id,jugador2_id:null,ganador_id:real.id,es_bye:true});
+    }
+  }
+  return {filas:filas,tamCuadro:D,byes:D-P};
+}
+
+// Comportamiento historico (seeding_tipo='serie', el que ya venia
+// funcionando): sembrados 1 y 2 con bye fijo, el resto emparejado mas
+// alto vs mas bajo. Se mantiene intacto para no alterar el Torneo
+// Interno de Serie tal como esta hoy.
+function generarCuadroSimple(incluidos,torneoId){
+  var byes=incluidos.slice(0,2),resto=incluidos.slice(2),filas=[],pos=0;
+  byes.forEach(function(s){filas.push({torneo_id:torneoId,ronda:1,posicion:pos++,jugador1_id:s.id,jugador2_id:null,ganador_id:s.id,es_bye:true});});
+  var i=0,j=resto.length-1;
+  while(i<j){filas.push({torneo_id:torneoId,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:resto[j].id,es_bye:false});i++;j--;}
+  var byesExtra=0;
+  if(i===j){filas.push({torneo_id:torneoId,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:null,ganador_id:resto[i].id,es_bye:true});byesExtra=1;}
+  return {filas:filas,tamCuadro:incluidos.length,byes:byes.length+byesExtra};
+}
+
+// ---- Generar Ronda 1: usa siembra ATP o el emparejamiento simple
+// historico, segun competiciones.seeding_tipo del torneo abierto. ----
 async function generarRonda1(){
   var incluidos=seedList.filter(function(s){return s.incluido;});
   if(incluidos.length<4){setMsg('err','Necesitas al menos 4 jugadores incluidos para armar un cuadro.');return;}
-  var byes=incluidos.slice(0,2);
-  var resto=incluidos.slice(2);
-  var filas=[];
-  var pos=0;
-  byes.forEach(function(s){
-    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:s.id,jugador2_id:null,ganador_id:s.id,es_bye:true});
-  });
-  var i=0,j=resto.length-1;
-  while(i<j){
-    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:resto[j].id,es_bye:false});
-    i++;j--;
-  }
-  if(i===j){ // cantidad impar de "resto": el ultimo tambien pasa con bye
-    filas.push({torneo_id:torneoAbierto.id,ronda:1,posicion:pos++,jugador1_id:resto[i].id,jugador2_id:null,ganador_id:resto[i].id,es_bye:true});
-  }
+
+  var usarATP=torneoAbierto.seeding_tipo==='atp';
+  var res=usarATP?generarCuadroSembrado(incluidos,torneoAbierto.id):generarCuadroSimple(incluidos,torneoAbierto.id);
+  if(res.error){setMsg('err',res.error);return;}
+
   guardando=true;render();
-  var res=await window.supabaseClient.from('torneo_partidos').insert(filas);
-  if(!res.error)await window.supabaseClient.from('competiciones').update({estado:'en_curso'}).eq('id',torneoAbierto.id);
+
+  // Deja registro del pool/semilla final en torneo_participantes.
+  // Es trazabilidad (no bloquea el armado del cuadro si llegara a
+  // fallar): clave sobre todo para el Abierto, donde el pool no sale
+  // 1:1 de jugadores.serie.
+  var filasParticipantes=incluidos.map(function(s,i){
+    return {torneo_id:torneoAbierto.id,jugador_id:s.id,club_id:clubActual,semilla:i+1};
+  });
+  window.supabaseClient.from('torneo_participantes').insert(filasParticipantes)
+    .then(function(r){if(r.error)console.warn('No se pudo registrar torneo_participantes.',r.error);});
+
+  var ins=await window.supabaseClient.from('torneo_partidos').insert(res.filas);
+  if(!ins.error)await window.supabaseClient.from('competiciones').update({estado:'en_curso'}).eq('id',torneoAbierto.id);
   guardando=false;
-  if(res.error){setMsg('err','No se pudo crear la Ronda 1: '+res.error.message);return;}
+  if(ins.error){setMsg('err','No se pudo crear la Ronda 1: '+ins.error.message);return;}
   await cargarPartidos(torneoAbierto.id);
   torneoAbierto.estado='en_curso';
-  setMsg('ok','Ronda 1 creada.');
+  setMsg('ok','Cuadro de '+res.tamCuadro+' creado ('+res.byes+' bye'+(res.byes===1?'':'s')+').');
 }
 
 function rondaMaxima(){var m=0;partidos.forEach(function(p){if(p.ronda>m)m=p.ronda;});return m;}
@@ -699,32 +775,39 @@ function renderVisibilidadTorneoInterno(){
 
 function renderSelectorYListado(){
   var h='<div class="tabs">';
-  ['A','B','C'].forEach(function(s){
-    h+='<button class="tb'+(s===serieActual?' active':'')+'" onclick="seleccionarSerie(\''+s+'\')">Serie '+s+'</button>';
+  ['A','B','C','ABIERTO'].forEach(function(s){
+    h+='<button class="tb'+(s===serieActual?' active':'')+'" onclick="seleccionarSerie(\''+s+'\')">'+(s==='ABIERTO'?'🏆 Abierto':'Serie '+s)+'</button>';
   });
   h+='</div>';
 
-  h+='<div class="card"><b>Torneos de Serie '+esc(serieActual)+'</b>';
+  var esAbierto=(serieActual==='ABIERTO');
+  var etiquetaVista=esAbierto?'Torneo Abierto':('Serie '+esc(serieActual));
+
+  h+='<div class="card"><b>Torneos — '+etiquetaVista+'</b>';
   if(!torneosSerie.length){
-    h+='<p class="sub" style="margin-bottom:0">Todavia no hay ningun torneo interno creado para esta serie.</p>';
+    h+='<p class="sub" style="margin-bottom:0">Todavia no hay ningun torneo '+(esAbierto?'abierto creado.':'interno creado para esta serie.')+'</p>';
   }else{
     torneosSerie.forEach(function(t,idx){
-      var etiqueta=t.nombre?esc(t.nombre):('Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):''));
+      var etiqueta=t.nombre?esc(t.nombre):(esAbierto?'Torneo Abierto':('Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'')));
       h+='<div class="torneo-item"><span>'+etiqueta+' <span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></span>'
         +'<button class="btn az" onclick="abrirTorneoIdx('+idx+')">Abrir</button></div>';
     });
   }
   h+='</div>';
 
-  h+='<div class="card"><b>Crear nuevo torneo — Serie '+esc(serieActual)+'</b>'
+  h+='<div class="card"><b>Crear nuevo torneo — '+etiquetaVista+'</b>'
     +'<div class="row" style="margin-top:.7rem">'
-    +'<input type="text" id="inNombreTorneo" placeholder="Nombre del torneo (opcional, ej: Copa Aniversario)" style="flex:1;min-width:220px">'
+    +'<input type="text" id="inNombreTorneo" placeholder="Nombre del torneo'+(esAbierto?' (ej: Torneo Abierto Quilicura)':' (opcional, ej: Copa Aniversario)')+'" style="flex:1;min-width:220px">'
     +'</div>'
     +'<div class="row" style="margin-top:.5rem">'
     +'<input type="number" id="inTemporada" placeholder="Temporada (ej: 2026)" value="'+new Date().getFullYear()+'">'
     +'<input type="text" id="inPeriodo" placeholder="Periodo (opcional, ej: Apertura)">'
     +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="crearTorneo()">'+(guardando?'Creando...':'Crear torneo')+'</button>'
-    +'</div><p class="sub" style="margin-bottom:0">Si dejas el nombre vacio, se muestra como "Serie '+esc(serieActual)+'". Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).</p></div>';
+    +'</div><p class="sub" style="margin-bottom:0">'
+    +(esAbierto
+      ?'Combina las 3 series + invitados de la escuelita en un ranking unico, con siembra estilo ATP (byes automaticos, sin choques tempranos entre sembrados).'
+      :'Si dejas el nombre vacio, se muestra como "Serie '+esc(serieActual)+'". Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).')
+    +'</p></div>';
   return h;
 }
 
@@ -775,7 +858,7 @@ async function guardarNombreTorneo(){
 function renderTorneoAbierto(){
   var t=torneoAbierto;
   var h='<button class="backbtn" onclick="volverListado()">&larr; Volver al listado</button>';
-  var subInfo='Serie '+esc(t.serie)+' &middot; Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'');
+  var subInfo=(t.serie?('Serie '+esc(t.serie)+' &middot; '):'')+'Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'');
   h+='<div class="card">';
   if(editandoNombreTorneo){
     h+='<div class="row" style="margin-bottom:.5rem">'
@@ -785,7 +868,7 @@ function renderTorneoAbierto(){
       +'</div><p class="sub" style="margin:0 0 .5rem">'+subInfo+'</p>';
   }else{
     h+='<div class="row" style="justify-content:space-between;align-items:flex-start">'
-      +'<div><b style="font-size:1rem">'+(t.nombre?esc(t.nombre):('Serie '+esc(t.serie)))+'</b>'
+      +'<div><b style="font-size:1rem">'+(t.nombre?esc(t.nombre):(t.serie?('Serie '+esc(t.serie)):'Torneo Abierto'))+'</b>'
       +'<button class="iconbtn" style="margin-left:.5rem;vertical-align:middle" title="Editar nombre" onclick="toggleEditarNombreTorneo()">&#9998;</button>'
       +'<p class="sub" style="margin:.2rem 0 0">'+subInfo+'</p></div>'
       +'<span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></div>';
@@ -807,11 +890,18 @@ function renderTorneoAbierto(){
 
 function renderSeeding(){
   var esPlataforma=torneoAbierto&&torneoAbierto.club_id==null;
+  var esAbierto=torneoAbierto&&torneoAbierto.tipo==='abierto';
+  var usarATP=torneoAbierto&&torneoAbierto.seeding_tipo==='atp';
   var h='<div class="card"><b>Armar cuadro — orden de siembra</b>'
     +'<p class="sub">'+(esPlataforma
       ?'Lista alfabetica de jugadores activos de todos los clubes. Ordena con las flechas segun el criterio que uses (ranking, sorteo, etc.) y desmarca a quien no vaya a jugar.'
-      :'Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno.')
-    +' Los 2 primeros de la lista quedan con <i>bye</i> en la Ronda 1, segun el reglamento.</p>'
+      :esAbierto
+        ?'Ranking unico: Serie A, luego B, luego C (por puntos base de la Escalerilla), y los invitados de la escuelita al final. Reordena con las flechas si el nivel real de alguien no calza, y desmarca a quien no vaya a jugar.'
+        :'Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno.')
+    +(usarATP
+      ?' El cuadro se arma con siembra estilo ATP: los byes necesarios los reciben automaticamente los mejores sembrados, y quedan lo mas separados posible entre si.'
+      :' Los 2 primeros de la lista quedan con <i>bye</i> en la Ronda 1, segun el reglamento.')
+    +'</p>'
     +'<div class="seedlist">';
   seedList.forEach(function(s,idx){
     h+='<div class="seedrow'+(s.incluido?'':' excluido')+'">'
