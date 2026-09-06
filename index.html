@@ -2168,7 +2168,7 @@ function calcularRanking(jugadores,resultados,fixtureSize){
     var anulados={};
     jugadoresSerie.forEach(function(j){if(j.estado==='Retirado -50%')anulados[j.nombre]=true;});
     var totalPartidosTemporada=fixtureSize[serie]||0;
-    var partidosSerie=resultados.filter(function(r){return r.serie===serie&&r.ganador&&(r.set1||r.tipo==='W.O.');});
+    var partidosSerie=resultados.filter(function(r){return r.serie===serie&&(r.ganador||r.tipo==='Doble W.O.')&&(r.set1||r.tipo==='W.O.'||r.tipo==='Doble W.O.');});
     var filas=jugadoresSerie.map(function(j){
       var nombre=j.nombre;
       var esAnulado=j.estado==='Retirado -50%';
@@ -2179,7 +2179,7 @@ function calcularRanking(jugadores,resultados,fixtureSize){
       var pg=0,ptsBase=0,bonoBagel=0,racha=0;
       ordenados.forEach(function(r){
         var gane=r.ganador===nombre;
-        var esWO=r.tipo==='W.O.';
+        var esWO=r.tipo==='W.O.'||r.tipo==='Doble W.O.';
         var sets=esWO?0:numSets(r);
         if(gane){
           pg++;racha++;
@@ -2351,7 +2351,11 @@ function construirTickerHero(){
   if(DATA.results&&DATA.results.length){
     var ordenados=DATA.results.slice().sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
     var ult=ordenados[0];
-    partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.ganador)+'</b> venci\u00f3 a '+esc(ult.perdedor)+' '+esc(ult.score)+' (Serie '+esc(ult.serie)+')');
+    if(ult.dobleWO){
+      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.jugador1)+'</b> vs <b>'+esc(ult.jugador2)+'</b> \u2014 Doble W.O. (Serie '+esc(ult.serie)+')');
+    }else{
+      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.ganador)+'</b> venci\u00f3 a '+esc(ult.perdedor)+' '+esc(ult.score)+' (Serie '+esc(ult.serie)+')');
+    }
   }
   if(DATA.matches&&DATA.matches.length){
     var pendientes=DATA.matches.filter(function(m){return m.status==='pending'&&m.fecha;}).sort(function(a,b){return parseFechaDDMMYYYY(a.fecha)-parseFechaDDMMYYYY(b.fecha);});
@@ -2464,8 +2468,8 @@ async function cargarJugadoresYResultadosSupabase(){
 
     // Partidos con ganador_id -> ya se jugaron (ranking + DATA.results).
     // Partidos sin ganador_id -> pendientes (DATA.matches, ex hoja "Partidos").
-    var jugadosRaw=resRes.data.filter(function(r){return r.ganador_id;});
-    var pendientesRaw=resRes.data.filter(function(r){return !r.ganador_id;});
+    var jugadosRaw=resRes.data.filter(function(r){return r.ganador_id||r.tipo==='Doble W.O.';});
+    var pendientesRaw=resRes.data.filter(function(r){return !r.ganador_id&&r.tipo!=='Doble W.O.';});
     // Orden pedido para RESULTADOS / HISTORIAL COMPLETO: por fecha/hora de
     // creacion (created_at) descendente, el ultimo partido ingresado siempre
     // arriba de todo. Se ordena aca una sola vez porque tanto DATA.results
@@ -2515,6 +2519,13 @@ async function cargarJugadoresYResultadosSupabase(){
       return m;
     });
     DATA.results=resultadosRaw.map(function(r){
+      if(r.tipo==='Doble W.O.'){
+        // Nadie se presento: no hay ganador ni perdedor unico, asi que se
+        // marca dobleWO:true y se guardan ambos nombres. Los consumidores
+        // de DATA.results que no conocen este caso (ganador/perdedor
+        // ambos null) simplemente lo ignoran sin romperse.
+        return {fecha:r.fecha,ganador:null,perdedor:null,dobleWO:true,jugador1:r.jugador1,jugador2:r.jugador2,score:'Doble W.O.',serie:r.serie,estadoPartido:r.estadoPartido||'doble_w_o',fotoResultado:r.fotoResultado||''};
+      }
       var scoreCrudo=r.tipo==='W.O.'?'W.O.':[r.set1,r.set2,r.set3].filter(Boolean).join(' ');
       var score=scorePerspectiva(scoreCrudo,r.jugador1,r.ganador);
       return {fecha:r.fecha,ganador:r.ganador,perdedor:(r.jugador1===r.ganador?r.jugador2:r.jugador1),score:score,serie:r.serie,jugador1:r.jugador1,estadoPartido:r.estadoPartido||'finalizado',fotoResultado:r.fotoResultado||''};
@@ -3908,7 +3919,8 @@ function poolResultados(){
   var deResultados=(DATA.results||[]).filter(function(r){return r.fotoResultado;})
     .slice().sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);})
     .map(function(r){
-      return {url:r.fotoResultado,titulo:r.ganador+' vs '+r.perdedor,sub:'Resultado · '+r.score+' · '+r.fecha};
+      var titulo=r.dobleWO?(r.jugador1+' vs '+r.jugador2):(r.ganador+' vs '+r.perdedor);
+      return {url:r.fotoResultado,titulo:titulo,sub:'Resultado · '+r.score+' · '+r.fecha};
     });
   var vistos={};
   return deDesafios.concat(deResultados).filter(function(it){
@@ -4040,8 +4052,13 @@ function rResults(){
       var r=DATA.results[i];
       if(!r)continue;
       h+="<div class=\"rr\"><div class=\"rdate\">"+esc(r.fecha)+"</div>";
-      h+="<div class=\"rpl\"><span class=\"rw\">"+esc(r.ganador)+"</span><span class=\"rvs\">def.</span><span class=\"rlo\">"+esc(r.perdedor)+"</span></div>";
-      h+="<div class=\"rsb\">"+esc(r.score)+"</div>";
+      if(r.dobleWO){
+        h+="<div class=\"rpl\"><span class=\"rlo\">"+esc(r.jugador1)+"</span><span class=\"rvs\">vs</span><span class=\"rlo\">"+esc(r.jugador2)+"</span></div>";
+        h+="<div class=\"rsb\" style=\"color:#e05a4a\">Doble W.O.</div>";
+      }else{
+        h+="<div class=\"rpl\"><span class=\"rw\">"+esc(r.ganador)+"</span><span class=\"rvs\">def.</span><span class=\"rlo\">"+esc(r.perdedor)+"</span></div>";
+        h+="<div class=\"rsb\">"+esc(r.score)+"</div>";
+      }
       h+="<span class=\"sb "+esc(r.serie)+"\" style=\"font-size:.65rem;padding:.1rem .4rem;\">"+esc(r.serie)+"</span></div>";
     }
   }
@@ -4976,13 +4993,20 @@ async function _showProfileImpl(nombre,scroll){
   // ordenan por fecha real antes de cortar los 5 mas recientes.
   var rec=[];
   for(var i=0;i<DATA.results.length;i++){
-    if(DATA.results[i].ganador===nombre||DATA.results[i].perdedor===nombre)rec.push(DATA.results[i]);
+    var rItem=DATA.results[i];
+    if(rItem.ganador===nombre||rItem.perdedor===nombre||(rItem.dobleWO&&(rItem.jugador1===nombre||rItem.jugador2===nombre)))rec.push(rItem);
   }
   rec.sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
   rec=rec.slice(0,5);
   var rH="";
   for(var i=0;i<rec.length;i++){
-    var r=rec[i],won=r.ganador===nombre,opp=won?r.perdedor:r.ganador;
+    var r=rec[i];
+    var won=r.ganador===nombre;
+    // Doble W.O.: ninguno de los dos "gano", asi que won queda false para
+    // los dos y se muestra como derrota (L) para ambos, con el rival
+    // resuelto desde jugador1/jugador2 en vez de r.perdedor (que no existe
+    // en este caso porque no hay un unico perdedor).
+    var opp=r.dobleWO?(r.jugador1===nombre?r.jugador2:r.jugador1):(won?r.perdedor:r.ganador);
     // r.score ya viene siempre en orden ganador-perdedor (normalizado al
     // cargar DATA.results). Antes se volvia a pasar por scorePerspectiva
     // comparando contra el Jugador1 crudo original, lo que la invertia
@@ -5166,12 +5190,27 @@ function construirHistorialPorJugador(){
   var validos=[];
   for(var i=0;i<DATA.results.length;i++){
     var r=DATA.results[i];
-    if(r.ganador&&r.perdedor&&!retiradoSet[r.ganador]&&!retiradoSet[r.perdedor])validos.push(r);
+    if(r.dobleWO){
+      if(!retiradoSet[r.jugador1]&&!retiradoSet[r.jugador2])validos.push(r);
+    }else if(r.ganador&&r.perdedor&&!retiradoSet[r.ganador]&&!retiradoSet[r.perdedor]){
+      validos.push(r);
+    }
   }
   validos.sort(function(a,b){return parseFechaDDMMYYYY(a.fecha)-parseFechaDDMMYYYY(b.fecha);});
   var historial={};
   for(var i=0;i<validos.length;i++){
-    var r=validos[i],wo=r.score==='W.O.';
+    var r=validos[i];
+    if(r.dobleWO){
+      // Doble W.O.: ambos quedan con una derrota propia en su historial
+      // (corta la racha de los dos), consistente con como calcularRanking
+      // ya los trata (0 puntos, cuenta como PJ+PP para ambos).
+      if(!historial[r.jugador1])historial[r.jugador1]=[];
+      if(!historial[r.jugador2])historial[r.jugador2]=[];
+      historial[r.jugador1].push({resultado:'L',rival:r.jugador2,fecha:r.fecha,serie:r.serie,wo:true,score:r.score,dobleWO:true});
+      historial[r.jugador2].push({resultado:'L',rival:r.jugador1,fecha:r.fecha,serie:r.serie,wo:true,score:r.score,dobleWO:true});
+      continue;
+    }
+    var wo=r.score==='W.O.';
     if(!historial[r.ganador])historial[r.ganador]=[];
     if(!historial[r.perdedor])historial[r.perdedor]=[];
     historial[r.ganador].push({resultado:'W',rival:r.perdedor,fecha:r.fecha,serie:r.serie,wo:wo,score:r.score});
@@ -5472,9 +5511,10 @@ async function calcH2H(){
   for(var i=0;i<DATA.results.length;i++){
     var r=DATA.results[i];
     if((r.ganador===p1&&r.perdedor===p2)||(r.ganador===p2&&r.perdedor===p1))ml.push(r);
+    else if(r.dobleWO&&((r.jugador1===p1&&r.jugador2===p2)||(r.jugador1===p2&&r.jugador2===p1)))ml.push(r);
   }
   var w1=0,w2=0;
-  for(var i=0;i<ml.length;i++){if(ml[i].ganador===p1)w1++;else w2++;}
+  for(var i=0;i<ml.length;i++){if(ml[i].ganador===p1)w1++;else if(ml[i].ganador===p2)w2++;}
   var s1="A",s2="A";
   for(var i=0;i<DATA.players.length;i++){
     if(DATA.players[i].nombre===p1)s1=DATA.players[i].serie;
@@ -5486,7 +5526,12 @@ async function calcH2H(){
   var tit1=titulosPar[0],tit2=titulosPar[1];
   var rH="";
   for(var i=0;i<ml.length;i++){
-    var r=ml[i],lw=r.ganador===p1;
+    var r=ml[i];
+    if(r.dobleWO){
+      rH+="<div class=\"h2hmr\"><span class=\"h2hwi\"></span><span class=\"h2hms\" style=\"color:#e05a4a\">Doble W.O.</span><span class=\"h2hwi\"></span><span class=\"h2hmd\">"+esc(r.fecha)+"</span></div>";
+      continue;
+    }
+    var lw=r.ganador===p1;
     rH+="<div class=\"h2hmr\"><span class=\"h2hwi\">"+(lw?"🏆":"")+"</span><span class=\"h2hms\">"+esc(r.score)+"</span><span class=\"h2hwi\" style=\"text-align:right\">"+(lw?"":"🏆")+"</span><span class=\"h2hmd\">"+esc(r.fecha)+"</span></div>";
   }
   if(!rH)rH="<p style=\"text-align:center;color:var(--gl);padding:1rem\">Sin partidos entre estos jugadores</p>";
