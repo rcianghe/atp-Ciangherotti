@@ -722,9 +722,23 @@ span.diachip{cursor:default;display:inline-block}
   50%{text-shadow:0 0 12px color-mix(in srgb,var(--serie-color) 95%,transparent),0 0 28px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 42px color-mix(in srgb,var(--serie-color) 30%,transparent)}
 }
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
-.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
+#tintCampeon,#tintCampeonAbierto{perspective:900px}
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transform-style:preserve-3d;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
 .tint-campeon:hover{transform:translateY(-2px)}
 .tint-campeon:active{transform:scale(.97)}
+/* Efecto "sale hacia adelante": al tocar/hacer click en la caja del
+   trofeo, se dispara esta animacion antes de abrir el modal grande (ver
+   tocarCampeonBox() en JS). translateZ + rotateX simulan la caja
+   despegandose de la pantalla hacia el usuario, apoyado por la
+   perspective del contenedor padre (#tintCampeon/#tintCampeonAbierto) y
+   una sombra que crece para reforzar la sensacion de profundidad. */
+@keyframes tintCampeonPop3D{
+  0%{transform:translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
+  45%{transform:translateZ(46px) scale(1.08) rotateX(-6deg);box-shadow:0 34px 46px -18px rgba(0,0,0,.55),0 0 34px color-mix(in srgb,var(--serie-color) 45%,transparent)}
+  100%{transform:translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
+}
+.tint-campeon.pop3d{animation:tintCampeonPop3D .42s cubic-bezier(.34,1.56,.64,1)}
+@media(prefers-reduced-motion:reduce){.tint-campeon.pop3d{animation:none}}
 .tint-campeon .ic{font-size:1.8rem}
 .tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out infinite}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
@@ -1456,6 +1470,49 @@ var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i]
 // quede viendo exactamente lo mismo que tenia en pantalla. Si la persona
 // esta arriba del todo (scrollY===0, por ejemplo recien entrando al
 // sitio) no se toca nada.
+// ============================================================
+// BLOQUEO DE SCROLL PARA MODALES (trofeo, carrito)
+// ============================================================
+// Antes cada modal bloqueaba el scroll de fondo con
+// document.body.style.overflow='hidden'. Esa tecnica es fragil en dos
+// frentes distintos, que coinciden con los sintomas reportados:
+// 1) iOS Safari: overflow:hidden en el body NO bloquea de forma
+//    confiable el scroll de fondo (es un bug conocido de WebKit). El
+//    resultado tipico es que el scroll "se pega": la pagina queda a
+//    medio hacer scroll, sin responder, hasta que se recarga.
+// 2) Escritorio: al ocultar la barra de scroll vertical, el ancho
+//    disponible de la pagina crece unos pixeles de golpe, lo que se ve
+//    como un salto/reacomodo del contenido al abrir o cerrar el modal.
+// La tecnica robusta (position:fixed en el body, guardando el scrollY
+// actual como "top" negativo, y agregando ese mismo padding-right que
+// media la barra de scroll para que el ancho no salte) resuelve ambos
+// casos a la vez y es la que se usa en la mayoria de librerias de UI.
+var SCROLL_LOCK_Y=0, scrollLockCount=0;
+function bloquearScrollBody(){
+  if(scrollLockCount===0){
+    SCROLL_LOCK_Y=window.scrollY||window.pageYOffset||0;
+    var anchoBarra=window.innerWidth-document.documentElement.clientWidth;
+    document.body.style.position='fixed';
+    document.body.style.top='-'+SCROLL_LOCK_Y+'px';
+    document.body.style.left='0';
+    document.body.style.right='0';
+    document.body.style.width='100%';
+    if(anchoBarra>0)document.body.style.paddingRight=anchoBarra+'px';
+  }
+  scrollLockCount++;
+}
+function restaurarScrollBody(){
+  scrollLockCount=Math.max(0,scrollLockCount-1);
+  if(scrollLockCount>0)return; // otro modal sigue abierto, no se libera todavia
+  document.body.style.position='';
+  document.body.style.top='';
+  document.body.style.left='';
+  document.body.style.right='';
+  document.body.style.width='';
+  document.body.style.paddingRight='';
+  window.scrollTo(0,SCROLL_LOCK_Y);
+}
+
 function conScrollPreservado(fn){
   var yAntes=window.scrollY;
   var altoAntes=document.documentElement.scrollHeight;
@@ -2780,7 +2837,7 @@ function rTintEstadoYCampeon(tipo,t){
   if(!camp)return;
   TINT_CAMPEON_POR_TIPO[tipo]=t;
   var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo" loading="lazy">';
-  var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="abrirCampeonModal(\''+tipo+'\')" onkeydown="'+kbActivate("abrirCampeonModal('"+tipo+"')")+'"';
+  var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="tocarCampeonBox(this,\''+tipo+'\')" onkeydown="'+kbActivate("tocarCampeonBox(this,'"+tipo+"')")+'"';
   var etiquetaCampeon=esc(etiquetaTorneo(t));
   if(t.campeon){
     camp.innerHTML='<div class="tint-campeon" '+attrs+'>'+img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 '+etiquetaCampeon+'</div><div class="nom">'+esc(t.campeon)+'</div></div>';
@@ -2795,6 +2852,26 @@ function rTintEstadoYCampeon(tipo,t){
 // Interno y Abierto -- solo se abre uno a la vez -- por eso el color
 // de marca se fija directo en la tarjeta (card.style.setProperty) en
 // vez de depender de heredar --serie-color de su seccion contenedora.
+// Dispara el efecto "sale hacia adelante" (clase .pop3d, ver CSS
+// @keyframes tintCampeonPop3D) en la caja chica del trofeo antes de
+// abrir el modal grande, para que el toque se sienta con respuesta
+// fisica en vez de saltar directo a la pantalla completa. Si el
+// visitante toca varias veces seguido antes de que termine la
+// animacion anterior, se reinicia limpio (se saca y se vuelve a poner
+// la clase, forzando un reflow entremedio) en vez de acumularse.
+function tocarCampeonBox(el,tipo){
+  if(el){
+    el.classList.remove('pop3d');
+    void el.offsetWidth;
+    el.classList.add('pop3d');
+    setTimeout(function(){
+      el.classList.remove('pop3d');
+      abrirCampeonModal(tipo);
+    },230);
+  }else{
+    abrirCampeonModal(tipo);
+  }
+}
 function abrirCampeonModal(tipo){
   var t=TINT_CAMPEON_POR_TIPO[tipo];
   if(!t)return;
@@ -2812,12 +2889,12 @@ function abrirCampeonModal(tipo){
     card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 '+etiquetaModal+'</div><div class="nom-pendiente">Por definir</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
   }
   modal.classList.add('activo');
-  document.body.style.overflow='hidden';
+  bloquearScrollBody();
 }
 function cerrarCampeonModal(){
   var modal=document.getElementById('tintCampeonModal');
   if(modal)modal.classList.remove('activo');
-  document.body.style.overflow='';
+  restaurarScrollBody();
 }
 
 // Fase 6: Actualiza los meta og:title / og:description en caliente segun
@@ -5468,8 +5545,8 @@ function changeQty(id,delta){
   updateFab();rCartModal();
 }
 
-function openCart(){rCartModal();document.getElementById("mo").classList.add("open");document.body.style.overflow="hidden";}
-function closeCart(){document.getElementById("mo").classList.remove("open");document.body.style.overflow="";}
+function openCart(){rCartModal();document.getElementById("mo").classList.add("open");bloquearScrollBody();}
+function closeCart(){document.getElementById("mo").classList.remove("open");restaurarScrollBody();}
 function closeCartOutside(e){if(e.target===document.getElementById("mo"))closeCart();}
 
 function rCartModal(){
