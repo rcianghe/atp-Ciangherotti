@@ -2859,7 +2859,18 @@ function rTintEstadoYCampeon(tipo,t){
 // visitante toca varias veces seguido antes de que termine la
 // animacion anterior, se reinicia limpio (se saca y se vuelve a poner
 // la clase, forzando un reflow entremedio) en vez de acumularse.
+// campeonModalPendiente evita que un doble toque (o un toque repetido
+// mientras la caja todavia esta con la animacion .pop3d en curso)
+// dispare dos aperturas seguidas del modal. Sin este resguardo, cada
+// apertura suma un bloqueo de scroll (bloquearScrollBody) pero el
+// visitante solo cierra el modal una vez -> el contador de bloqueos
+// quedaba en 1 en vez de 0 y el scroll de fondo se quedaba pegado para
+// siempre. Es la causa exacta del "se pega y no deja subir ni bajar"
+// reportado.
+var campeonModalPendiente=false;
 function tocarCampeonBox(el,tipo){
+  if(campeonModalPendiente)return;
+  campeonModalPendiente=true;
   if(el){
     el.classList.remove('pop3d');
     void el.offsetWidth;
@@ -2867,9 +2878,11 @@ function tocarCampeonBox(el,tipo){
     setTimeout(function(){
       el.classList.remove('pop3d');
       abrirCampeonModal(tipo);
+      campeonModalPendiente=false;
     },230);
   }else{
     abrirCampeonModal(tipo);
+    campeonModalPendiente=false;
   }
 }
 function abrirCampeonModal(tipo){
@@ -2878,6 +2891,7 @@ function abrirCampeonModal(tipo){
   var modal=document.getElementById('tintCampeonModal');
   var card=document.getElementById('tintCampeonModalCard');
   if(!modal||!card)return;
+  if(modal.classList.contains('activo'))return; // ya esta abierto: no volver a bloquear el scroll encima
   card.style.setProperty('--serie-color',colorDeTorneo(t));
   var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo">';
   var etiquetaModal=esc(etiquetaTorneo(t));
@@ -2893,7 +2907,8 @@ function abrirCampeonModal(tipo){
 }
 function cerrarCampeonModal(){
   var modal=document.getElementById('tintCampeonModal');
-  if(modal)modal.classList.remove('activo');
+  if(!modal||!modal.classList.contains('activo'))return; // ya estaba cerrado: no descontar el contador de bloqueo de nuevo
+  modal.classList.remove('activo');
   restaurarScrollBody();
 }
 
@@ -5545,8 +5560,8 @@ function changeQty(id,delta){
   updateFab();rCartModal();
 }
 
-function openCart(){rCartModal();document.getElementById("mo").classList.add("open");bloquearScrollBody();}
-function closeCart(){document.getElementById("mo").classList.remove("open");restaurarScrollBody();}
+function openCart(){var mo=document.getElementById("mo");if(mo.classList.contains("open"))return;rCartModal();mo.classList.add("open");bloquearScrollBody();}
+function closeCart(){var mo=document.getElementById("mo");if(!mo||!mo.classList.contains("open"))return;mo.classList.remove("open");restaurarScrollBody();}
 function closeCartOutside(e){if(e.target===document.getElementById("mo"))closeCart();}
 
 function rCartModal(){
