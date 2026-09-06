@@ -25,7 +25,7 @@
  *
  * Alineado 1:1 con el schema real de Supabase (proyecto Club Tenis App):
  *   resultados.estado_partido / torneo_partidos.estado_partido
- *     CHECK IN ('programado','en_juego','finalizado','w_o','retirado','cancelado','suspendido')
+ *     CHECK IN ('programado','en_juego','finalizado','w_o','doble_w_o','retirado','cancelado','suspendido')
  *   jugadores.avatar_url, jugadores.pais, jugadores.bandera_iso (CHECK ^[A-Z]{2}$)
  *   clubes.tema jsonb {primario, primario_oscuro, primario_claro, acento}, logo_url
  *
@@ -49,7 +49,7 @@
  *   estado, ganadorId (uuid o null),
  *   jugador1, jugador2: {id,nombre,avatarUrl,banderaIso,pais} o null,
  *   set1,set2,set3 (o) score:"6-4 3-6 10-8" como respaldo,
- *   tipo ('Normal'|'W.O.'), fecha, hora, cancha, serie, torneoNombre,
+ *   tipo ('Normal'|'W.O.'|'Doble W.O.'), fecha, hora, cancha, serie, torneoNombre,
  *   esBye, esMejorPerdedor, ronda (solo torneo_partidos)
  * }
  * opts = { idioma:'es'|'en'|'it', compact:bool, mostrarTorneo:bool,
@@ -64,21 +64,21 @@
 var MRC_I18N = {
   es: {
     'match.scheduled':'Programado', 'match.live':'En juego', 'match.finished':'Finalizado',
-    'match.walkover':'W.O.', 'match.retired':'Retirado', 'match.cancelled':'Cancelado',
+    'match.walkover':'W.O.', 'match.doubleWalkover':'Doble W.O.', 'match.retired':'Retirado', 'match.cancelled':'Cancelado',
     'match.suspended':'Suspendido', 'match.winner':'Ganador', 'match.vs':'Por definir',
     'match.tbd':'Por definir', 'match.retiredPlayer':'{jugador} se retir\u00f3',
     'match.court':'Cancha {n}'
   },
   en: {
     'match.scheduled':'Scheduled', 'match.live':'Live', 'match.finished':'Finished',
-    'match.walkover':'W.O.', 'match.retired':'Retired', 'match.cancelled':'Cancelled',
+    'match.walkover':'W.O.', 'match.doubleWalkover':'Double W.O.', 'match.retired':'Retired', 'match.cancelled':'Cancelled',
     'match.suspended':'Suspended', 'match.winner':'Winner', 'match.vs':'TBD',
     'match.tbd':'TBD', 'match.retiredPlayer':'{jugador} retired',
     'match.court':'Court {n}'
   },
   it: {
     'match.scheduled':'Programmato', 'match.live':'In corso', 'match.finished':'Finito',
-    'match.walkover':'W.O.', 'match.retired':'Ritirato', 'match.cancelled':'Annullato',
+    'match.walkover':'W.O.', 'match.doubleWalkover':'Doppio W.O.', 'match.retired':'Ritirato', 'match.cancelled':'Annullato',
     'match.suspended':'Sospeso', 'match.winner':'Vincitore', 'match.vs':'Da definire',
     'match.tbd':'Da definire', 'match.retiredPlayer':'{jugador} si \u00e8 ritirato',
     'match.court':'Campo {n}'
@@ -96,6 +96,7 @@ var MRC_ESTADOS = {
   en_juego:   { claveI18n:'match.live',      color:'var(--mrc-ro,#C0392B)', icono:'\ud83d\udd34' },
   finalizado: { claveI18n:'match.finished',  color:'var(--mrc-v,#5BBF2A)',  icono:'\u2705' },
   w_o:        { claveI18n:'match.walkover',  color:'var(--mrc-am,#D4E60A)', icono:'\u26a0\ufe0f' },
+  doble_w_o:  { claveI18n:'match.doubleWalkover', color:'var(--mrc-ro,#C0392B)', icono:'\ud83d\udeab' },
   retirado:   { claveI18n:'match.retired',   color:'var(--mrc-am,#D4E60A)', icono:'\ud83e\ude79' },
   cancelado:  { claveI18n:'match.cancelled', color:'var(--mrc-gl,#9a9a9a)', icono:'\ud83d\udeab' },
   suspendido: { claveI18n:'match.suspended', color:'var(--mrc-gl,#9a9a9a)', icono:'\u23f8\ufe0f' }
@@ -225,6 +226,8 @@ function renderMatchResultCard(match, opts){
   var estado = match.estado || (match.ganadorId ? 'finalizado' : 'programado');
   var esWO = match.tipo === 'W.O.' || estado === 'w_o';
   if(esWO) estado = 'w_o';
+  var esDobleWO = match.tipo === 'Doble W.O.' || estado === 'doble_w_o';
+  if(esDobleWO) estado = 'doble_w_o';
   var estadoInfo = MRC_ESTADOS[estado] || MRC_ESTADOS.programado;
   var estadoLabel = mrcT(estadoInfo.claveI18n, idioma);
 
@@ -259,6 +262,8 @@ function renderMatchResultCard(match, opts){
     centroH = '<div class="mrc-centro mrc-centro-txt">\u2014</div>';
   } else if(esWO){
     centroH = '<div class="mrc-centro mrc-centro-sets">W.O.</div>';
+  } else if(esDobleWO){
+    centroH = '<div class="mrc-centro mrc-centro-txt" style="color:var(--mrc-ro,#C0392B)">'+mrcEsc(mrcT('match.doubleWalkover',idioma))+'</div>';
   } else {
     centroH = '<div class="mrc-centro mrc-centro-sets">'+calc.setsJ1+'\u2013'+calc.setsJ2+'</div>';
   }
@@ -365,7 +370,7 @@ function ensureMatchResultCardStyles(){
     + '.mrc-setchip.win1,.mrc-setchip.win2{color:var(--mrc-bl);background:color-mix(in srgb,var(--mrc-primary) 22%,transparent)}'
     + '.mrc-nota{margin-top:.4rem;text-align:center;font-size:.72rem;font-style:italic;color:var(--mrc-am)}'
     + '.mrc-meta{margin-top:.5rem;text-align:center;font-size:.68rem;color:var(--mrc-gl)}'
-    + '.mrc-cancelado,.mrc-suspendido{opacity:.75}'
+    + '.mrc-cancelado,.mrc-suspendido,.mrc-doble_w_o{opacity:.85}'
     + '.mrc-compact{padding:.65rem .75rem}'
     + '.mrc-compact .mrc-avatar,.mrc-compact .mrc-avatar-i{width:28px;height:28px}';
   var styleEl = document.createElement('style');
