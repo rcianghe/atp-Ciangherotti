@@ -3237,6 +3237,7 @@ function startLiveRefresh(){
       });
       cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
       cargarConfigClubSupabase();
+      cargarAfichePortadaSupabase();
     }
   },LIVE_REFRESH_MS);
   document.addEventListener('visibilitychange',function(){
@@ -3250,6 +3251,7 @@ function startLiveRefresh(){
       });
       cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
       cargarConfigClubSupabase();
+      cargarAfichePortadaSupabase();
     }
   });
 }
@@ -3319,6 +3321,7 @@ function init(){
     });
   });
   cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
+  cargarAfichePortadaSupabase();
   startLiveRefresh();
   iniciarRealtime();
   initVisitas();
@@ -3906,10 +3909,21 @@ function normalizarMediaUrl(u){
   var id=extraerDriveId(u);
   return id?('https://drive.google.com/uc?export=view&id='+id):u;
 }
+var AFICHE_PORTADA_ACTUAL=null;
+async function cargarAfichePortadaSupabase(){
+  if(!window.supabaseClient)return;
+  try{
+    var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('club_id',CLUB_ACTUAL_ID).eq('clave','afiche_portada').maybeSingle();
+    AFICHE_PORTADA_ACTUAL=(!res.error&&res.data&&res.data.valor&&res.data.valor.url)?res.data.valor:null;
+    conScrollPreservado(function(){rAfichesGrandes();});
+  }catch(err){console.warn('Sin conexion al cargar el afiche de portada.',err);}
+}
 function poolAfiches(){
-  return (DATA.desafios||[]).filter(function(d){return d.afiche;}).map(function(d){
+  var manual=AFICHE_PORTADA_ACTUAL?[{url:AFICHE_PORTADA_ACTUAL.url,titulo:AFICHE_PORTADA_ACTUAL.titulo||'Afiche del club',sub:''}]:[];
+  var deDesafios=(DATA.desafios||[]).filter(function(d){return d.afiche;}).map(function(d){
     return {url:d.afiche,titulo:d.de+' vs '+d.para,sub:[fmtDesafioDia?fmtDesafioDia(d.dia):d.dia,d.cancha?('Cancha '+d.cancha):''].filter(Boolean).join(' · ')};
   });
+  return manual.concat(deDesafios);
 }
 function poolResultados(){
   var deDesafios=(DATA.desafios||[]).filter(function(d){return d.afiche_resultado;}).map(function(d){
