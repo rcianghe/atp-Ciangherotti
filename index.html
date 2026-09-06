@@ -2857,17 +2857,57 @@ function tintSlotHtml(nombre,esGanador,score,tbd){
   return '<div class="tint-slot'+(esGanador?' win':'')+'"><span class="nm">'+esc(nombre)+'</span>'+(score?'<span class="sc">'+esc(score)+'</span>':'')+'</div>';
 }
 
+// ============================================================
+// NOMBRES DE RONDA POR DISTANCIA A LA FINAL (Final, Semifinal, Cuartos...)
+// ============================================================
+// Antes cada ronda se nombraba por su posicion absoluta desde el inicio
+// del cuadro (indice fijo: "posicion 4 siempre se llama Semifinal"), lo
+// que rompia en cuadros con muchos jugadores (Serie C, o el Abierto que
+// junta A+B+C): con 6+ rondas, la ronda en el indice 4 caia en "Final"
+// del arreglo aunque todavia tuviera varios partidos, Y la ronda REAL
+// final (la ultima, con un solo partido) tambien se llamaba "Final" --
+// dos rondas distintas mostrando el mismo nombre, que es justo el bug
+// reportado.
+//
+// La forma correcta es nombrar cada ronda por su DISTANCIA HACIA ATRAS
+// desde la final (0 = Final, 1 = Semifinal, 2 = Cuartos, etc), sin
+// importar cuantas rondas haya al principio. Para saber esa distancia
+// incluso ANTES de que se hayan generado todas las rondas (el cuadro se
+// arma ronda por ronda desde el panel admin), se proyecta hacia adelante
+// cuantas rondas totales va a tener el cuadro completo a partir de la
+// cantidad de partidos de la Ronda 1: cada partido/bye de una ronda
+// entrega exactamente 1 ganador que avanza, y la siguiente ronda tiene
+// ceil(avanzan/2) partidos (mismo criterio que usa avanzarRonda() en el
+// panel admin al sumar un "mejor perdedor" cuando la cantidad es impar).
+function proyectarTotalRondas(rondas){
+  if(!rondas||!rondas.length)return 0;
+  var avanzan=rondas[0].length;
+  var total=1;
+  while(avanzan>1){avanzan=Math.ceil(avanzan/2);total++;}
+  return total;
+}
+var NOMBRES_RONDA_DESDE_FINAL=['Final','Semifinal','Cuartos de Final','Octavos de Final','Dieciseisavos de Final','Treintaidosavos de Final'];
+function nombreDeRonda(ri,totalRondasProyectado){
+  var distancia=totalRondasProyectado-1-ri;
+  if(distancia>=0&&distancia<NOMBRES_RONDA_DESDE_FINAL.length)return NOMBRES_RONDA_DESDE_FINAL[distancia];
+  return 'Ronda '+(ri+1);
+}
+
 var tintRondaPorTipo={interno:0,abierto:0};
 function rTintBracket(tipo,t){
   var el=document.getElementById('tintBracket'+sufijoTipo(tipo));
   if(!el)return;
-  var nombresRonda=['Primera ronda','Segunda ronda','Tercera ronda','Semifinal','Final'];
   var totalRondas=t.rondas.length;
   if(!totalRondas){
     el.innerHTML='<div class="tint-vacio">El cuadro todav\u00eda no se ha armado.</div>';
     var navVacio=document.getElementById('tintRondaNav'+sufijoTipo(tipo));if(navVacio)navVacio.style.display='none';
     return;
   }
+  // Total de rondas que tendra el cuadro COMPLETO (aunque todavia no esten
+  // todas generadas), para nombrar cada ronda por su distancia real a la
+  // Final en vez de por su posicion desde el inicio. Math.max cubre el
+  // caso raro de que ya existan mas rondas cargadas que las proyectadas.
+  var totalRondasProyectado=Math.max(proyectarTotalRondas(t.rondas),totalRondas);
   // Misma tarjeta de resultado que ya se usa en el panel de administracion
   // (match-result-card.js / renderMatchResultCard), asi el cuadro publico
   // se ve identico a lo que ya se veia en el admin en vez de la fila de
@@ -2884,8 +2924,8 @@ function rTintBracket(tipo,t){
 
   var h='';
   t.rondas.forEach(function(matches,ri){
-    var esFinal=(matches.length===1&&ri===totalRondas-1);
-    var titulo=esFinal?'Final':(nombresRonda[ri]||('Ronda '+(ri+1)));
+    var esFinal=(ri===totalRondasProyectado-1);
+    var titulo=nombreDeRonda(ri,totalRondasProyectado);
     h+='<div class="tint-ronda" data-ri="'+ri+'"><div class="tint-rondatit">'+esc(titulo)+'</div><div class="tint-ronda-matches">';
     matches.forEach(function(m){
       if(m.bye){
