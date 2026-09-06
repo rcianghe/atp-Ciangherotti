@@ -5514,18 +5514,43 @@ function sendWA(){
   window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
+// === Resaltado del menu segun seccion visible (scroll-spy) ===
+// Antes esto se recalculaba en CADA evento de "scroll" (docenas por
+// segundo durante un gesto de scroll en celular) leyendo offsetTop y
+// offsetHeight de las 10 secciones -- ambas lecturas fuerzan al navegador
+// a recalcular el layout de toda la pagina de forma sincronica (layout
+// thrashing), en cada uno de esos eventos. Con secciones cada vez mas
+// pesadas (el cuadro del Torneo Abierto, con muchas tarjetas de partido)
+// ese costo se volvio lo bastante alto como para trabar/entrecortar el
+// scroll tanto en celular como en escritorio.
+// IntersectionObserver hace el mismo trabajo (saber que seccion esta a
+// la vista) pero de forma nativa y asincrona: el navegador avisa solo
+// cuando una seccion entra o sale de la franja observada, sin forzar
+// layout en cada pixel de scroll. rootMargin recorta esa franja para que
+// quede angosta cerca del tope de la pantalla (compensando la altura del
+// header fijo), imitando el mismo criterio de "seccion actual" que el
+// calculo anterior por scrollY, pero sin el costo.
 var SECS=["hero","ranking","afiches","resultados","perfil","estadisticas","torneo-interno","torneo-abierto","galeria","tienda"];
-window.addEventListener("scroll",function(){
-  var sy=window.scrollY||window.pageYOffset;
+var navLinksPorSeccion={};
+SECS.forEach(function(id){
+  navLinksPorSeccion[id]=document.querySelectorAll('nav a[href="#'+id+'"],.mni[href="#'+id+'"]');
+});
+function marcarSeccionActiva(id){
+  var todos=document.querySelectorAll('nav a,.mni');
+  for(var i=0;i<todos.length;i++)todos[i].classList.remove('active');
+  var activos=navLinksPorSeccion[id]||[];
+  for(var i=0;i<activos.length;i++)activos[i].classList.add('active');
+}
+var seccionActivaObs=new IntersectionObserver(function(entries){
+  var visibles={};
+  entries.forEach(function(e){if(e.isIntersecting)visibles[e.target.id]=true;});
   for(var i=0;i<SECS.length;i++){
-    var el=document.getElementById(SECS[i]);if(!el)continue;
-    if(sy>=el.offsetTop-80&&sy<el.offsetTop+el.offsetHeight-80){
-      var nl=document.querySelectorAll("nav a,.mni");
-      for(var j=0;j<nl.length;j++)nl[j].classList.remove("active");
-      var al=document.querySelectorAll("nav a[href=\"#"+SECS[i]+"\"],.mni[href=\"#"+SECS[i]+"\"]");
-      for(var j=0;j<al.length;j++)al[j].classList.add("active");
-    }
+    if(visibles[SECS[i]]){marcarSeccionActiva(SECS[i]);break;}
   }
+},{rootMargin:'-80px 0px -70% 0px',threshold:0});
+SECS.forEach(function(id){
+  var el=document.getElementById(id);
+  if(el)seccionActivaObs.observe(el);
 });
 
 init();
