@@ -618,6 +618,49 @@ async function deshacerResultado(partidoId){
   setMsg('ok','Resultado deshecho.');
 }
 
+// Convierte un bye ("pasa directo") en un partido real: se usa para
+// integrar a un jugador nuevo (o un invitado de la escuelita) que llega
+// despues de armado el cuadro, aprovechando uno de los cupos vacios que
+// deja la siembra ATP en vez de tener que rehacer el cuadro entero.
+async function agregarJugadorABye(partidoId){
+  var sel=document.getElementById('nuevoJugadorBye-'+partidoId);
+  var jugadorId=sel?sel.value:'';
+  if(!jugadorId){setMsg('err','Selecciona un jugador para completar este cupo.');return;}
+  guardando=true;render();
+  var res=await window.supabaseClient.from('torneo_partidos').update({
+    jugador2_id:jugadorId,es_bye:false,ganador_id:null
+  }).eq('id',partidoId).select().maybeSingle();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo agregar el jugador: '+res.error.message);return;}
+  // Trazabilidad en torneo_participantes (best-effort, no bloquea el flujo).
+  window.supabaseClient.from('torneo_participantes').insert({torneo_id:torneoAbierto.id,jugador_id:jugadorId,club_id:clubActual})
+    .then(function(r){if(r.error)console.warn('No se pudo registrar torneo_participantes.',r.error);});
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Jugador agregado: el bye se convirtio en partido real.');
+}
+
+// Cambia manualmente al jugador de un slot (jugador1 o jugador2) de un
+// partido ya emparejado -- por ejemplo si alguien se baja del torneo y
+// entra un reemplazo, o si el cruce se cargo mal. Si el partido ya
+// tenia un resultado cargado, se borra: el marcador/ganador ya no tiene
+// sentido con otro jugador en la cancha.
+async function cambiarJugadorPartido(partidoId,campo){
+  var sel=document.getElementById('cambiar'+(campo==='jugador1'?'Jugador1':'Jugador2')+'-'+partidoId);
+  var nuevoId=sel?sel.value:'';
+  if(!nuevoId){setMsg('err','Selecciona el jugador de reemplazo.');return;}
+  guardando=true;render();
+  var patch={};
+  patch[campo+'_id']=nuevoId;
+  patch.ganador_id=null;patch.set1=null;patch.set2=null;patch.set3=null;patch.tipo=null;
+  var res=await window.supabaseClient.from('torneo_partidos').update(patch).eq('id',partidoId).select().maybeSingle();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo cambiar el jugador: '+res.error.message);return;}
+  window.supabaseClient.from('torneo_participantes').insert({torneo_id:torneoAbierto.id,jugador_id:nuevoId,club_id:clubActual})
+    .then(function(r){if(r.error)console.warn('No se pudo registrar torneo_participantes.',r.error);});
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Jugador reemplazado. Si el partido ya tenia resultado cargado, se borro para volver a registrarlo.');
+}
+
 // Marca un partido SIN resultado (todavia sin ganador) como en juego,
 // cancelado o suspendido -- puramente informativo/visual para la
 // MatchResultCard, no toca el avance del cuadro ni registra un ganador.
@@ -940,7 +983,7 @@ function renderBracketAdmin(){
   var rMax=rondaMaxima();
   for(var r=1;r<=rMax;r++){
     var esUltima=(r===rMax);
-    h+='<div class="ronda-tit">'+(esUltima?'Ultima ronda cargada':'Ronda '+r)+'</div>';
+    h+='<div class="ronda-tit">'+((esUltima&&rMax>1)?'Ultima ronda cargada':'Ronda '+r)+'</div>';
     partidosDeRonda(r).forEach(function(p){
       h+=renderMatchAdmin(p,esUltima&&partidosDeRonda(r).length===1);
     });
@@ -957,12 +1000,41 @@ function renderBracketAdmin(){
   return h;
 }
 
+// Lista de jugadores que todavia no estan en el torneo (ni jugando ni
+// con bye), para ofrecerlos como reemplazo/incorporacion. Se reusa tanto
+// para completar un bye como para cambiar manualmente a un jugador de
+// un partido ya emparejado.
+function opcionesJugadoresDisponibles(excluirIds){
+  var yaEnTorneo={};
+  partidos.forEach(function(pp){if(pp.jugador1_id)yaEnTorneo[pp.jugador1_id]=true;if(pp.jugador2_id)yaEnTorneo[pp.jugador2_id]=true;});
+  (excluirIds||[]).forEach(function(id){delete yaEnTorneo[id];}); // el jugador actual del slot SI puede volver a elegirse a si mismo? no tiene sentido, se deja afuera
+  var disponibles=(vistaPlataforma?jugadoresTodos:jugadoresClub).filter(function(j){return !yaEnTorneo[j.id];});
+  var opts='';
+  disponibles.forEach(function(j){opts+='<option value="'+esc(j.id)+'">'+esc(j.nombre)+(j.es_invitado?' (Escuelita)':'')+'</option>';});
+  return {opts:opts,cantidad:disponibles.length};
+}
+
 function renderMatchAdmin(p,esFinal){
   var cls='match'+(esFinal?' final':'');
   var h='<div class="'+cls+'">';
   if(p.es_mejor_perdedor)h+='<span class="mp-badge">Mejor perdedor</span>';
   if(p.es_bye){
     h+='<div class="mplayers"><span class="win">'+esc(nombreDe(p.jugador1_id))+'</span><span class="bye-tag">Bye</span></div>';
+    // Un jugador nuevo (o un invitado de la escuelita que se sumo tarde)
+    // se integra rellenando un cupo de bye vacio: se convierte ese "pasa
+    // directo" en un partido real. Solo se permite mientras esta ronda
+    // siga siendo la ultima cargada -- si ya se avanzo a la ronda
+    // siguiente, el ganador de este bye ya pudo haberse usado alla, y
+    // tocarlo ahora dejaria el cuadro inconsistente.
+    if(p.ronda===rondaMaxima()){
+      var disp=opcionesJugadoresDisponibles();
+      if(disp.cantidad){
+        h+='<div class="row" style="margin-top:.5rem;gap:.4rem;flex-wrap:wrap">'
+          +'<select id="nuevoJugadorBye-'+p.id+'" style="flex:1;min-width:160px"><option value="">+ Agregar jugador a este cupo...</option>'+disp.opts+'</select>'
+          +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="agregarJugadorABye(\''+jsAttr(p.id)+'\')">Agregar</button>'
+          +'</div>';
+      }
+    }
     h+='</div>';
     return h;
   }
@@ -985,6 +1057,30 @@ function renderMatchAdmin(p,esFinal){
     h+='<div class="mplayers"><span class="'+(p.ganador_id===j1?'win':'')+'">'+esc(nombreDe(j1))+'</span>'
       +'<span style="color:var(--gl);font-size:.72rem">vs</span>'
       +'<span class="'+(p.ganador_id===j2?'win':'')+'">'+esc(nombreDe(j2))+'</span></div>';
+  }
+
+  // Cambio manual de jugador: cubre el caso de que alguien se baje del
+  // torneo y entre un reemplazo, o simplemente se cargo mal el cruce.
+  // Solo mientras esta siga siendo la ultima ronda cargada, por el mismo
+  // motivo que el bye: si ya se avanzo de ronda, el ganador de ESTE
+  // partido ya pudo haberse usado alla y tocarlo ahora rompe el cuadro.
+  if(p.ronda===rondaMaxima()){
+    var dispCambio=opcionesJugadoresDisponibles();
+    if(dispCambio.cantidad){
+      h+='<div class="cambiojugador" style="margin:.6rem 0;padding-top:.55rem;border-top:1px dashed rgba(255,255,255,.12)">'
+        +'<div class="sub" style="margin-bottom:.4rem">Cambiar un jugador manualmente (ej: se bajo del torneo, entra un reemplazo):</div>'
+        +'<div class="row" style="gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:.4rem">'
+          +'<span class="sub" style="margin:0;flex-basis:100%">'+esc(nombreDe(j1))+' &rarr;</span>'
+          +'<select id="cambiarJugador1-'+p.id+'" style="flex:1;min-width:140px"><option value="">Elegir reemplazo...</option>'+dispCambio.opts+'</select>'
+          +'<button class="btn ro" '+(guardando?'disabled':'')+' onclick="cambiarJugadorPartido(\''+jsAttr(p.id)+'\',\'jugador1\')">Cambiar</button>'
+        +'</div>'
+        +'<div class="row" style="gap:.4rem;flex-wrap:wrap;align-items:center">'
+          +'<span class="sub" style="margin:0;flex-basis:100%">'+esc(nombreDe(j2))+' &rarr;</span>'
+          +'<select id="cambiarJugador2-'+p.id+'" style="flex:1;min-width:140px"><option value="">Elegir reemplazo...</option>'+dispCambio.opts+'</select>'
+          +'<button class="btn ro" '+(guardando?'disabled':'')+' onclick="cambiarJugadorPartido(\''+jsAttr(p.id)+'\',\'jugador2\')">Cambiar</button>'
+        +'</div>'
+      +'</div>';
+    }
   }
 
   if(p.ganador_id){
