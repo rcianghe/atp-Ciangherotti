@@ -594,7 +594,7 @@ const ENTITIES = {
       {key:'j1',label:'Jugador 1',render:v=>v?.nombre||'—'},
       {key:'j2',label:'Jugador 2',render:v=>v?.nombre||'—'},
       {key:'sets',label:'Sets',render:(v,r)=>renderSets(r)},
-      {key:'g',label:'Ganador',render:(v,r)=>v?`<b>${v.nombre}</b>`:(r.tipo==='Doble W.O.'?'<span class="hint">— (doble W.O.)</span>':'—')},
+      {key:'g',label:'Ganador',render:v=>v?`<b>${v.nombre}</b>`:'—'},
       {key:'estado_partido',label:'Estado',render:v=>badgeEstadoPartido(v)},
       {key:'_tarjeta',label:'',render:(v,r)=>`<button class="subtle-link" onclick="previewMatchCard('resultados','${r.id}')">Ver tarjeta →</button>`},
     ],
@@ -606,9 +606,9 @@ const ENTITIES = {
       {key:'set1',label:'Set 1 (ej. 6-4)',type:'text'},
       {key:'set2',label:'Set 2',type:'text'},
       {key:'set3',label:'Set 3 / super tie-break',type:'text'},
-      {key:'ganador_id',label:'Ganador (dejar en "ninguno" si es Doble W.O.)',type:'fk',lookup:'jugadores'},
-      {key:'tipo',label:'Tipo',type:'select',options:['Normal','W.O.','Doble W.O.']},
-      {key:'estado_partido',label:'Estado del partido',type:'select',options:['programado','en_juego','finalizado','w_o','doble_w_o','retirado','cancelado','suspendido'],default:'finalizado'},
+      {key:'ganador_id',label:'Ganador',type:'fk',lookup:'jugadores',required:true},
+      {key:'tipo',label:'Tipo',type:'select',options:['Normal','W.O.']},
+      {key:'estado_partido',label:'Estado del partido',type:'select',options:['programado','en_juego','finalizado','w_o','retirado','cancelado','suspendido'],default:'finalizado'},
       {key:'fecha',label:'Fecha',type:'date'},
       {key:'hora',label:'Hora',type:'text'},
       {key:'cancha',label:'Cancha',type:'text'},
@@ -919,11 +919,11 @@ function bracketRowActions(r){
    ========================================================================= */
 const ESTADO_PARTIDO_LABELS = {
   programado:'Programado', en_juego:'En juego', finalizado:'Finalizado',
-  w_o:'W.O.', doble_w_o:'Doble W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido'
+  w_o:'W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido'
 };
 function badgeEstadoPartido(v){
   const estado = v || 'programado';
-  const map = {programado:'badge-gray',en_juego:'badge-warn',finalizado:'badge-green',w_o:'badge-clay',doble_w_o:'badge-red',retirado:'badge-clay',cancelado:'badge-red',suspendido:'badge-red'};
+  const map = {programado:'badge-gray',en_juego:'badge-warn',finalizado:'badge-green',w_o:'badge-clay',retirado:'badge-clay',cancelado:'badge-red',suspendido:'badge-red'};
   return `<span class="badge ${map[estado]||'badge-gray'}">${ESTADO_PARTIDO_LABELS[estado]||estado}</span>`;
 }
 
@@ -1692,6 +1692,17 @@ async function showEntity(key, opts={}){
   document.getElementById('topbarActions').innerHTML = e.noCreate? '' :
     `<button class="btn btn-primary" onclick="openCreate()">+ Nuevo</button>`;
 
+  // Un solo <select id="filterSelect">, con las opciones que correspondan
+  // segun venga de una lista fija (filterOptions) o de una tabla
+  // relacionada (filterLookup) -- son mutuamente excluyentes en la config
+  // de cada entidad, pero se arma una sola vez para no repetir el mismo
+  // id en dos ramas del template.
+  const filterSelectHtml = e.filterOptions
+    ? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">${e.filterField==='estado'?'Todos los estados':'Todos'}</option>${e.filterOptions.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`
+    : e.filterLookup
+      ? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">Todos los torneos</option>${lookups[e.filterLookup].map(o=>`<option value="${o.id}" ${opts.filterValue===o.id?'selected':''}>${o.label}</option>`).join('')}</select>`
+      : '';
+
   const content = document.getElementById('content');
   content.innerHTML = `
     ${key==='push_tokens' ? '<div class="advisory">⚠️ Esta tabla no tiene Row Level Security activada — cualquiera con la clave anónima puede leerla o modificarla. Revisa la nota de seguridad al final de este chat para el SQL de corrección.</div>' : ''}
@@ -1699,8 +1710,7 @@ async function showEntity(key, opts={}){
       <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
         <div class="table-toolbar" style="margin:0;">
           ${e.searchCols?.length? `<div class="search-box"><input id="searchInput" placeholder="Buscar…" oninput="onSearchInput(this.value)"></div>`:''}
-          ${e.filterOptions? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">${e.filterField==='estado'?'Todos los estados':'Todos'}</option>${e.filterOptions.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`:''}
-          ${e.filterLookup? `<select id="filterSelect" onchange="onFilterChange(this.value)"><option value="">Todos los torneos</option>${lookups[e.filterLookup].map(o=>`<option value="${o.id}" ${opts.filterValue===o.id?'selected':''}>${o.label}</option>`).join('')}</select>`:''}
+          ${filterSelectHtml}
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -1851,22 +1861,6 @@ async function saveRecord(){
     else { payload[f.key] = el.value===''? null : el.value; }
     if(f.required && (payload[f.key]===null || payload[f.key]==='')){
       toast(`El campo "${f.label}" es obligatorio.`, true); return;
-    }
-  }
-  if(currentEntity==='resultados'){
-    if(payload.tipo==='Doble W.O.'){
-      if(payload.ganador_id){
-        toast('Si el Tipo es "Doble W.O." no puede haber Ganador: ninguno de los dos se presentó. Deja ese campo en "(ninguno)".', true); return;
-      }
-      // Doble W.O. siempre cuenta como resultado ya jugado (0 pts y una
-      // derrota para ambos, ver calcularRanking en index.html), asi que
-      // se marca el estado del partido acorde salvo que ya se haya
-      // elegido otro a proposito (ej. "cancelado").
-      if(!payload.estado_partido || payload.estado_partido==='programado' || payload.estado_partido==='finalizado'){
-        payload.estado_partido = 'doble_w_o';
-      }
-    } else if(!payload.ganador_id){
-      toast('El campo "Ganador" es obligatorio salvo que el Tipo sea "Doble W.O.".', true); return;
     }
   }
   const btn = document.getElementById('modalSaveBtn');
