@@ -722,20 +722,23 @@ span.diachip{cursor:default;display:inline-block}
   50%{text-shadow:0 0 12px color-mix(in srgb,var(--serie-color) 95%,transparent),0 0 28px color-mix(in srgb,var(--serie-color) 60%,transparent),0 0 42px color-mix(in srgb,var(--serie-color) 30%,transparent)}
 }
 .tint-vacio{text-align:center;color:var(--gl);font-size:.85rem;padding:2rem 1rem;font-style:italic}
-#tintCampeon,#tintCampeonAbierto{perspective:900px}
-.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transform-style:preserve-3d;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
+.tint-campeon{max-width:420px;margin:0 auto 2rem;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 16%,transparent),color-mix(in srgb,var(--serie-color) 8%,transparent));border:1.5px solid color-mix(in srgb,var(--serie-color) 55%,transparent);border-radius:14px;padding:1.1rem 1.3rem;text-align:center;box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent);cursor:pointer;transition:transform .15s ease,border-color .3s ease,box-shadow .3s ease}
 .tint-campeon:hover{transform:translateY(-2px)}
 .tint-campeon:active{transform:scale(.97)}
 /* Efecto "sale hacia adelante": al tocar/hacer click en la caja del
    trofeo, se dispara esta animacion antes de abrir el modal grande (ver
    tocarCampeonBox() en JS). translateZ + rotateX simulan la caja
-   despegandose de la pantalla hacia el usuario, apoyado por la
-   perspective del contenedor padre (#tintCampeon/#tintCampeonAbierto) y
-   una sombra que crece para reforzar la sensacion de profundidad. */
+   despegandose de la pantalla hacia el usuario. La perspectiva va
+   incluida en la propia funcion transform (perspective(...)) en vez de
+   como propiedad CSS aparte en el contenedor padre, para que este
+   efecto sea puramente visual y no cambie el modelo de posicionamiento
+   de ningun otro elemento de la pagina (una propiedad "perspective" en
+   un contenedor afecta cómo se posicionan sus descendientes con
+   position:fixed, asi que se evita a proposito). */
 @keyframes tintCampeonPop3D{
-  0%{transform:translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
-  45%{transform:translateZ(46px) scale(1.08) rotateX(-6deg);box-shadow:0 34px 46px -18px rgba(0,0,0,.55),0 0 34px color-mix(in srgb,var(--serie-color) 45%,transparent)}
-  100%{transform:translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
+  0%{transform:perspective(900px) translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
+  45%{transform:perspective(900px) translateZ(46px) scale(1.08) rotateX(-6deg);box-shadow:0 34px 46px -18px rgba(0,0,0,.55),0 0 34px color-mix(in srgb,var(--serie-color) 45%,transparent)}
+  100%{transform:perspective(900px) translateZ(0) scale(1) rotateX(0deg);box-shadow:0 0 24px color-mix(in srgb,var(--serie-color) 25%,transparent)}
 }
 .tint-campeon.pop3d{animation:tintCampeonPop3D .42s cubic-bezier(.34,1.56,.64,1)}
 @media(prefers-reduced-motion:reduce){.tint-campeon.pop3d{animation:none}}
@@ -1487,23 +1490,22 @@ var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i]
 // actual como "top" negativo, y agregando ese mismo padding-right que
 // media la barra de scroll para que el ancho no salte) resuelve ambos
 // casos a la vez y es la que se usa en la mayoria de librerias de UI.
-var SCROLL_LOCK_Y=0, scrollLockCount=0;
+var SCROLL_LOCK_Y=0, bodyScrollLocked=false;
 function bloquearScrollBody(){
-  if(scrollLockCount===0){
-    SCROLL_LOCK_Y=window.scrollY||window.pageYOffset||0;
-    var anchoBarra=window.innerWidth-document.documentElement.clientWidth;
-    document.body.style.position='fixed';
-    document.body.style.top='-'+SCROLL_LOCK_Y+'px';
-    document.body.style.left='0';
-    document.body.style.right='0';
-    document.body.style.width='100%';
-    if(anchoBarra>0)document.body.style.paddingRight=anchoBarra+'px';
-  }
-  scrollLockCount++;
+  if(bodyScrollLocked)return; // ya estaba bloqueado -- no pisar SCROLL_LOCK_Y de nuevo
+  bodyScrollLocked=true;
+  SCROLL_LOCK_Y=window.scrollY||window.pageYOffset||0;
+  var anchoBarra=window.innerWidth-document.documentElement.clientWidth;
+  document.body.style.position='fixed';
+  document.body.style.top='-'+SCROLL_LOCK_Y+'px';
+  document.body.style.left='0';
+  document.body.style.right='0';
+  document.body.style.width='100%';
+  if(anchoBarra>0)document.body.style.paddingRight=anchoBarra+'px';
 }
 function restaurarScrollBody(){
-  scrollLockCount=Math.max(0,scrollLockCount-1);
-  if(scrollLockCount>0)return; // otro modal sigue abierto, no se libera todavia
+  if(!bodyScrollLocked)return;
+  bodyScrollLocked=false;
   document.body.style.position='';
   document.body.style.top='';
   document.body.style.left='';
@@ -1512,6 +1514,29 @@ function restaurarScrollBody(){
   document.body.style.paddingRight='';
   window.scrollTo(0,SCROLL_LOCK_Y);
 }
+// Red de seguridad: si por cualquier motivo (una excepcion en algun otro
+// codigo, un evento que no llego a dispararse, etc.) el bloqueo de scroll
+// queda pegado sin que ningun modal siga realmente abierto, el primer
+// toque en cualquier parte de la pagina lo detecta y lo libera solo. Esto
+// no reemplaza arreglar la causa de fondo, pero asegura que un usuario
+// real NUNCA quede con la pagina trabada esperando un F5.
+document.addEventListener('click',function(){
+  if(!bodyScrollLocked&&document.body.style.position!=='fixed')return;
+  var campeonModalEl=document.getElementById('tintCampeonModal');
+  var carritoModalEl=document.getElementById('mo');
+  var campeonAbierto=campeonModalEl&&campeonModalEl.classList.contains('activo');
+  var carritoAbierto=carritoModalEl&&carritoModalEl.classList.contains('open');
+  if(!campeonAbierto&&!carritoAbierto){
+    bodyScrollLocked=false;
+    document.body.style.position='';
+    document.body.style.top='';
+    document.body.style.left='';
+    document.body.style.right='';
+    document.body.style.width='';
+    document.body.style.paddingRight='';
+  }
+},true);
+
 
 function conScrollPreservado(fn){
   var yAntes=window.scrollY;
