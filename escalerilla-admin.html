@@ -507,11 +507,14 @@ function onFileurlTextChange(fieldKey, val){ renderFileurlPreview(fieldKey, val)
    en la portada del sitio publico (seccion "Afiches" de index.html).
    =========================================================================
    Reusa el mismo bucket "afiches" y el mismo helper subirArchivoFileUrl()
-   que ya usan los campos fileurl de Desafios/Resultados. La diferencia es
-   que este afiche NO esta atado a un desafio puntual: se guarda como
-   configuracion del club en la tabla "configuracion_sitio"
-   (clave='afiche_portada', valor jsonb {url, titulo}, club_id=club actual),
-   asi el sitio publico lo puede leer sin necesitar un desafio de por medio.
+   que ya usan los campos fileurl de Desafios/Resultados. Este afiche NO
+   esta atado a un desafio puntual: se guarda en la tabla dedicada
+   "afiches" (columnas club_id, titulo, url, activo), donde activo=true
+   marca cual es la portada vigente de ese club. El cambio de portada pasa
+   siempre por las funciones fn_set_afiche_portada/fn_quitar_afiche_portada
+   (RPC), que desactivan la anterior y activan la nueva en un solo paso —
+   la base de datos garantiza que nunca haya mas de una portada activa por
+   club a la vez (indice unico), asi que no hace falta control manual aca.
    Requiere elegir un club (selector de la izquierda o admin de club fijo). */
 async function renderPanelAfichePortada(){
   const el = document.getElementById('panelAfichePortada');
@@ -550,15 +553,18 @@ async function cargarAfichePortadaActual(clubId){
   const wrap = document.getElementById('afpActual');
   if(!wrap) return;
   try{
-    const { data, error } = await sb.from('configuracion_sitio').select('valor').eq('club_id', clubId).eq('clave','afiche_portada').maybeSingle();
-    if(error || !data || !data.valor || !data.valor.url){
+    const { data, error } = await sb.from('afiches').select('url,titulo').eq('club_id', clubId).eq('activo', true).maybeSingle();
+    if(error || !data || !data.url){
       wrap.textContent = 'Este club todavía no tiene un afiche de portada cargado.';
+      document.getElementById('f_portadaAfiche').value = '';
+      document.getElementById('afpTitulo').value = '';
+      renderFileurlPreview('portadaAfiche', '');
       return;
     }
-    wrap.innerHTML = `Afiche actual: <b>${escAttr(data.valor.titulo||'Sin título')}</b> — subido y visible en la portada.`;
-    document.getElementById('f_portadaAfiche').value = data.valor.url;
-    document.getElementById('afpTitulo').value = data.valor.titulo||'';
-    renderFileurlPreview('portadaAfiche', data.valor.url);
+    wrap.innerHTML = `Afiche actual: <b>${escAttr(data.titulo||'Sin título')}</b> — subido y visible en la portada.`;
+    document.getElementById('f_portadaAfiche').value = data.url;
+    document.getElementById('afpTitulo').value = data.titulo||'';
+    renderFileurlPreview('portadaAfiche', data.url);
   }catch(err){
     wrap.textContent = 'No se pudo comprobar el afiche actual.';
   }
@@ -573,8 +579,11 @@ async function guardarAfichePortada(){
   const btn = document.getElementById('afpGuardarBtn');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try{
-    const { error } = await sb.from('configuracion_sitio')
-      .upsert({club_id:folder, clave:'afiche_portada', valor:{url, titulo:titulo||null}}, {onConflict:'club_id,clave'});
+    const { error } = await sb.rpc('fn_set_afiche_portada', {
+      p_club_id: folder,
+      p_url: url,
+      p_titulo: titulo || null
+    });
     if(error) throw error;
     toast('Afiche guardado. Ya debería verse en la portada del sitio.');
     await cargarAfichePortadaActual(folder);
@@ -589,7 +598,7 @@ async function quitarAfichePortada(){
   if(!folder) return;
   if(!confirm('¿Quitar el afiche de portada de este club?')) return;
   try{
-    const { error } = await sb.from('configuracion_sitio').delete().eq('club_id',folder).eq('clave','afiche_portada');
+    const { error } = await sb.rpc('fn_quitar_afiche_portada', { p_club_id: folder });
     if(error) throw error;
     document.getElementById('f_portadaAfiche').value='';
     document.getElementById('afpTitulo').value='';
@@ -934,6 +943,28 @@ const ENTITIES = {
       {key:'titulo',label:'Título',type:'text'},
       {key:'url_foto',label:'Foto',type:'fileurl',required:true},
       {key:'dia',label:'Día (texto libre)',type:'text'},
+    ]},
+
+  // Historial de afiches de portada por club. Para el uso del día a día
+  // (subir/quitar el afiche vigente) se usa el panel dedicado del Resumen
+  // (📣 Carga de Afiches, arriba); esta vista sirve para ver afiches
+  // anteriores, borrarlos definitivamente, o reactivar uno viejo a mano.
+  // Si intentas marcar "Portada actual" en un afiche mientras otro ya
+  // esta activo, la base de datos rechaza el guardado (solo puede haber
+  // uno activo por club) — primero desmarca el actual desde aquí o desde
+  // "Quitar afiche actual" en el panel del Resumen.
+  afiches:{ label:'Afiches (historial)', group:'Sistema', table:'afiches', pk:'id', clubFilter:'direct',
+    select:'id,titulo,url,activo,created_at', order:{col:'created_at',asc:false}, searchCols:['titulo'],
+    columns:[
+      {key:'url',label:'Imagen',render:v=>v?`<img src="${escAttr(v)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;">`:'—'},
+      {key:'titulo',label:'Título',render:v=>v||'<span class="hint">Sin título</span>'},
+      {key:'activo',label:'Portada actual',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+      {key:'created_at',label:'Subido',render:v=>v?new Date(v).toLocaleDateString('es-CL'):'—'},
+    ],
+    fields:[
+      {key:'titulo',label:'Título',type:'text'},
+      {key:'url',label:'Imagen',type:'fileurl',required:true,bucket:'afiches'},
+      {key:'activo',label:'Usar como portada actual',type:'bool',default:false},
     ]},
 
   admins:{ label:'Administradores', group:'Sistema', table:'admins', pk:'user_id', clubFilter:'direct', clubFilterIncludeNull:true,
