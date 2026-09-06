@@ -503,6 +503,105 @@ function renderFileurlPreview(fieldKey, url){
 function onFileurlTextChange(fieldKey, val){ renderFileurlPreview(fieldKey, val); }
 
 /* =========================================================================
+   CARGA DE AFICHES — caja del Resumen para subir el afiche que se muestra
+   en la portada del sitio publico (seccion "Afiches" de index.html).
+   =========================================================================
+   Reusa el mismo bucket "afiches" y el mismo helper subirArchivoFileUrl()
+   que ya usan los campos fileurl de Desafios/Resultados. La diferencia es
+   que este afiche NO esta atado a un desafio puntual: se guarda como
+   configuracion del club en la tabla "configuracion_sitio"
+   (clave='afiche_portada', valor jsonb {url, titulo}, club_id=club actual),
+   asi el sitio publico lo puede leer sin necesitar un desafio de por medio.
+   Requiere elegir un club (selector de la izquierda o admin de club fijo). */
+async function renderPanelAfichePortada(){
+  const el = document.getElementById('panelAfichePortada');
+  if(!el) return;
+  const folder = carpetaClubParaSubida();
+  if(!folder){
+    el.innerHTML = `<div class="panel-head"><h3>📣 Carga de Afiches</h3></div>
+      <div class="panel-body" style="padding:16px 18px">
+      <p class="hint" style="margin:0">Elige un club en el selector de la izquierda para poder subir su afiche de portada.</p></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="panel-head"><h3>📣 Carga de Afiches</h3></div>
+    <div class="panel-body" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+      <p class="hint" style="margin:0">Sube aquí la imagen que se debe mostrar como afiche en la portada del sitio. Reemplaza automáticamente al afiche anterior de este club.</p>
+      <div class="field"><label>Título (opcional)</label><input id="afpTitulo" type="text" placeholder="Ej: Torneo de Verano 2026"></div>
+      <div class="field">
+        <label>Imagen del afiche</label>
+        <div class="fileurl-row">
+          <input id="f_portadaAfiche" type="text" placeholder="URL (o sube un archivo)" oninput="onFileurlTextChange('portadaAfiche', this.value)">
+          <label class="fileurl-upload-btn" id="fu_btn_portadaAfiche" for="fu_file_portadaAfiche">⬆ Subir archivo</label>
+          <input type="file" id="fu_file_portadaAfiche" accept="image/*" style="display:none" onchange="subirArchivoFileUrl('portadaAfiche', this, 'afiches')">
+        </div>
+        <div class="fileurl-preview" id="fu_preview_portadaAfiche"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" id="afpGuardarBtn" onclick="guardarAfichePortada()">Guardar afiche</button>
+        <button class="btn btn-ghost" onclick="quitarAfichePortada()">Quitar afiche actual</button>
+      </div>
+      <div id="afpActual" class="hint">Cargando afiche actual…</div>
+    </div>`;
+  await cargarAfichePortadaActual(folder);
+}
+
+async function cargarAfichePortadaActual(clubId){
+  const wrap = document.getElementById('afpActual');
+  if(!wrap) return;
+  try{
+    const { data, error } = await sb.from('configuracion_sitio').select('valor').eq('club_id', clubId).eq('clave','afiche_portada').maybeSingle();
+    if(error || !data || !data.valor || !data.valor.url){
+      wrap.textContent = 'Este club todavía no tiene un afiche de portada cargado.';
+      return;
+    }
+    wrap.innerHTML = `Afiche actual: <b>${escAttr(data.valor.titulo||'Sin título')}</b> — subido y visible en la portada.`;
+    document.getElementById('f_portadaAfiche').value = data.valor.url;
+    document.getElementById('afpTitulo').value = data.valor.titulo||'';
+    renderFileurlPreview('portadaAfiche', data.valor.url);
+  }catch(err){
+    wrap.textContent = 'No se pudo comprobar el afiche actual.';
+  }
+}
+
+async function guardarAfichePortada(){
+  const folder = carpetaClubParaSubida();
+  if(!folder){ toast('Elige un club en el selector de la izquierda.', true); return; }
+  const url = (document.getElementById('f_portadaAfiche').value||'').trim();
+  const titulo = (document.getElementById('afpTitulo').value||'').trim();
+  if(!url){ toast('Sube una imagen o pega una URL primero.', true); return; }
+  const btn = document.getElementById('afpGuardarBtn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try{
+    const { error } = await sb.from('configuracion_sitio')
+      .upsert({club_id:folder, clave:'afiche_portada', valor:{url, titulo:titulo||null}}, {onConflict:'club_id,clave'});
+    if(error) throw error;
+    toast('Afiche guardado. Ya debería verse en la portada del sitio.');
+    await cargarAfichePortadaActual(folder);
+  }catch(err){
+    toast('No se pudo guardar el afiche: '+(err.message||'error desconocido'), true);
+  }
+  btn.disabled = false; btn.textContent = 'Guardar afiche';
+}
+
+async function quitarAfichePortada(){
+  const folder = carpetaClubParaSubida();
+  if(!folder) return;
+  if(!confirm('¿Quitar el afiche de portada de este club?')) return;
+  try{
+    const { error } = await sb.from('configuracion_sitio').delete().eq('club_id',folder).eq('clave','afiche_portada');
+    if(error) throw error;
+    document.getElementById('f_portadaAfiche').value='';
+    document.getElementById('afpTitulo').value='';
+    renderFileurlPreview('portadaAfiche','');
+    toast('Afiche de portada quitado.');
+    await cargarAfichePortadaActual(folder);
+  }catch(err){
+    toast('No se pudo quitar el afiche: '+(err.message||'error desconocido'), true);
+  }
+}
+
+/* =========================================================================
    ENTIDADES — un solo motor genérico de CRUD para las 16 tablas
    ========================================================================= */
 const ENTITIES = {
@@ -1603,7 +1702,8 @@ async function showDashboard(){
   document.getElementById('viewSubtitle').textContent = clubNombreDash ? `Estado general — ${clubNombreDash}` : 'Estado general de todos los clubes';
   document.getElementById('topbarActions').innerHTML='';
   const content = document.getElementById('content');
-  content.innerHTML = '<div class="stat-grid" id="statGrid"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
+  content.innerHTML = '<div class="panel" id="panelAfichePortada"></div><div class="stat-grid" id="statGrid"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
+  renderPanelAfichePortada();
 
   const clubIdsDash = selectedClubId ? await getClubJugadorIds(selectedClubId) : null;
   let memQueryDash = sb.from('membresias').select('id,estado',{count:'exact'});
