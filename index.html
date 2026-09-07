@@ -1402,13 +1402,13 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 </div>
 
 <footer>
-  <div class="fl2">CLUB DE TENIS ESTADIO QUILICURA</div>
+  <div class="fl2" id="footerClubNombre">CLUB DE TENIS ESTADIO QUILICURA</div>
   <div class="fs">Escalerilla por Series 2026</div>
   <div class="fls">
     <a href="#ranking">Ranking</a><a href="#afiches">Afiches</a><a href="#resultados">Resultados</a>
     <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#torneo-interno" id="footerInterno">Interno</a><a href="#torneo-abierto" id="footerAbierto">Abierto</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
   </div>
-  <div class="fc">Club de Tenis Estadio Quilicura 2026 v3.0</div>
+  <div class="fc" id="footerCopyright">Club de Tenis Estadio Quilicura 2026 v3.0</div>
   <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
 </footer>
 
@@ -2757,6 +2757,76 @@ async function cargarFixtureSizeSupabase(){
 }
 
 // ============================================================
+// FASE 3: RESOLUCION DE CLUB POR SLUG (multi-club real)
+// ============================================================
+// Esta plantilla (index.html) es la MISMA para todos los clubes de
+// ChileTenis PRO. Que club se muestra depende del parametro ?club=slug
+// en la URL (ej: index.html?club=quilicura), tal como los enlaza el
+// portal principal de ChileTenis PRO. Si no viene el parametro (por
+// ejemplo, alguien entra directo a la URL de Quilicura sin tocarla),
+// se usa CLUB_SLUG_DEFAULT para no romper el link que ya esta
+// circulando hoy.
+//
+// Tres desenlaces posibles al resolver el club:
+// 1) El club tiene "sitio_web_externo" cargado -> se redirige ahi
+//    directo (el club eligio tener su propia web en vez de usar la
+//    plantilla de ChileTenis PRO).
+// 2) El club existe pero esta "activo=false" (servicio congelado) ->
+//    se muestra un aviso en vez de la plantilla, sin perder sus datos
+//    (nada se borra, solo se deja de mostrar la web publica).
+// 3) Club activo y sin sitio propio -> sigue el flujo normal: se fija
+//    CLUB_ACTUAL_ID y toda la carga de datos de siempre usa ese id.
+var CLUB_SLUG_DEFAULT='quilicura';
+var CLUB_SLUG_ACTUAL=CLUB_SLUG_DEFAULT;
+
+async function resolverClubDesdeURL(){
+  if(!window.supabaseClient)return true; // sin cliente, se sigue con el club por defecto ya hardcodeado
+  var slug=CLUB_SLUG_DEFAULT;
+  try{
+    var params=new URLSearchParams(window.location.search);
+    slug=(params.get('club')||CLUB_SLUG_DEFAULT).trim().toLowerCase();
+  }catch(e){}
+  CLUB_SLUG_ACTUAL=slug;
+  try{
+    var res=await window.supabaseClient.from('clubes')
+      .select('id,activo,sitio_web_externo')
+      .eq('slug',slug).maybeSingle();
+    if(res.error||!res.data){
+      console.warn('No se encontro el club con slug "'+slug+'", se usa el club por defecto.',res.error);
+      return true; // sigue con CLUB_ACTUAL_ID por defecto (Quilicura)
+    }
+    var c=res.data;
+    if(c.sitio_web_externo){
+      window.location.replace(c.sitio_web_externo);
+      return false; // no seguir cargando esta plantilla, ya estamos redirigiendo
+    }
+    if(c.activo===false){
+      mostrarClubCongelado();
+      return false; // no cargar datos de un club con el servicio pausado
+    }
+    CLUB_ACTUAL_ID=c.id;
+    return true;
+  }catch(err){
+    console.warn('Sin conexion al resolver el club por slug, se usa el club por defecto.',err);
+    return true;
+  }
+}
+
+// Se muestra en vez de la plantilla cuando el club existe pero tiene el
+// servicio pausado (clubes.activo=false). Reusa la pantalla de splash
+// (ya es un overlay a pantalla completa) en vez de armar una nueva.
+function mostrarClubCongelado(){
+  var sp=document.getElementById('splash');
+  if(!sp)return;
+  sp.classList.remove('hide');
+  sp.innerHTML='<div style="text-align:center;padding:0 1.8rem;max-width:360px">'
+    +'<div style="font-size:2.4rem;margin-bottom:.7rem">🎾</div>'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem">Este club no esta disponible</div>'
+    +'<div style="font-size:.85rem;color:#9a9a9a;line-height:1.5">El servicio de este club esta temporalmente pausado. Sus datos siguen guardados. Si eres el administrador, contacta a ChileTenis PRO para reactivarlo.</div>'
+    +'</div>';
+}
+
+// ============================================================
 // FASE 2: CONFIGURACION DE MARCA DEL CLUB DESDE SUPABASE
 // ============================================================
 // Reemplaza lo que antes vivia hardcodeado en el JS (nombre del club,
@@ -2829,6 +2899,11 @@ function aplicarBrandingClub(tema,albumes){
 
   var tagEl=document.getElementById('heroTagline');
   if(tagEl)tagEl.textContent=CLUB_HERO_TAGLINE;
+
+  var footerNombreEl=document.getElementById('footerClubNombre');
+  if(footerNombreEl)footerNombreEl.textContent=CLUB_NOMBRE.toUpperCase();
+  var footerCopyEl=document.getElementById('footerCopyright');
+  if(footerCopyEl)footerCopyEl.textContent=CLUB_NOMBRE+' '+new Date().getFullYear();
 
   if(albumes){
     var la=document.getElementById('galLinkAfiches');if(la&&albumes.afiches)la.href=albumes.afiches;
@@ -3316,6 +3391,16 @@ function toggleConfirmed(el){onlyConfirmed=el.checked;rMatches();}
 
 function init(){
   if("scrollRestoration" in history)history.scrollRestoration="manual";
+  resolverClubDesdeURL().then(function(seguir){
+    // seguir===false: o ya redirigimos a la web externa del club, o el
+    // club esta congelado y se mostro el aviso. En ambos casos no tiene
+    // sentido seguir cargando datos ni sacar el splash.
+    if(seguir===false)return;
+    initClubResuelto();
+  });
+}
+
+function initClubResuelto(){
   rAll();
   window.scrollTo(0,0);
   cargarConfigClubSupabase();
