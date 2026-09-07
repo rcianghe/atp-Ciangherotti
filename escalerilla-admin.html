@@ -407,7 +407,7 @@ let currentUser = null;
 let currentEntity = null;
 let editingId = null;
 let rowsCache = [];
-let lookups = { jugadores:[], clubes:[], clubesFull:[], temporadas:[], competiciones:[], membresias:[] };
+let lookups = { jugadores:[], clubes:[], clubesFull:[], temporadas:[], competiciones:[], membresias:[], organizaciones:[] };
 
 /* ---- Filtro global por club ---- */
 let selectedClubId = localStorage.getItem('escalerilla_admin_club') || '';
@@ -856,24 +856,44 @@ const ENTITIES = {
     ]},
 
   clubes:{ label:'Clubes', group:'Club', table:'clubes', pk:'id',
-    select:'id,nombre,comuna,encargado_nombre,encargado_contacto,link_cancha,color_tema,logo_url,activo,slug',
-    order:{col:'nombre'}, searchCols:['nombre','comuna'],
+    select:'id,nombre,nombre_corto,comuna,encargado_nombre,encargado_contacto,link_cancha,logo_url,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,whatsapp_numero,color_tema,tema,zonas_entrega,albumes_galeria,activo,slug,organizacion_id,organizaciones(nombre)',
+    order:{col:'nombre'}, searchCols:['nombre','comuna','nombre_corto'],
     columns:[
       {key:'nombre',label:'Nombre'},
       {key:'comuna',label:'Comuna'},
       {key:'encargado_nombre',label:'Encargado'},
-      {key:'color_tema',label:'Color',render:v=>v?`<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:13px;height:13px;border-radius:4px;background:${v};display:inline-block;border:1px solid #0002"></span>${v}</span>`:'—'},
+      {key:'tema',label:'Colores',render:v=>renderTemaSwatch(v)},
+      {key:'organizaciones',label:'Organización',render:v=>v?.nombre||'<span class="hint">—</span>'},
       {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
     ],
     fields:[
       {key:'nombre',label:'Nombre del club',type:'text',required:true},
+      {key:'nombre_corto',label:'Nombre corto (header / app instalable)',type:'text'},
       {key:'slug',label:'Slug (URL)',type:'text'},
       {key:'comuna',label:'Comuna',type:'text'},
       {key:'encargado_nombre',label:'Nombre encargado',type:'text'},
       {key:'encargado_contacto',label:'Contacto encargado',type:'text'},
       {key:'link_cancha',label:'Link cancha (mapa)',type:'text'},
-      {key:'color_tema',label:'Color tema (hex)',type:'text',default:'#5BBF2A'},
       {key:'logo_url',label:'Logo URL',type:'text'},
+      {key:'mascota_hero_url',label:'Mascota del hero (imagen)',type:'text'},
+      {key:'trofeo_url',label:'Trofeo (imagen, torneos)',type:'text'},
+      {key:'hero_tagline',label:'Tagline del hero (ej: QUILICURA)',type:'text'},
+      {key:'og_image_url',label:'Imagen para redes sociales (Open Graph)',type:'text'},
+      {key:'whatsapp_numero',label:'WhatsApp (solo números, ej: 56912345678)',type:'text'},
+      {key:'tema',label:'Colores del club',type:'jsonFields',subfields:[
+        {key:'primario',label:'Primario',placeholder:'#5BBF2A'},
+        {key:'primario_oscuro',label:'Primario oscuro',placeholder:'#3d8a1a'},
+        {key:'primario_claro',label:'Primario claro',placeholder:'#7ed44a'},
+        {key:'acento',label:'Acento',placeholder:'#D4E60A'},
+      ]},
+      {key:'color_tema',label:'Color de respaldo (legacy, solo si no usas "Colores del club")',type:'text'},
+      {key:'zonas_entrega',label:'Zonas de entrega de la tienda (separadas por coma)',type:'taglist'},
+      {key:'albumes_galeria',label:'Álbumes de galería',type:'jsonFields',subfields:[
+        {key:'afiches',label:'Álbum Afiches (URL)',placeholder:'https://photos.app.goo.gl/...'},
+        {key:'vintage',label:'Álbum Vintage (URL)',placeholder:'https://photos.app.goo.gl/...'},
+        {key:'competicion_mes',label:'Álbum Competición del mes (URL)',placeholder:'https://photos.app.goo.gl/...'},
+      ]},
+      {key:'organizacion_id',label:'Organización (plataforma/liga)',type:'fk',lookup:'organizaciones'},
       {key:'activo',label:'Club activo',type:'bool',default:true},
     ]},
 
@@ -986,9 +1006,44 @@ const ENTITIES = {
       {key:'token',label:'Token',render:v=>`<span class="hint" style="font-family:var(--mono)">${(v||'').slice(0,28)}…</span>`},
       {key:'updated_at',label:'Actualizado',render:v=>v?new Date(v).toLocaleString('es-CL'):'—'},
     ], fields:[]},
+
+  organizaciones:{ label:'Organizaciones', group:'Plataforma', table:'organizaciones', pk:'id',
+    select:'id,nombre,tipo,slug,logo_url,descripcion,configuracion,activo,created_at',
+    order:{col:'nombre'}, searchCols:['nombre','slug'],
+    columns:[
+      {key:'nombre',label:'Nombre'},
+      {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v||'—'}</span>`},
+      {key:'slug',label:'Slug'},
+      {key:'activo',label:'Activa',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
+    ],
+    fields:[
+      {key:'nombre',label:'Nombre',type:'text',required:true},
+      {key:'tipo',label:'Tipo',type:'select',options:['plataforma','liga','federacion']},
+      {key:'slug',label:'Slug (URL)',type:'text'},
+      {key:'logo_url',label:'Logo URL',type:'text'},
+      {key:'descripcion',label:'Descripción',type:'textarea'},
+      {key:'configuracion',label:'Configuración avanzada (JSON, opcional)',type:'json'},
+      {key:'activo',label:'Organización activa',type:'bool',default:true},
+    ]},
+
+  calificaciones:{ label:'Calificaciones', group:'Competición', table:'calificaciones', pk:'id',
+    clubFilter:'viaJugadorOr', clubFilterFields:['calificador_id','calificado_id'],
+    select:'id,puntualidad,respeto,cumplimiento,fair_play,created_at,resultado_id,calificador:calificador_id(nombre),calificado:calificado_id(nombre)',
+    order:{col:'created_at',asc:false}, searchCols:[],
+    noCreate:true, noEdit:true, // datos que generan los propios jugadores; el admin solo modera
+    columns:[
+      {key:'calificador',label:'De',render:v=>v?.nombre||'—'},
+      {key:'calificado',label:'A',render:v=>v?.nombre||'—'},
+      {key:'puntualidad',label:'Puntualidad'},
+      {key:'respeto',label:'Respeto'},
+      {key:'cumplimiento',label:'Cumplimiento'},
+      {key:'fair_play',label:'Fair Play'},
+      {key:'created_at',label:'Fecha',render:v=>v?new Date(v).toLocaleDateString('es-CL'):'—'},
+    ],
+    fields:[]},
 };
 
-const NAV_GROUPS = ['Resumen','Competición','Club','Sistema'];
+const NAV_GROUPS = ['Resumen','Competición','Club','Plataforma','Sistema'];
 
 /* =========================================================================
    HELPERS DE FORMATO / BADGES
@@ -1000,6 +1055,12 @@ function banderaEmoji(iso2){
   return String.fromCodePoint(cp[0],cp[1]);
 }
 function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+function renderTemaSwatch(tema){
+  if(!tema || typeof tema!=='object') return '<span class="hint">—</span>';
+  const colores = [tema.primario, tema.acento].filter(Boolean);
+  if(!colores.length) return '<span class="hint">—</span>';
+  return colores.map(c=>`<span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${escAttr(c)};border:1px solid #0002;margin-right:3px;vertical-align:middle;" title="${escAttr(c)}"></span>`).join('');
+}
 function badgeEstadoJugador(v){
   if(v==='Activo') return '<span class="badge badge-green">Activo</span>';
   if(v==='Retirado +50%') return '<span class="badge badge-warn">Retirado +50%</span>';
@@ -1678,7 +1739,7 @@ async function enterApp(){
    LOOKUPS (para selects tipo FK)
    ========================================================================= */
 async function loadLookups(){
-  const [j,c,t,comp,mem] = await Promise.all([
+  const [j,c,t,comp,mem,org] = await Promise.all([
     (selectedClubId
       ? sb.from('jugadores').select('id,nombre,serie').eq('club_id', selectedClubId).order('nombre')
       : sb.from('jugadores').select('id,nombre,serie').order('nombre')),
@@ -1686,6 +1747,7 @@ async function loadLookups(){
     sb.from('temporadas').select('id,nombre').order('nombre'),
     sb.from('competiciones').select('id,serie,temporada,periodo,tipo').order('temporada',{ascending:false}),
     sb.from('membresias').select('id,tipo,estado,jugador_id,jugadores(nombre)'),
+    sb.from('organizaciones').select('id,nombre').order('nombre'),
   ]);
   lookups.jugadores = (j.data||[]).map(x=>({id:x.id,label:`${x.nombre} (Serie ${x.serie||'—'})`}));
   lookups.clubes = (c.data||[]).map(x=>({id:x.id,label:x.nombre}));
@@ -1693,6 +1755,7 @@ async function loadLookups(){
   lookups.temporadas = (t.data||[]).map(x=>({id:x.id,label:x.nombre}));
   lookups.competiciones = (comp.data||[]).map(x=>({id:x.id,label:`${x.tipo} · Serie ${x.serie} · ${x.temporada}${x.periodo?' · '+x.periodo:''}`}));
   lookups.membresias = (mem.data||[]).map(x=>({id:x.id,label:`${x.jugadores?.nombre||'?'} · ${x.tipo} · ${x.estado}`}));
+  lookups.organizaciones = (org.data||[]).map(x=>({id:x.id,label:x.nombre}));
 }
 
 /* =========================================================================
@@ -1867,6 +1930,14 @@ async function fetchAndRenderRows(){
     const ids = await getClubJugadorIds(selectedClubId);
     if(!ids.length){ rowsCache=[]; renderRows(); return; }
     q = q.in('jugador_id', ids);
+  } else if(selectedClubId && e.clubFilter==='viaJugadorOr'){
+    // Igual que 'viaJugador', pero para tablas con mas de una FK a jugadores
+    // (ej. calificaciones: calificador_id/calificado_id). Incluye la fila si
+    // CUALQUIERA de los campos listados en clubFilterFields pertenece al club.
+    const ids = await getClubJugadorIds(selectedClubId);
+    if(!ids.length){ rowsCache=[]; renderRows(); return; }
+    const campos = e.clubFilterFields||['jugador_id'];
+    q = q.or(campos.map(c=>`${c}.in.(${ids.join(',')})`).join(','));
   }
 
   const { data, error } = await q.limit(500);
@@ -1962,6 +2033,22 @@ function renderField(f, record){
     const strVal = Array.isArray(val)? val.join(', ') : (val||'');
     return `<div class="field"><label>${f.label}</label><input id="f_${f.key}" type="text" value="${escAttr(strVal)}" ${disabled}><div class="hint">Ej: lunAM, mieAM, sabPM</div></div>`;
   }
+  if(f.type==='jsonFields'){
+    const obj = (val && typeof val==='object') ? val : {};
+    const inputs = f.subfields.map(sf=>{
+      const sv = obj[sf.key]!=null ? obj[sf.key] : '';
+      return `<div style="margin-bottom:8px;"><label style="display:block;font-size:11.5px;font-weight:500;color:var(--ink-soft);margin-bottom:3px;">${sf.label}</label>
+        <input id="f_${f.key}__${sf.key}" type="text" placeholder="${escAttr(sf.placeholder||'')}" value="${escAttr(sv)}" ${disabled}></div>`;
+    }).join('');
+    return `<div class="field"><label>${f.label}</label>
+      <div style="border:1.5px solid var(--line);border-radius:8px;padding:12px;background:#FBFAF6;">${inputs}</div></div>`;
+  }
+  if(f.type==='json'){
+    const strVal = (val && typeof val==='object') ? JSON.stringify(val, null, 2) : (val||'');
+    return `<div class="field"><label>${f.label}${f.required?' *':''}</label>
+      <textarea id="f_${f.key}" rows="5" style="font-family:var(--mono);font-size:12px;" ${disabled}>${strVal}</textarea>
+      <div class="hint">Formato JSON. Déjalo vacío si no aplica.</div></div>`;
+  }
   if(f.type==='fileurl'){
     return `<div class="field">
       <label>${f.label}${f.required?' *':''}</label>
@@ -1984,11 +2071,29 @@ async function saveRecord(){
   const payload = {};
   for(const f of e.fields){
     if(f.disabledOnEdit && editingId) continue;
+    if(f.type==='jsonFields'){
+      const obj = {}; let any=false;
+      f.subfields.forEach(sf=>{
+        const subEl = document.getElementById(`f_${f.key}__${sf.key}`);
+        const v = subEl ? subEl.value.trim() : '';
+        if(v){ obj[sf.key]=v; any=true; }
+      });
+      payload[f.key] = any ? obj : null;
+      continue;
+    }
     const el = document.getElementById('f_'+f.key);
     if(!el) continue;
     if(f.type==='bool'){ payload[f.key] = el.classList.contains('on'); }
     else if(f.type==='number'){ payload[f.key] = el.value===''? null : Number(el.value); }
     else if(f.type==='taglist'){ payload[f.key] = el.value.trim()? el.value.split(',').map(s=>s.trim()).filter(Boolean) : null; }
+    else if(f.type==='json'){
+      const raw = el.value.trim();
+      if(!raw){ payload[f.key]=null; }
+      else{
+        try{ payload[f.key]=JSON.parse(raw); }
+        catch(err){ toast(`El campo "${f.label}" no es JSON válido: ${err.message}`, true); return; }
+      }
+    }
     else { payload[f.key] = el.value===''? null : el.value; }
     if(f.required && (payload[f.key]===null || payload[f.key]==='')){
       toast(`El campo "${f.label}" es obligatorio.`, true); return;
@@ -2007,7 +2112,7 @@ async function saveRecord(){
   toast('Guardado correctamente.');
   closeModal();
   fetchAndRenderRows();
-  if(currentEntity==='jugadores'||currentEntity==='clubes'||currentEntity==='temporadas'||currentEntity==='competiciones'||currentEntity==='membresias') loadLookups();
+  if(currentEntity==='jugadores'||currentEntity==='clubes'||currentEntity==='temporadas'||currentEntity==='competiciones'||currentEntity==='membresias'||currentEntity==='organizaciones') loadLookups();
 }
 
 async function confirmDelete(id){
