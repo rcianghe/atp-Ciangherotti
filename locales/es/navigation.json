@@ -1,0 +1,15 @@
+{
+  "navigation": {
+    "home": "Inicio",
+    "clubs": "Clubes",
+    "ladders": "Escalerillas",
+    "tournaments": "Torneos",
+    "challenges": "Desafíos",
+    "rankings": "Rankings",
+    "news": "Noticias",
+    "search": "Buscar",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "language": "Idioma"
+  }
+}
