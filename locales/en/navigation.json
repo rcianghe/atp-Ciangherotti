@@ -1,0 +1,15 @@
+{
+  "navigation": {
+    "home": "Home",
+    "clubs": "Clubs",
+    "ladders": "Ladders",
+    "tournaments": "Tournaments",
+    "challenges": "Challenges",
+    "rankings": "Rankings",
+    "news": "News",
+    "search": "Search",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language"
+  }
+}
