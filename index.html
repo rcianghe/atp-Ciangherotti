@@ -6,13 +6,8 @@
 <title>ChileTenis PRO — Portal</title>
 <meta name="description" content="La plataforma que conecta clubes, escalerillas, torneos, desafíos y jugadores de tenis en todo Chile.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <script src="lib/supabase.min.js/supabase.min.js"></script>
-<link rel="icon" href="favicon.ico" sizes="any">
-<link rel="icon" href="ctp-favicon-32x32.png" type="image/png" sizes="32x32">
-<link rel="icon" href="ctp-favicon-16x16.png" type="image/png" sizes="16x16">
-<link rel="apple-touch-icon" href="ctp-apple-touch-icon.png">
-<meta name="theme-color" content="#0B1220">
 <style>
 /* ============================================================
    TOKENS — ChileTenis PRO (portal). Distinto de la identidad de
@@ -122,6 +117,12 @@ nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
   .head-actions .btn-ghost,.head-actions .btn-primary{display:none}
   .menu-toggle{display:flex}
 }
+@media(max-width:400px){
+  .headbar{gap:10px}
+  .head-actions{gap:6px}
+  .head-actions .icon-btn:not(.menu-toggle){display:none}
+  .brand-txt{font-size:15px}
+}
 
 /* menu movil: panel deslizante, mismo lenguaje visual que el header */
 .mobile-panel{
@@ -135,6 +136,12 @@ nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
 .mobile-actions{display:flex;flex-direction:column;gap:10px}
 .mobile-lang{display:flex;align-items:center;gap:10px;margin-bottom:18px}
 .mobile-lang span{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase}
+/* Tablet: el menu se comporta como un drawer angosto anclado a la
+   derecha, no como una pantalla completa (eso queda solo para
+   telefono, donde el ancho real lo justifica). */
+@media(min-width:641px) and (max-width:920px){
+  .mobile-panel{inset:68px 0 0 auto;width:340px;border-left:1px solid var(--line);box-shadow:-20px 0 40px rgba(0,0,0,.35)}
+}
 
 /* ============================================================
    CONTENEDOR GENERAL DE SECCIONES
@@ -187,11 +194,24 @@ section{padding:64px 0}
 
 /* grafico decorativo lateral: pelota + lineas de cancha, no una foto */
 .hero-visual{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1}
-.hero-ball{width:100%;max-width:260px;filter:drop-shadow(0 20px 40px rgba(198,241,53,.18))}
+.hero-ball{width:100%;max-width:340px;filter:drop-shadow(0 25px 50px rgba(198,241,53,.22)) drop-shadow(0 4px 14px rgba(0,0,0,.4))}
+.hero-tagline-deco{position:absolute;top:6%;right:2%;text-align:right;line-height:1.15;z-index:2}
+.hero-tagline-deco .l1{font-family:var(--display);font-weight:700;font-size:18px;color:#fff}
+.hero-tagline-deco .l2{font-family:'Caveat',cursive;font-weight:700;font-size:26px;color:var(--lime);margin-top:-2px}
 @media(max-width:920px){
+  .hero{padding:64px 0 56px}
+}
+/* Tablet: se mantiene la columna visual (pelota) pero mas chica y
+   compartiendo espacio, en vez de saltar directo a una sola columna
+   como en telefono. */
+@media(min-width:641px) and (max-width:920px){
+  .hero-grid{grid-template-columns:1fr 220px;gap:24px}
+  .hero-ball{max-width:200px}
+  .hero-tagline-deco{display:none}
+}
+@media(max-width:640px){
   .hero-grid{grid-template-columns:1fr}
   .hero-visual{display:none}
-  .hero{padding:64px 0 56px}
 }
 
 /* ============================================================
@@ -200,11 +220,13 @@ section{padding:64px 0}
 .feature-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:-26px;position:relative;z-index:2}
 .feature-item{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;transition:border-color .2s ease,transform .2s ease}
 .feature-item:hover{border-color:var(--line-strong);transform:translateY(-2px)}
-.feature-ic{width:38px;height:38px;border-radius:10px;background:rgba(198,241,53,.1);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
+.feature-ic{width:44px;height:44px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
 .feature-ic svg{width:19px;height:19px}
 .feature-title{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:5px}
 .feature-desc{font-size:12.5px;line-height:1.5;color:var(--ink-faint)}
-@media(max-width:920px){.feature-strip{grid-template-columns:repeat(2,1fr);margin-top:0}}
+@media(max-width:920px){.feature-strip{margin-top:0}}
+@media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.feature-strip{grid-template-columns:1fr}}
 
 /* ============================================================
@@ -216,6 +238,43 @@ section{padding:64px 0}
 .home-col-list{display:flex;flex-direction:column;gap:12px}
 .empty-note{border:1px dashed var(--line-strong);border-radius:var(--radius-sm);padding:22px 16px;text-align:center;color:var(--ink-faint);font-size:12.5px}
 @media(max-width:920px){.home-cols{grid-template-columns:1fr}}
+/* Tablet real (no solo "desktop encogido"): 2 columnas, con Club
+   destacado ocupando el ancho completo arriba en vez de apretarse a
+   una columna angosta como en escritorio. */
+@media(min-width:701px) and (max-width:920px){
+  .home-cols{grid-template-columns:1fr 1fr}
+  .home-cols>div:first-child{grid-column:1/-1}
+  .featured-club-card{aspect-ratio:21/9}
+}
+
+/* ---- Club destacado: tarjeta con foto de fondo ---- */
+.featured-club-card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;border:1px solid var(--line);background:var(--bg-1)}
+.featured-club-bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.featured-club-bg.placeholder{background:
+    radial-gradient(ellipse 260px 180px at 20% 20%, rgba(198,241,53,.16), transparent 60%),
+    radial-gradient(ellipse 220px 180px at 90% 90%, rgba(63,169,245,.18), transparent 60%),
+    linear-gradient(150deg,#122036,#0E1830)}
+.featured-club-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,10,18,.92) 0%,rgba(6,10,18,.35) 55%,rgba(6,10,18,.15) 100%)}
+.featured-club-badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(11,18,32,.75);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 11px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--lime);text-transform:uppercase}
+.featured-club-content{position:absolute;left:0;right:0;bottom:0;padding:16px;display:flex;align-items:flex-end;gap:12px}
+.featured-club-logo{width:52px;height:52px;border-radius:50%;border:3px solid var(--bg);background:var(--bg-2);object-fit:cover;flex-shrink:0}
+.featured-club-logo-i{width:52px;height:52px;border-radius:50%;border:3px solid var(--bg);background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;color:var(--lime);flex-shrink:0}
+.featured-club-info{flex:1;min-width:0}
+.featured-club-name{font-family:var(--display);font-weight:700;font-size:15px;color:#fff;line-height:1.2}
+.featured-club-sub{font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px}
+.featured-club-actions{margin-top:8px}
+
+/* ---- Filas compactas dentro de una sola tarjeta (Escalerillas / Torneos) ---- */
+.list-card{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:6px 16px}
+.list-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.list-row:last-child{border-bottom:none}
+.list-row-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:13px;color:var(--lime);flex-shrink:0;object-fit:cover}
+.list-row-thumb{width:40px;height:40px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--lime)}
+.list-row-thumb svg{width:18px;height:18px}
+.list-row-main{flex:1;min-width:0}
+.list-row-title{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row-sub{font-size:11.5px;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-card .home-col-list{gap:0}
 
 /* ============================================================
    BANNER DE DESAFIOS — Fase 6
@@ -234,6 +293,7 @@ section{padding:64px 0}
 .challenge-title{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,28px);letter-spacing:-.01em;margin:0 0 8px}
 .challenge-desc{font-size:13.5px;color:var(--ink-dim);line-height:1.55}
 .challenge-cta{position:relative;z-index:1;flex-shrink:0}
+@media(max-width:640px){.challenge-banner{padding:28px 22px}}
 
 /* ============================================================
    RANKING CHILETENIS PRO — Fase 6
@@ -253,6 +313,7 @@ section{padding:64px 0}
 .club-cta-ic svg{width:26px;height:26px}
 .club-cta-title{font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);margin-bottom:4px}
 .club-cta-desc{font-size:13px;color:var(--ink-dim);max-width:440px;line-height:1.5}
+@media(max-width:640px){.club-cta{padding:26px 22px}}
 
 /* ============================================================
    SISTEMA DE TARJETAS — vista previa
@@ -285,8 +346,8 @@ section{padding:64px 0}
 .rank-row:last-child{border-bottom:none}
 .rank-pos{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink-faint);width:20px;flex-shrink:0}
 .rank-pos.top{color:var(--lime)}
-.rank-name{flex:1;font-size:13.5px;font-weight:600;color:var(--ink)}
-.rank-pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim)}
+.rank-name{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);min-width:0;display:flex;align-items:center;flex-wrap:wrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);flex-shrink:0}
 
 /* ============================================================
    FOOTER
@@ -296,6 +357,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
 .foot-brand .brand{margin-bottom:10px}
 .foot-brand p{font-size:12.5px;color:var(--ink-faint);max-width:260px;line-height:1.6}
 .foot-cols{display:flex;gap:48px;flex-wrap:wrap}
+@media(max-width:520px){.foot-cols{flex-direction:column;gap:22px}.foot-grid{gap:24px}}
 .foot-col h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint);margin:0 0 12px;font-weight:600;text-transform:uppercase}
 .foot-col a{display:block;font-size:13px;color:var(--ink-dim);padding:5px 0}
 .foot-col a:hover{color:var(--ink)}
@@ -304,32 +366,9 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
 .foot-social{display:flex;gap:8px}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
-
-/* ============================================================
-   SPLASH / PANTALLA DE CARGA
-   ============================================================
-   Se muestra fija sobre todo el contenido apenas carga el HTML
-   (antes de que I18N.init() y loadHomeSections() resuelvan) y se
-   desvanece cuando ambos terminan. Mismo patron que index.html
-   (splash + spinner), adaptado a la paleta navy/lima del portal. */
-.splash{
-  position:fixed;inset:0;z-index:9999;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;
-  transition:opacity .4s ease;
-}
-.splash-logo{width:200px;max-width:62vw;height:auto;filter:drop-shadow(0 12px 30px rgba(198,241,53,.18))}
-.splash-spin{width:30px;height:30px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--lime);border-radius:50%;animation:splashspin .8s linear infinite}
-@keyframes splashspin{to{transform:rotate(360deg)}}
-.splash.hide{opacity:0;pointer-events:none}
-@media(prefers-reduced-motion:reduce){.splash-spin{animation:none}}
 </style>
 </head>
 <body>
-
-<div id="splash" class="splash">
-  <img src="logo-chiletenis-pro.png" alt="ChileTenis PRO" class="splash-logo">
-  <div class="splash-spin" aria-hidden="true"></div>
-</div>
 
 <header>
   <div class="wrap headbar">
@@ -423,10 +462,24 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
+        <div class="hero-tagline-deco">
+          <div class="l1" data-i18n="home.hero.taglineLine1">Más tenis,</div>
+          <div class="l2" data-i18n="home.hero.taglineLine2">más comunidad</div>
+        </div>
         <svg class="hero-ball" viewBox="0 0 200 200" fill="none">
-          <circle cx="100" cy="100" r="92" fill="#C6F135" opacity=".95"/>
-          <path d="M100 8c-38 30-38 154 0 184M100 8c38 30 38 154 0 184" stroke="#0B1220" stroke-width="4" fill="none" opacity=".55"/>
-          <circle cx="100" cy="100" r="92" fill="none" stroke="#0B1220" stroke-width="2" opacity=".2"/>
+          <circle cx="100" cy="100" r="92" fill="#C6F135"/>
+          <circle cx="100" cy="100" r="92" fill="url(#ballShade)"/>
+          <path d="M100 8c-38 30-38 154 0 184M100 8c38 30 38 154 0 184" stroke="#0B1220" stroke-width="3.5" fill="none" opacity=".45"/>
+          <text x="100" y="94" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="21" fill="#0B1220">Chile<tspan fill="#0B1220">Tenis</tspan></text>
+          <text x="100" y="122" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="24" fill="#0B1220" letter-spacing="1">PRO</text>
+          <circle cx="100" cy="100" r="92" fill="none" stroke="#0B1220" stroke-width="1.5" opacity=".15"/>
+          <defs>
+            <radialGradient id="ballShade" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#fff" stop-opacity=".35"/>
+              <stop offset="55%" stop-color="#fff" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity=".18"/>
+            </radialGradient>
+          </defs>
         </svg>
       </div>
     </div>
@@ -480,14 +533,16 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
       <div>
         <div class="section-head" style="margin-bottom:14px">
           <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.activeLadders">Escalerillas Activas</h2>
+          <a href="#" class="section-link" style="font-size:12px"><span data-i18n="home.sections.viewAllLadders">Ver todas</span> →</a>
         </div>
-        <div id="activeLaddersList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+        <div class="list-card"><div id="activeLaddersList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div></div>
       </div>
       <div>
         <div class="section-head" style="margin-bottom:14px">
           <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.upcomingTournaments">Próximos Torneos</h2>
+          <a href="#" class="section-link" style="font-size:12px"><span data-i18n="home.sections.viewAllTournaments">Ver todos</span> →</a>
         </div>
-        <div id="upcomingTournamentsList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+        <div class="list-card"><div id="upcomingTournamentsList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div></div>
       </div>
     </div>
   </section>
@@ -811,7 +866,7 @@ async function fetchClubDestacado(){
   if(!sbClient)return null;
   try{
     var res=await sbClient.from('clubes')
-      .select('id,nombre,nombre_corto,slug,comuna,logo_url,hero_tagline')
+      .select('id,nombre,nombre_corto,slug,comuna,logo_url,hero_tagline,foto_portada_url')
       .eq('destacado',true).eq('activo',true).limit(1).maybeSingle();
     return res.error?null:res.data;
   }catch(err){console.warn('[portal] club destacado',err);return null;}
@@ -820,7 +875,7 @@ async function fetchEscalerillasActivas(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('temporadas')
-      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug)')
+      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug,logo_url)')
       .eq('activa',true).eq('tipo','escalerilla')
       .order('fecha_inicio',{ascending:false}).limit(4);
     return res.error?[]:res.data;
@@ -854,20 +909,36 @@ async function fetchRankingChileTenisPro(){
   }catch(err){console.warn('[portal] ranking chiletenis pro',err);return [];}
 }
 
+// Bandera de pais: usa flagcdn.com (servicio publico dedicado a
+// banderas, no fotografia de stock) a partir del ISO-2 ya guardado en
+// jugadores.bandera_iso. Si no hay bandera cargada, no se muestra nada
+// (no se inventa una nacionalidad por defecto).
+function banderaImgHtml(iso){
+  if(!iso)return '';
+  return '<img src="https://flagcdn.com/20x15/'+esc(iso.toLowerCase())+'.png" alt="" style="width:16px;height:12px;border-radius:2px;flex-shrink:0;margin-left:5px">';
+}
+
 function renderClubDestacado(club){
   var el=document.getElementById('featuredClubCard');
   if(!el)return;
   if(!club){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyClub'))+'</div>';return;}
-  var avatarHtml=club.logo_url
-    ?'<img class="card-avatar" style="object-fit:cover" src="'+esc(club.logo_url)+'" alt="">'
-    :'<span class="card-avatar">'+esc(inicialesDe(club.nombre_corto||club.nombre))+'</span>';
+  var bgHtml=club.foto_portada_url
+    ?'<div class="featured-club-bg" style="background-image:url(\''+esc(club.foto_portada_url)+'\')"></div>'
+    :'<div class="featured-club-bg placeholder"></div>';
+  var logoHtml=club.logo_url
+    ?'<img class="featured-club-logo" src="'+esc(club.logo_url)+'" alt="">'
+    :'<span class="featured-club-logo-i">'+esc(inicialesDe(club.nombre_corto||club.nombre))+'</span>';
   el.innerHTML=
-    '<div class="card card-feat">'
-    +'<div class="card-top">'+avatarHtml
-      +'<div><div class="card-title">'+esc(club.nombre)+'</div>'
-      +'<div class="card-sub">'+esc(club.comuna||club.hero_tagline||'')+'</div></div></div>'
-    +'<div style="margin-top:6px"><span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span></div>'
-    +'<div style="margin-top:16px"><a class="btn btn-outline btn-sm" href="index.html?club='+encodeURIComponent(club.slug)+'">'+esc(I18N.t('home.club.viewClub'))+'</a></div>'
+    '<div class="featured-club-card">'
+    +bgHtml
+    +'<div class="featured-club-overlay"></div>'
+    +'<div class="featured-club-badge">'+esc(I18N.t('home.sections.featuredClub'))+'</div>'
+    +'<div class="featured-club-content">'+logoHtml
+      +'<div class="featured-club-info">'
+        +'<div class="featured-club-name">'+esc(club.nombre)+'</div>'
+        +'<div class="featured-club-sub">'+esc(club.comuna||club.hero_tagline||'')+'</div>'
+        +'<div class="featured-club-actions"><a class="btn btn-outline btn-sm" href="index.html?club='+encodeURIComponent(club.slug)+'">'+esc(I18N.t('home.club.viewClub'))+'</a></div>'
+      +'</div></div>'
     +'</div>';
 }
 function renderEscalerillasActivas(list){
@@ -876,9 +947,12 @@ function renderEscalerillasActivas(list){
   if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyLadders'))+'</div>';return;}
   el.innerHTML=list.map(function(t){
     var club=t.clubes||{};
-    return '<a class="card" href="index.html?club='+encodeURIComponent(club.slug||'')+'" style="display:block">'
-      +'<div class="card-top"><span class="card-avatar">'+esc(inicialesDe(club.nombre))+'</span>'
-      +'<div><div class="card-title">'+esc(club.nombre||'—')+'</div><div class="card-sub">'+esc(t.nombre||'')+'</div></div></div>'
+    var avatarHtml=club.logo_url
+      ?'<img class="list-row-avatar" src="'+esc(club.logo_url)+'" alt="">'
+      :'<span class="list-row-avatar">'+esc(inicialesDe(club.nombre))+'</span>';
+    return '<a class="list-row" href="index.html?club='+encodeURIComponent(club.slug||'')+'" style="text-decoration:none;cursor:pointer">'
+      +avatarHtml
+      +'<div class="list-row-main"><div class="list-row-title">'+esc(club.nombre||'—')+'</div><div class="list-row-sub">'+esc(t.nombre||'')+'</div></div>'
       +'<span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span>'
       +'</a>';
   }).join('');
@@ -893,10 +967,11 @@ function renderProximosTorneos(list){
     var enCurso=tn.estado==='en_curso';
     var estadoTxt=enCurso?I18N.t('home.tournament.statusOngoing'):I18N.t('home.tournament.statusUpcoming');
     var titulo=tn.nombre||((club.nombre?club.nombre+' · ':'')+(tn.tipo||''));
-    return '<div class="card">'
-      +'<div class="card-title">'+esc(titulo)+'</div>'
-      +'<div class="card-sub">'+esc(fechaTxt)+(club.nombre?' · '+esc(club.nombre):'')+'</div>'
-      +'<div style="margin-top:10px"><span class="pill '+(enCurso?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span></div>'
+    var trofeoIc='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4h8v3a4 4 0 01-8 0V4z"/><path d="M6 4.8H4.2a1.6 1.6 0 001.6 2.8M14 4.8h1.8a1.6 1.6 0 01-1.6 2.8M10 11v2.5M8 16h4" stroke-linecap="round"/></svg>';
+    return '<div class="list-row">'
+      +'<span class="list-row-thumb">'+trofeoIc+'</span>'
+      +'<div class="list-row-main"><div class="list-row-title">'+esc(titulo)+'</div><div class="list-row-sub">'+esc(fechaTxt)+(club.nombre?' · '+esc(club.nombre):'')+'</div></div>'
+      +'<span class="pill '+(enCurso?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span>'
       +'</div>';
   }).join('');
 }
@@ -908,11 +983,14 @@ function renderRankingChileTenisPro(list){
   el.innerHTML=list.map(function(p,i){
     var pos=i+1;
     var multiClub=p.clubes_participa>1?(' <span style="color:var(--ink-faint);font-weight:400">· '+p.clubes_participa+' clubes</span>'):'';
+    var avatarHtml=p.avatar_url
+      ?'<img class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0;object-fit:cover;border-radius:50%" src="'+esc(p.avatar_url)+'" alt="">'
+      :'<span class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>';
     return '<div class="rank-row">'
       +'<span class="rank-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
-      +'<span class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>'
-      +'<span class="rank-name">'+esc(p.nombre)+multiClub+'</span>'
-      +'<span class="rank-pts">'+p.total_puntos+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      +avatarHtml
+      +'<span class="rank-name">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+multiClub+'</span>'
+      +'<span class="rank-pts">'+Number(p.total_puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
       +'</div>';
   }).join('');
 }
@@ -949,21 +1027,8 @@ async function loadHomeSections(){
       I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
     });
   });
-
-  // Splash: se oculta apenas terminan las traducciones y las secciones
-  // dinamicas (club destacado, escalerillas, torneos, ranking). Si algo
-  // se demora de mas (red lenta, Supabase caido), un timeout de seguridad
-  // igual lo saca a los 4s para no dejar a la persona mirando el splash
-  // para siempre -- mismo criterio defensivo que el resto del sitio.
-  var splashOculto=false;
-  function ocultarSplash(){
-    if(splashOculto)return;
-    splashOculto=true;
-    var sp=document.getElementById('splash');
-    if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},450);}
-  }
-  setTimeout(ocultarSplash,4000);
-  Promise.all([I18N.init(), loadHomeSections()]).then(ocultarSplash).catch(ocultarSplash);
+  I18N.init();
+  loadHomeSections();
 })();
 </script>
 
