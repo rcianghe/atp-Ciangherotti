@@ -856,7 +856,7 @@ const ENTITIES = {
     ]},
 
   clubes:{ label:'Clubes', group:'Club', table:'clubes', pk:'id',
-    select:'id,nombre,nombre_corto,comuna,encargado_nombre,encargado_contacto,link_cancha,logo_url,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,whatsapp_numero,color_tema,tema,zonas_entrega,albumes_galeria,activo,slug,organizacion_id,organizaciones(nombre),destacado,sitio_web_externo',
+    select:'id,nombre,nombre_corto,comuna,encargado_nombre,encargado_contacto,link_cancha,logo_url,foto_portada_url,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,whatsapp_numero,color_tema,tema,zonas_entrega,albumes_galeria,activo,slug,organizacion_id,organizaciones(nombre),destacado,sitio_web_externo',
     order:{col:'nombre'}, searchCols:['nombre','comuna','nombre_corto'],
     columns:[
       {key:'nombre',label:'Nombre'},
@@ -876,6 +876,7 @@ const ENTITIES = {
       {key:'encargado_contacto',label:'Contacto encargado',type:'text'},
       {key:'link_cancha',label:'Link cancha (mapa)',type:'text'},
       {key:'logo_url',label:'Logo URL',type:'text'},
+      {key:'foto_portada_url',label:'Foto de portada (cancha/club, para el portal)',type:'text'},
       {key:'mascota_hero_url',label:'Mascota del hero (imagen)',type:'text'},
       {key:'trofeo_url',label:'Trofeo (imagen, torneos)',type:'text'},
       {key:'hero_tagline',label:'Tagline del hero (ej: QUILICURA)',type:'text'},
