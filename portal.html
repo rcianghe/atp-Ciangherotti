@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ChileTenis PRO — Portal</title>
+<meta name="description" content="La plataforma que conecta clubes, escalerillas, torneos, desafíos y jugadores de tenis en todo Chile.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="lib/supabase.min.js/supabase.min.js"></script>
+<style>
+/* ============================================================
+   TOKENS — ChileTenis PRO (portal). Distinto de la identidad de
+   cada club (que vive en su propia plantilla, ej. Barlow/Bebas Neue
+   de Quilicura). El portal tiene su propia voz tipografica, pero
+   comparte familia con escalerilla-admin.html para dar coherencia
+   entre los productos internos de ChileTenis PRO.
+   ============================================================ */
+:root{
+  --bg:#0B1220;            /* fondo navy profundo, con tinte azul (no negro plano) */
+  --bg-1:#111A2E;          /* superficie elevada 1 (tarjetas) */
+  --bg-2:#17223B;          /* superficie elevada 2 (anidado dentro de tarjetas) */
+  --line:rgba(255,255,255,.08);
+  --line-strong:rgba(255,255,255,.14);
+  --lime:#C6F135;          /* acento primario: verde "pelota de tenis" */
+  --lime-dim:#8FB324;
+  --sky:#3FA9F5;           /* secundario azul/celeste */
+  --ink:#F5F7FA;
+  --ink-dim:#93A0B8;       /* gris con tinte azul, no gris puro */
+  --ink-faint:#5C6B85;
+  --radius:14px;
+  --radius-sm:9px;
+  --display:'Space Grotesk',sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --maxw:1240px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%;display:block}
+::selection{background:var(--lime);color:var(--bg)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+@media(max-width:640px){.wrap{padding:0 16px}}
+
+/* focus visible consistente en toda la pagina */
+a:focus-visible,button:focus-visible,input:focus-visible{
+  outline:2px solid var(--lime);outline-offset:2px;border-radius:4px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(11,18,32,.82);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+}
+.headbar{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-right:auto}
+.brand-mark{width:34px;height:34px;flex:none}
+.brand-txt{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.05}
+.brand-txt b{color:var(--lime);font-weight:700}
+.brand-txt span{display:block;font-family:var(--mono);font-weight:500;font-size:9.5px;letter-spacing:.16em;color:var(--ink-faint);margin-top:1px;text-transform:uppercase}
+
+nav.primary-nav{display:flex;align-items:center;gap:2px}
+nav.primary-nav a{
+  font-size:13.5px;font-weight:500;color:var(--ink-dim);padding:9px 13px;border-radius:8px;
+  transition:color .15s ease,background .15s ease;
+}
+nav.primary-nav a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
+
+.head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.icon-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:transparent;
+  color:var(--ink-dim);display:flex;align-items:center;justify-content:center;transition:all .15s ease;
+}
+.icon-btn:hover{border-color:var(--line-strong);color:var(--ink)}
+.icon-btn svg{width:16px;height:16px}
+
+/* selector de idioma — presente pero SIN logica de traduccion todavia
+   (eso es Fase 3, Fundacion i18n). Hoy solo alterna estado visual. */
+.lang-switch{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.lang-btn{
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;
+  padding:5px 9px;border-radius:6px;border:none;background:transparent;color:var(--ink-faint);
+  transition:all .15s ease;
+}
+.lang-btn[aria-pressed="true"]{background:var(--lime);color:var(--bg)}
+.lang-btn:not([aria-pressed="true"]):hover{color:var(--ink)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-family:var(--body);font-weight:600;font-size:13.5px;
+  padding:9px 17px;border-radius:9px;border:1px solid transparent;white-space:nowrap;
+  transition:filter .15s ease,transform .05s ease,background .15s ease,border-color .15s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--lime);color:var(--bg)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{color:var(--ink-dim);border-color:var(--line)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--line-strong)}
+.btn-outline{color:var(--ink);border-color:var(--line-strong);background:rgba(255,255,255,.02)}
+.btn-outline:hover{border-color:var(--lime);color:var(--lime)}
+.btn-sm{padding:7px 13px;font-size:12.5px}
+.btn-block{width:100%}
+
+.menu-toggle{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);align-items:center;justify-content:center}
+
+@media(max-width:920px){
+  nav.primary-nav{display:none}
+  .head-actions .btn-ghost,.head-actions .btn-primary{display:none}
+  .menu-toggle{display:flex}
+}
+
+/* menu movil: panel deslizante, mismo lenguaje visual que el header */
+.mobile-panel{
+  display:none;position:fixed;inset:68px 0 0 0;z-index:99;background:var(--bg);
+  overflow-y:auto;padding:20px 20px 40px;
+}
+.mobile-panel.open{display:block}
+.mobile-panel nav{display:flex;flex-direction:column;gap:2px;margin-bottom:22px}
+.mobile-panel nav a{padding:13px 14px;border-radius:10px;font-size:15px;font-weight:500;color:var(--ink-dim);border-bottom:1px solid var(--line)}
+.mobile-panel nav a:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.mobile-actions{display:flex;flex-direction:column;gap:10px}
+.mobile-lang{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.mobile-lang span{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase}
+
+/* ============================================================
+   CONTENEDOR GENERAL DE SECCIONES
+   ============================================================ */
+main{display:block}
+section{padding:64px 0}
+.section-head{margin-bottom:28px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.section-eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--lime);margin-bottom:8px}
+.section-title{font-family:var(--display);font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.section-link{font-size:13px;font-weight:600;color:var(--sky);display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.section-link:hover{color:var(--ink)}
+
+/* placeholder — Hero, franja de funcionalidades y contenido dinamico
+   se implementan en las fases siguientes (3 en adelante). Este bloque
+   solo marca el lugar donde van a vivir, para que la maqueta del
+   header/footer se pueda revisar en contexto real. */
+.pending-block{
+  border:1px dashed var(--line-strong);border-radius:var(--radius);
+  padding:56px 24px;text-align:center;color:var(--ink-faint);font-size:13px;
+}
+.pending-block b{display:block;color:var(--ink-dim);font-family:var(--display);font-size:15px;margin-bottom:6px;font-weight:600}
+
+/* ============================================================
+   HERO
+   ============================================================
+   NOTA: todavia no hay fotografia deportiva real provista por el
+   cliente (el PDF pide "fotografia deportiva de tenis a pantalla
+   ancha"). En vez de usar un stock photo generico sin licencia
+   confirmada, el fondo se resuelve con un patron de lineas de cancha
+   + glow de marca (mismo lenguaje que ya usa index.html con sus
+   .hconn-path). Cuando haya foto real, .hero-bg-img reemplaza este
+   patron sin tocar el resto del layout. */
+.hero{position:relative;overflow:hidden;padding:96px 0 80px}
+.hero-bg{position:absolute;inset:0;z-index:0;background:
+    radial-gradient(ellipse 900px 520px at 15% -10%, rgba(198,241,53,.14), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 30%, rgba(63,169,245,.16), transparent 60%),
+    linear-gradient(180deg,#0B1220 0%,#0E1830 60%,#0B1220 100%);
+}
+.hero-courtlines{position:absolute;inset:0;z-index:0;opacity:.5}
+.hero::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,transparent 0%,var(--bg) 96%)}
+.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:center}
+.hero-eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--lime);text-transform:uppercase;margin-bottom:14px}
+.hero-title{font-family:var(--display);font-weight:700;font-size:clamp(34px,5.4vw,58px);letter-spacing:-.02em;line-height:1.03;margin:0 0 18px}
+.hero-title b{color:var(--lime);font-weight:700}
+.hero-desc{font-size:15.5px;line-height:1.65;color:var(--ink-dim);max-width:520px;margin:0 0 22px}
+.hero-themes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:30px}
+.hero-themes span.dot{color:var(--ink-faint);opacity:.5}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-cta .btn{padding:12px 22px;font-size:14px}
+
+/* grafico decorativo lateral: pelota + lineas de cancha, no una foto */
+.hero-visual{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1}
+.hero-ball{width:100%;max-width:260px;filter:drop-shadow(0 20px 40px rgba(198,241,53,.18))}
+@media(max-width:920px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .hero{padding:64px 0 56px}
+}
+
+/* ============================================================
+   FRANJA DE 5 FUNCIONALIDADES
+   ============================================================ */
+.feature-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:-26px;position:relative;z-index:2}
+.feature-item{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;transition:border-color .2s ease,transform .2s ease}
+.feature-item:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+.feature-ic{width:38px;height:38px;border-radius:10px;background:rgba(198,241,53,.1);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
+.feature-ic svg{width:19px;height:19px}
+.feature-title{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:5px}
+.feature-desc{font-size:12.5px;line-height:1.5;color:var(--ink-faint)}
+@media(max-width:920px){.feature-strip{grid-template-columns:repeat(2,1fr);margin-top:0}}
+@media(max-width:520px){.feature-strip{grid-template-columns:1fr}}
+
+/* ============================================================
+   CONTENIDO DINAMICO — Fase 5: Club destacado, Escalerillas
+   Activas, Proximos Torneos. Tres columnas, cada una alimentada
+   por su propia consulta a Supabase (ver script al final).
+   ============================================================ */
+.home-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+.home-col-list{display:flex;flex-direction:column;gap:12px}
+.empty-note{border:1px dashed var(--line-strong);border-radius:var(--radius-sm);padding:22px 16px;text-align:center;color:var(--ink-faint);font-size:12.5px}
+@media(max-width:920px){.home-cols{grid-template-columns:1fr}}
+
+/* ============================================================
+   BANNER DE DESAFIOS — Fase 6
+   ============================================================ */
+.challenge-banner{
+  position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--line);
+  padding:40px 36px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+}
+.challenge-banner-bg{position:absolute;inset:0;z-index:0;background:
+    radial-gradient(ellipse 600px 340px at 85% 0%, rgba(63,169,245,.16), transparent 60%),
+    radial-gradient(ellipse 500px 340px at 5% 100%, rgba(198,241,53,.12), transparent 60%),
+    linear-gradient(115deg,#0E1830 0%,#111A2E 100%);
+}
+.challenge-banner-content{position:relative;z-index:1;max-width:560px}
+.challenge-eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--sky);margin-bottom:10px}
+.challenge-title{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,28px);letter-spacing:-.01em;margin:0 0 8px}
+.challenge-desc{font-size:13.5px;color:var(--ink-dim);line-height:1.55}
+.challenge-cta{position:relative;z-index:1;flex-shrink:0}
+
+/* ============================================================
+   RANKING CHILETENIS PRO — Fase 6
+   ============================================================ */
+.ranking-panel{max-width:640px;margin:0 auto}
+
+/* ============================================================
+   BLOQUE COMERCIAL "¿TIENES UN CLUB?" — Fase 7
+   ============================================================ */
+.club-cta{
+  position:relative;overflow:hidden;border-radius:var(--radius);
+  border:1px solid rgba(198,241,53,.3);background:linear-gradient(135deg,rgba(198,241,53,.07),rgba(198,241,53,.02));
+  padding:36px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:space-between;
+}
+.club-cta-left{display:flex;align-items:center;gap:18px;flex:1;min-width:260px}
+.club-cta-ic{width:52px;height:52px;border-radius:14px;background:rgba(198,241,53,.14);display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.club-cta-ic svg{width:26px;height:26px}
+.club-cta-title{font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);margin-bottom:4px}
+.club-cta-desc{font-size:13px;color:var(--ink-dim);max-width:440px;line-height:1.5}
+
+/* ============================================================
+   SISTEMA DE TARJETAS — vista previa
+   ============================================================
+   Dos tratamientos distintos (no el mismo card+shadow repetido):
+   - .card: elevacion por tono, borde sutil, sin sombra pesada.
+   - .card-feat: agrega una linea lima arriba (motivo "linea de
+     cancha"), reservada para el elemento destacado de cada bloque. */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;transition:border-color .2s ease,background .2s ease;
+}
+.card:hover{border-color:var(--line-strong);background:var(--bg-2)}
+.card-feat{position:relative;border-top:2px solid var(--lime);border-radius:0 0 var(--radius) var(--radius)}
+.card-feat::before{content:"";position:absolute;top:-2px;left:0;right:0;height:2px;background:var(--lime);border-radius:2px 2px 0 0}
+
+.card-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.card-avatar{width:40px;height:40px;border-radius:10px;background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:15px;color:var(--lime);flex-shrink:0}
+.card-title{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink)}
+.card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px}
+.card-body{font-size:13px;color:var(--ink-dim);line-height:1.55}
+.pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:4px 9px;border-radius:20px}
+.pill-live{background:rgba(198,241,53,.12);color:var(--lime)}
+.pill-live::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--lime);box-shadow:0 0 6px var(--lime)}
+.pill-soon{background:rgba(63,169,245,.12);color:var(--sky)}
+
+/* fila tipo ranking, para reusar en el bloque de Ranking ChileTenis PRO */
+.rank-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.rank-row:last-child{border-bottom:none}
+.rank-pos{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink-faint);width:20px;flex-shrink:0}
+.rank-pos.top{color:var(--lime)}
+.rank-name{flex:1;font-size:13.5px;font-weight:600;color:var(--ink)}
+.rank-pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim)}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
+.foot-grid{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;margin-bottom:28px}
+.foot-brand .brand{margin-bottom:10px}
+.foot-brand p{font-size:12.5px;color:var(--ink-faint);max-width:260px;line-height:1.6}
+.foot-cols{display:flex;gap:48px;flex-wrap:wrap}
+.foot-col h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint);margin:0 0 12px;font-weight:600;text-transform:uppercase}
+.foot-col a{display:block;font-size:13px;color:var(--ink-dim);padding:5px 0}
+.foot-col a:hover{color:var(--ink)}
+.foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--line)}
+.foot-copy{font-size:11.5px;color:var(--ink-faint)}
+.foot-social{display:flex;gap:8px}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap headbar">
+    <a href="#" class="brand" aria-label="ChileTenis PRO, inicio">
+      <svg class="brand-mark" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <circle cx="17" cy="17" r="15" fill="none" stroke="#C6F135" stroke-width="2.2"/>
+        <path d="M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30" stroke="#C6F135" stroke-width="1.6" fill="none" opacity=".75"/>
+        <path d="M2 17h30" stroke="#C6F135" stroke-width="1.6" opacity=".4"/>
+      </svg>
+      <span class="brand-txt">Chile<b>Tenis</b> PRO<span data-i18n="brand.tagline">Plataforma de clubes</span></span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Navegación principal">
+      <a href="#" class="active" data-i18n="navigation.home">Inicio</a>
+      <a href="#" data-i18n="navigation.clubs">Clubes</a>
+      <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
+      <a href="#" data-i18n="navigation.tournaments">Torneos</a>
+      <a href="#" data-i18n="navigation.challenges">Desafíos</a>
+      <a href="#" data-i18n="navigation.rankings">Rankings</a>
+      <a href="#" data-i18n="navigation.news">Noticias</a>
+    </nav>
+
+    <div class="head-actions">
+      <button class="icon-btn" data-i18n-aria-label="navigation.search" aria-label="Buscar">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6.5"/><path d="M18 18l-4.5-4.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="lang-switch" role="group" data-i18n-aria-label="navigation.language" aria-label="Seleccionar idioma">
+        <button class="lang-btn" aria-pressed="true" data-lang="es">ES</button>
+        <button class="lang-btn" aria-pressed="false" data-lang="en">EN</button>
+      </div>
+      <a href="#" class="btn btn-ghost" data-i18n="auth.signIn">Iniciar sesión</a>
+      <a href="#" class="btn btn-primary" data-i18n="auth.signUp">Registrarse</a>
+      <button class="menu-toggle" id="menuToggle" data-i18n-aria-label="navigation.openMenu" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobilePanel">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" id="menuIcon"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-panel" id="mobilePanel">
+    <div class="mobile-lang">
+      <span data-i18n="navigation.language">Idioma</span>
+      <div class="lang-switch" role="group" data-i18n-aria-label="navigation.language" aria-label="Seleccionar idioma">
+        <button class="lang-btn" aria-pressed="true" data-lang="es">ES</button>
+        <button class="lang-btn" aria-pressed="false" data-lang="en">EN</button>
+      </div>
+    </div>
+    <nav aria-label="Navegación móvil">
+      <a href="#" data-i18n="navigation.home">Inicio</a>
+      <a href="#" data-i18n="navigation.clubs">Clubes</a>
+      <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
+      <a href="#" data-i18n="navigation.tournaments">Torneos</a>
+      <a href="#" data-i18n="navigation.challenges">Desafíos</a>
+      <a href="#" data-i18n="navigation.rankings">Rankings</a>
+      <a href="#" data-i18n="navigation.news">Noticias</a>
+    </nav>
+    <div class="mobile-actions">
+      <a href="#" class="btn btn-outline btn-block" data-i18n="auth.signIn">Iniciar sesión</a>
+      <a href="#" class="btn btn-primary btn-block" data-i18n="auth.signUp">Registrarse</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============================================================
+       HERO — Fase 4. Construido 100% con claves de traduccion
+       (data-i18n), sin texto de UI hardcodeado en ningun idioma.
+       ============================================================ -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <svg class="hero-courtlines" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="640" y="40" width="500" height="420" rx="4" fill="none" stroke="#C6F135" stroke-width="1" opacity=".25"/>
+      <line x1="890" y1="40" x2="890" y2="460" stroke="#C6F135" stroke-width="1" opacity=".2"/>
+      <line x1="640" y1="180" x2="1140" y2="180" stroke="#3FA9F5" stroke-width="1" opacity=".18"/>
+    </svg>
+    <div class="wrap hero-grid">
+      <div>
+        <div class="hero-eyebrow" data-i18n="home.hero.eyebrow">Bienvenido a</div>
+        <h1 class="hero-title">Chile<b>Tenis</b> PRO</h1>
+        <p class="hero-desc" data-i18n="home.hero.description">La plataforma que conecta clubes, jugadores y comunidad de tenis en todo Chile.</p>
+        <div class="hero-themes">
+          <span data-i18n="navigation.ladders">Escalerillas</span><span class="dot">·</span>
+          <span data-i18n="navigation.tournaments">Torneos</span><span class="dot">·</span>
+          <span data-i18n="navigation.challenges">Desafíos</span><span class="dot">·</span>
+          <span data-i18n="navigation.rankings">Rankings</span><span class="dot">·</span>
+          <span data-i18n="home.hero.communityLabel">Comunidad</span>
+        </div>
+        <div class="hero-cta">
+          <a href="#" class="btn btn-primary" data-i18n="actions.joinNow">Únete ahora</a>
+          <a href="#" class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg class="hero-ball" viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="92" fill="#C6F135" opacity=".95"/>
+          <path d="M100 8c-38 30-38 154 0 184M100 8c38 30 38 154 0 184" stroke="#0B1220" stroke-width="4" fill="none" opacity=".55"/>
+          <circle cx="100" cy="100" r="92" fill="none" stroke="#0B1220" stroke-width="2" opacity=".2"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FRANJA DE 5 FUNCIONALIDADES — Fase 4
+       ============================================================ -->
+  <section class="wrap" style="padding-top:0">
+    <div class="feature-strip">
+      <div class="feature-item">
+        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke-linecap="round"/></svg></div>
+        <div class="feature-title" data-i18n="home.features.profiles.title">Perfiles de jugadores</div>
+        <div class="feature-desc" data-i18n="home.features.profiles.description">Creá tu perfil y encontrá rivales a tu nivel.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h12v3a6 6 0 01-12 0V3z"/><path d="M4 4.5H2a2 2 0 002 3.5M16 4.5h2a2 2 0 01-2 3.5"/><path d="M10 12v3M7 17h6" stroke-linecap="round"/></svg></div>
+        <div class="feature-title" data-i18n="home.features.ladders.title">Escalerillas y torneos</div>
+        <div class="feature-desc" data-i18n="home.features.ladders.description">Competí en tu club o a nivel nacional.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3l14 14M17 3L3 17" stroke-linecap="round"/></svg></div>
+        <div class="feature-title" data-i18n="home.features.challenges.title">Desafíos</div>
+        <div class="feature-desc" data-i18n="home.features.challenges.description">Retá partidos y mejorá tu ranking.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9M9.5 17V3M16 17v-6" stroke-linecap="round"/></svg></div>
+        <div class="feature-title" data-i18n="home.features.rankings.title">Rankings automáticos</div>
+        <div class="feature-desc" data-i18n="home.features.rankings.description">Tu progreso, en tiempo real.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
+        <div class="feature-title" data-i18n="home.features.clubs.title">Clubes</div>
+        <div class="feature-desc" data-i18n="home.features.clubs.description">Cada club con su propia identidad.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTENIDO DINAMICO — Fase 5. Club destacado, Escalerillas
+       Activas y Proximos Torneos, con datos reales de Supabase.
+       ============================================================ -->
+  <section class="wrap">
+    <div class="home-cols">
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.featuredClub">Club destacado</h2>
+        </div>
+        <div id="featuredClubCard"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+      </div>
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.activeLadders">Escalerillas Activas</h2>
+        </div>
+        <div id="activeLaddersList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+      </div>
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.upcomingTournaments">Próximos Torneos</h2>
+        </div>
+        <div id="upcomingTournamentsList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BANNER DE DESAFIOS — Fase 6
+       ============================================================ -->
+  <section class="wrap">
+    <div class="challenge-banner">
+      <div class="challenge-banner-bg" aria-hidden="true"></div>
+      <div class="challenge-banner-content">
+        <div class="challenge-eyebrow" data-i18n="home.challengeBanner.eyebrow">Desafía · Compite · Avanza</div>
+        <h2 class="challenge-title" data-i18n="home.challengeBanner.title">Encuentra tu próximo rival</h2>
+        <p class="challenge-desc" data-i18n="home.challengeBanner.description">Jugá partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.</p>
+      </div>
+      <a href="#" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       RANKING CHILETENIS PRO — Fase 6
+       ============================================================ -->
+  <section class="wrap">
+    <div class="section-head">
+      <h2 class="section-title" data-i18n="home.ranking.title">Ranking ChileTenis PRO</h2>
+      <a href="#" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
+    </div>
+    <div class="ranking-panel">
+      <div class="card" id="rankingCard">
+        <div class="empty-note" data-i18n="home.states.loading">Cargando…</div>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 4px 0" data-i18n="home.ranking.note">Ranking por partidos ganados en toda la plataforma.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BLOQUE COMERCIAL "¿TIENES UN CLUB?" — Fase 7
+       ============================================================ -->
+  <section class="wrap">
+    <div class="club-cta">
+      <div class="club-cta-left">
+        <div class="club-cta-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
+        <div>
+          <div class="club-cta-title" data-i18n="home.clubCta.title">¿Tienes un club?</div>
+          <div class="club-cta-desc" data-i18n="home.clubCta.description">Sumate a ChileTenis PRO y digitalizá tu escalerilla, torneos, desafíos y ranking en minutos.</div>
+        </div>
+      </div>
+      <a href="#" class="btn btn-primary" data-i18n="actions.moreInfo">Más información</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SISTEMA DE TARJETAS Y BOTONES — vista previa de componentes
+       reutilizables (parte del alcance de esta Fase 2). No es
+       contenido real todavia: son variantes de muestra para validar
+       el sistema visual antes de conectarlo a Supabase en Fase 5.
+       ============================================================ -->
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">Sistema de diseño</div>
+        <h2 class="section-title">Tarjetas y botones — vista previa</h2>
+      </div>
+      <a href="#" class="section-link"><span data-i18n="actions.viewDocs">Ver documentación</span> →</a>
+    </div>
+
+    <div class="card-grid" style="margin-bottom:16px">
+      <div class="card card-feat">
+        <div class="card-top">
+          <span class="card-avatar">CQ</span>
+          <div>
+            <div class="card-title">Club de Tenis Quilicura</div>
+            <div class="card-sub">Escalerilla · Temporada 2026</div>
+          </div>
+        </div>
+        <div class="card-body">Tarjeta destacada — se usa para el "Club destacado" y elementos principales de cada bloque.</div>
+        <div style="margin-top:14px"><span class="pill pill-live">Escalerilla activa</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <span class="card-avatar" style="color:var(--sky)">TI</span>
+          <div>
+            <div class="card-title">Torneo Interno CTQ</div>
+            <div class="card-sub">12–18 dic 2026</div>
+          </div>
+        </div>
+        <div class="card-body">Tarjeta estándar — próximos torneos, escalerillas activas, desafíos.</div>
+        <div style="margin-top:14px"><span class="pill pill-soon">Próximamente</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top" style="margin-bottom:6px"><div class="card-title">Ranking ChileTenis PRO</div></div>
+        <div class="rank-row"><span class="rank-pos top">1</span><span class="rank-name">Mateo Rojas</span><span class="rank-pts">1.230 pts</span></div>
+        <div class="rank-row"><span class="rank-pos top">2</span><span class="rank-name">Gonzalo Campbell</span><span class="rank-pts">1.120 pts</span></div>
+        <div class="rank-row"><span class="rank-pos">3</span><span class="rank-name">Felipe Morales</span><span class="rank-pts">980 pts</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" data-i18n="actions.joinNow">Únete ahora</button>
+      <button class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</button>
+      <button class="btn btn-ghost" data-i18n="actions.viewFullRanking">Ver ranking completo</button>
+      <button class="btn btn-primary btn-sm" data-i18n="actions.moreInfo">Más información</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#" class="brand">
+          <svg class="brand-mark" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            <circle cx="17" cy="17" r="15" fill="none" stroke="#C6F135" stroke-width="2.2"/>
+            <path d="M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30" stroke="#C6F135" stroke-width="1.6" fill="none" opacity=".75"/>
+            <path d="M2 17h30" stroke="#C6F135" stroke-width="1.6" opacity=".4"/>
+          </svg>
+          <span class="brand-txt">Chile<b>Tenis</b> PRO</span>
+        </a>
+        <p data-i18n="brand.description">La plataforma que conecta clubes, escalerillas, torneos y jugadores de tenis en todo Chile.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4 data-i18n="footer.platformHeading">Plataforma</h4>
+          <a href="#" data-i18n="navigation.clubs">Clubes</a>
+          <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
+          <a href="#" data-i18n="navigation.tournaments">Torneos</a>
+          <a href="#" data-i18n="navigation.rankings">Rankings</a>
+        </div>
+        <div class="foot-col">
+          <h4 data-i18n="footer.communityHeading">Comunidad</h4>
+          <a href="#" data-i18n="navigation.challenges">Desafíos</a>
+          <a href="#" data-i18n="footer.players">Jugadores</a>
+          <a href="#" data-i18n="navigation.news">Noticias</a>
+        </div>
+        <div class="foot-col">
+          <h4 data-i18n="footer.chiletenisHeading">ChileTenis PRO</h4>
+          <a href="#" data-i18n="footer.hasClub">¿Tienes un club?</a>
+          <a href="#" data-i18n="footer.contact">Contacto</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span class="foot-copy" id="footCopy">© ChileTenis PRO 2026 · Todos los derechos reservados</span>
+      <div class="foot-social">
+        <a class="icon-btn" href="#" aria-label="Instagram"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="4"/><circle cx="10" cy="10" r="3.2"/><circle cx="14.3" cy="5.7" r=".6" fill="currentColor" stroke="none"/></svg></a>
+        <a class="icon-btn" href="#" aria-label="Facebook"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 7h-1.5A1.5 1.5 0 009 8.5V10h3l-.4 3H9v5H6v-5H4v-3h2V8a4 4 0 014-4h2v3z"/></svg></a>
+        <a class="icon-btn" href="#" aria-label="X (Twitter)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l12 12M16 4L4 16"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// FASE 3 — Fundacion i18n
+// ============================================================
+// Motor de traducciones minimo, sin dependencias ni framework (el
+// proyecto es HTML/JS plano, asi que no se mete un bundler solo por
+// esto). Principios que sigue, tal como pide la especificacion:
+//   - El idioma es una capa de presentacion, separada del negocio.
+//   - Nunca "if(lang==='en')" en el codigo: todo pasa por t(clave).
+//   - Si falta una clave, cae al idioma por defecto (es) y nunca
+//     rompe la interfaz (en el peor caso, se ve la clave literal).
+//   - Persiste en localStorage y en la URL (?lang=es|en), y el
+//     cambio de idioma NO recarga la pagina (asi se conserva
+//     cualquier estado de la pantalla actual).
+//
+// Namespaces cargados hoy: common, navigation, auth (los unicos que
+// usa este shell). Cada pantalla nueva (Fase 4 en adelante) suma su
+// propio archivo a NAMESPACES y sus JSON en /locales/es|en/.
+var I18N = (function(){
+  var DEFAULT_LOCALE='es';
+  var SUPPORTED=['es','en'];
+  var NAMESPACES=['common','navigation','auth','home'];
+  var BASE_PATH='locales/';
+  var dict={};
+  var dictDefault={};
+  var current=DEFAULT_LOCALE;
+
+  function resolveInitialLocale(){
+    try{
+      var fromUrl=new URLSearchParams(window.location.search).get('lang');
+      if(fromUrl && SUPPORTED.indexOf(fromUrl)!==-1)return fromUrl;
+    }catch(e){}
+    try{
+      var fromStorage=localStorage.getItem('ctp_lang');
+      if(fromStorage && SUPPORTED.indexOf(fromStorage)!==-1)return fromStorage;
+    }catch(e){}
+    return DEFAULT_LOCALE;
+  }
+
+  async function fetchNamespace(locale,ns){
+    try{
+      var res=await fetch(BASE_PATH+locale+'/'+ns+'.json');
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      return await res.json();
+    }catch(err){
+      console.warn('[i18n] No se pudo cargar '+locale+'/'+ns+'.json — revisa que el sitio se sirva por HTTP (fetch no funciona con file://).',err);
+      return {};
+    }
+  }
+
+  async function loadLocale(locale){
+    var merged={};
+    for(var i=0;i<NAMESPACES.length;i++){
+      Object.assign(merged, await fetchNamespace(locale,NAMESPACES[i]));
+    }
+    return merged;
+  }
+
+  function getPath(obj,path){
+    return path.split('.').reduce(function(acc,k){return (acc&&acc[k]!==undefined)?acc[k]:undefined;},obj);
+  }
+
+  function interpolate(str,vars){
+    if(!vars)return str;
+    return str.replace(/\{\{(\w+)\}\}/g,function(_,k){return vars[k]!==undefined?vars[k]:'{{'+k+'}}';});
+  }
+
+  // t(clave, variables): busca en el idioma actual; si falta, cae al
+  // idioma por defecto; si tampoco esta ahi, devuelve la clave misma
+  // (visible a proposito, para detectar claves faltantes sin romper nada).
+  function t(key,vars){
+    var val=getPath(dict,key);
+    if(val===undefined)val=getPath(dictDefault,key);
+    if(val===undefined){
+      console.warn('[i18n] Falta la clave "'+key+'" en "'+current+'" y en el idioma por defecto.');
+      return key;
+    }
+    return interpolate(val,vars);
+  }
+
+  function applyTranslations(root){
+    root=root||document;
+    root.querySelectorAll('[data-i18n]').forEach(function(el){
+      var vars=el.getAttribute('data-i18n-vars');
+      el.textContent=t(el.getAttribute('data-i18n'), vars?JSON.parse(vars):null);
+    });
+    root.querySelectorAll('[data-i18n-aria-label]').forEach(function(el){
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
+    });
+    // Copyright con el año calculado en tiempo real, no traducido a mano.
+    var copy=document.getElementById('footCopy');
+    if(copy)copy.textContent=t('footer.copyright',{year:new Date().getFullYear()});
+  }
+
+  function syncLangButtons(){
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.setAttribute('aria-pressed', b.dataset.lang===current?'true':'false');
+    });
+    document.documentElement.setAttribute('lang',current);
+    var toggle=document.getElementById('menuToggle');
+    if(toggle)toggle.setAttribute('aria-label', t(toggle.classList.contains('open')?'navigation.closeMenu':'navigation.openMenu'));
+  }
+
+  // Cambia de idioma SIN recargar la pagina: conserva scroll, menu
+  // abierto/cerrado y cualquier otro estado de la pantalla actual,
+  // tal como pide la especificacion.
+  async function setLocale(locale){
+    if(SUPPORTED.indexOf(locale)===-1)locale=DEFAULT_LOCALE;
+    dict=(locale===DEFAULT_LOCALE)?dictDefault:await loadLocale(locale);
+    current=locale;
+    try{localStorage.setItem('ctp_lang',locale);}catch(e){}
+    try{
+      var url=new URL(window.location.href);
+      url.searchParams.set('lang',locale);
+      history.replaceState(null,'',url.pathname+url.search+url.hash);
+    }catch(e){}
+    syncLangButtons();
+    applyTranslations();
+  }
+
+  async function init(){
+    var initial=resolveInitialLocale();
+    dictDefault=await loadLocale(DEFAULT_LOCALE);
+    dict=(initial===DEFAULT_LOCALE)?dictDefault:await loadLocale(initial);
+    current=initial;
+    try{localStorage.setItem('ctp_lang',current);}catch(e){}
+    syncLangButtons();
+    applyTranslations();
+  }
+
+  return {init:init, setLocale:setLocale, t:t, get current(){return current;}};
+})();
+
+// ============================================================
+// FASE 5 — Contenido dinamico (Club destacado, Escalerillas
+// Activas, Proximos Torneos). Consultas de SOLO LECTURA con la
+// clave anonima (misma que ya usan index.html / escalerilla-admin.html);
+// las tablas involucradas ya tienen RLS publico de lectura, verificado
+// antes de escribir este bloque (clubes, temporadas, competiciones).
+// No se duplica ningun dato: se leen las mismas tablas de siempre.
+// ============================================================
+var SUPABASE_URL='https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+var sbClient=(typeof supabase!=='undefined')?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function inicialesDe(nombre){
+  var partes=String(nombre||'?').trim().split(/\s+/);
+  var out='';
+  for(var i=0;i<partes.length&&out.length<2;i++){if(partes[i])out+=partes[i][0];}
+  return out.toUpperCase()||'?';
+}
+function formatFecha(iso){
+  try{
+    var d=new Date(iso+'T00:00:00');
+    if(isNaN(d.getTime()))return iso;
+    return d.toLocaleDateString(I18N.current==='en'?'en-US':'es-CL',{day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){return iso;}
+}
+
+var HOME_DATA={club:null,escalerillas:[],torneos:[],ranking:[]};
+
+async function fetchClubDestacado(){
+  if(!sbClient)return null;
+  try{
+    var res=await sbClient.from('clubes')
+      .select('id,nombre,nombre_corto,slug,comuna,logo_url,hero_tagline')
+      .eq('destacado',true).eq('activo',true).limit(1).maybeSingle();
+    return res.error?null:res.data;
+  }catch(err){console.warn('[portal] club destacado',err);return null;}
+}
+async function fetchEscalerillasActivas(){
+  if(!sbClient)return [];
+  try{
+    var res=await sbClient.from('temporadas')
+      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug)')
+      .eq('activa',true).eq('tipo','escalerilla')
+      .order('fecha_inicio',{ascending:false}).limit(4);
+    return res.error?[]:res.data;
+  }catch(err){console.warn('[portal] escalerillas activas',err);return [];}
+}
+async function fetchProximosTorneos(){
+  if(!sbClient)return [];
+  try{
+    var res=await sbClient.from('competiciones')
+      .select('id,nombre,tipo,serie,periodo,estado,fecha_inicio,clubes(nombre,slug)')
+      .neq('tipo','escalerilla').in('estado',['armado','en_curso'])
+      .order('fecha_inicio',{ascending:true,nullsFirst:false}).limit(4);
+    return res.error?[]:res.data;
+  }catch(err){console.warn('[portal] proximos torneos',err);return [];}
+}
+// Ranking ChileTenis PRO: llama al MISMO motor central (fn_ranking_club,
+// via fn_ranking_chiletenis_pro) que ya se valido contra el ranking real
+// de Quilicura -- 0 diferencias en pj/pg/pp/total para sus 43 jugadores.
+// Nada se recalcula en JS: el portal solo agrega lo que Postgres ya
+// calculo con las reglas propias de cada club (configuracion_sitio,
+// clave 'reglas_puntuacion'), agrupado por user_id cuando el mismo
+// jugador vinculo su cuenta en mas de un club. Sin normalizar entre
+// clubes (requisito explicito): cada fila conserva club_id/serie de
+// origen en el campo "detalle", por si se necesita mas adelante.
+async function fetchRankingChileTenisPro(){
+  if(!sbClient)return [];
+  try{
+    var res=await sbClient.rpc('fn_ranking_chiletenis_pro');
+    if(res.error)throw res.error;
+    return (res.data||[]).slice(0,5);
+  }catch(err){console.warn('[portal] ranking chiletenis pro',err);return [];}
+}
+
+function renderClubDestacado(club){
+  var el=document.getElementById('featuredClubCard');
+  if(!el)return;
+  if(!club){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyClub'))+'</div>';return;}
+  var avatarHtml=club.logo_url
+    ?'<img class="card-avatar" style="object-fit:cover" src="'+esc(club.logo_url)+'" alt="">'
+    :'<span class="card-avatar">'+esc(inicialesDe(club.nombre_corto||club.nombre))+'</span>';
+  el.innerHTML=
+    '<div class="card card-feat">'
+    +'<div class="card-top">'+avatarHtml
+      +'<div><div class="card-title">'+esc(club.nombre)+'</div>'
+      +'<div class="card-sub">'+esc(club.comuna||club.hero_tagline||'')+'</div></div></div>'
+    +'<div style="margin-top:6px"><span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span></div>'
+    +'<div style="margin-top:16px"><a class="btn btn-outline btn-sm" href="index.html?club='+encodeURIComponent(club.slug)+'">'+esc(I18N.t('home.club.viewClub'))+'</a></div>'
+    +'</div>';
+}
+function renderEscalerillasActivas(list){
+  var el=document.getElementById('activeLaddersList');
+  if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyLadders'))+'</div>';return;}
+  el.innerHTML=list.map(function(t){
+    var club=t.clubes||{};
+    return '<a class="card" href="index.html?club='+encodeURIComponent(club.slug||'')+'" style="display:block">'
+      +'<div class="card-top"><span class="card-avatar">'+esc(inicialesDe(club.nombre))+'</span>'
+      +'<div><div class="card-title">'+esc(club.nombre||'—')+'</div><div class="card-sub">'+esc(t.nombre||'')+'</div></div></div>'
+      +'<span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span>'
+      +'</a>';
+  }).join('');
+}
+function renderProximosTorneos(list){
+  var el=document.getElementById('upcomingTournamentsList');
+  if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyTournaments'))+'</div>';return;}
+  el.innerHTML=list.map(function(tn){
+    var club=tn.clubes||{};
+    var fechaTxt=tn.fecha_inicio?formatFecha(tn.fecha_inicio):I18N.t('home.tournament.dateTBD');
+    var enCurso=tn.estado==='en_curso';
+    var estadoTxt=enCurso?I18N.t('home.tournament.statusOngoing'):I18N.t('home.tournament.statusUpcoming');
+    var titulo=tn.nombre||((club.nombre?club.nombre+' · ':'')+(tn.tipo||''));
+    return '<div class="card">'
+      +'<div class="card-title">'+esc(titulo)+'</div>'
+      +'<div class="card-sub">'+esc(fechaTxt)+(club.nombre?' · '+esc(club.nombre):'')+'</div>'
+      +'<div style="margin-top:10px"><span class="pill '+(enCurso?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span></div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderRankingChileTenisPro(list){
+  var el=document.getElementById('rankingCard');
+  if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.ranking.empty'))+'</div>';return;}
+  el.innerHTML=list.map(function(p,i){
+    var pos=i+1;
+    var multiClub=p.clubes_participa>1?(' <span style="color:var(--ink-faint);font-weight:400">· '+p.clubes_participa+' clubes</span>'):'';
+    return '<div class="rank-row">'
+      +'<span class="rank-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
+      +'<span class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>'
+      +'<span class="rank-name">'+esc(p.nombre)+multiClub+'</span>'
+      +'<span class="rank-pts">'+p.total_puntos+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+function renderHomeSections(){
+  renderClubDestacado(HOME_DATA.club);
+  renderEscalerillasActivas(HOME_DATA.escalerillas);
+  renderProximosTorneos(HOME_DATA.torneos);
+  renderRankingChileTenisPro(HOME_DATA.ranking);
+}
+async function loadHomeSections(){
+  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro()]);
+  HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];
+  renderHomeSections();
+}
+
+// ============================================================
+// Interacciones de shell (menu movil) + wiring del selector de
+// idioma al motor I18N real (ya no es solo visual como en Fase 2).
+// ============================================================
+(function(){
+  var toggle=document.getElementById('menuToggle');
+  var panel=document.getElementById('mobilePanel');
+  if(toggle&&panel){
+    toggle.addEventListener('click',function(){
+      var abierto=panel.classList.toggle('open');
+      toggle.classList.toggle('open',abierto);
+      toggle.setAttribute('aria-expanded',abierto?'true':'false');
+      toggle.setAttribute('aria-label', I18N.t(abierto?'navigation.closeMenu':'navigation.openMenu'));
+    });
+  }
+  document.querySelectorAll('.lang-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
+    });
+  });
+  I18N.init();
+  loadHomeSections();
+})();
+</script>
+
+</body>
+</html>
