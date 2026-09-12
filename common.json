@@ -1,0 +1,24 @@
+{
+  "brand": {
+    "name": "ChileTenis",
+    "suffix": "PRO",
+    "tagline": "Conecta · Desafía · Compite",
+    "description": "La plataforma que conecta clubes, escalerillas, torneos y jugadores de tenis en todo Chile."
+  },
+  "actions": {
+    "joinNow": "Únete ahora",
+    "exploreClubs": "Explorar clubes",
+    "viewFullRanking": "Ver ranking completo",
+    "moreInfo": "Más información",
+    "viewDocs": "Ver documentación"
+  },
+  "footer": {
+    "platformHeading": "Plataforma",
+    "communityHeading": "Comunidad",
+    "chiletenisHeading": "ChileTenis PRO",
+    "hasClub": "¿Tienes un club?",
+    "contact": "Contacto",
+    "players": "Jugadores",
+    "copyright": "© ChileTenis PRO {{year}} · Todos los derechos reservados"
+  }
+}
