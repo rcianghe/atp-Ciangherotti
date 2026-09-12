@@ -558,14 +558,14 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         <h2 class="challenge-title" data-i18n="home.challengeBanner.title">Encuentra tu próximo rival</h2>
         <p class="challenge-desc" data-i18n="home.challengeBanner.description">Jugá partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.</p>
       </div>
-      <a href="#" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
+      <a href="#ranking" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
     </div>
   </section>
 
   <!-- ============================================================
        RANKING CHILETENIS PRO — Fase 6
        ============================================================ -->
-  <section class="wrap">
+  <section class="wrap" id="ranking">
     <div class="section-head">
       <h2 class="section-title" data-i18n="home.ranking.title">Ranking ChileTenis PRO</h2>
       <a href="#" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
@@ -574,7 +574,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
       <div class="card" id="rankingCard">
         <div class="empty-note" data-i18n="home.states.loading">Cargando…</div>
       </div>
-      <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 4px 0" data-i18n="home.ranking.note">Ranking por partidos ganados en toda la plataforma.</p>
+      <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 4px 0" data-i18n="home.ranking.note">Suma los puntos reales de la escalerilla de cada club.</p>
     </div>
   </section>
 
@@ -590,7 +590,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
           <div class="club-cta-desc" data-i18n="home.clubCta.description">Sumate a ChileTenis PRO y digitalizá tu escalerilla, torneos, desafíos y ranking en minutos.</div>
         </div>
       </div>
-      <a href="#" class="btn btn-primary" data-i18n="actions.moreInfo">Más información</a>
+      <a href="#" id="clubCtaLink" class="btn btn-primary" data-i18n="actions.moreInfo">Más información</a>
     </div>
   </section>
 
@@ -790,6 +790,15 @@ var I18N = (function(){
     // Copyright con el año calculado en tiempo real, no traducido a mano.
     var copy=document.getElementById('footCopy');
     if(copy)copy.textContent=t('footer.copyright',{year:new Date().getFullYear()});
+    // Email de contacto del bloque "¿Tienes un club?": el asunto y el
+    // cuerpo tambien pasan por el sistema de traducciones (no quedan
+    // fijos en espanol dentro del href).
+    var clubCtaLink=document.getElementById('clubCtaLink');
+    if(clubCtaLink){
+      var asunto=encodeURIComponent(t('home.clubCta.emailSubject'));
+      var cuerpo=encodeURIComponent(t('home.clubCta.emailBody'));
+      clubCtaLink.setAttribute('href','mailto:chiletenis-pro@proton.me?subject='+asunto+'&body='+cuerpo);
+    }
   }
 
   function syncLangButtons(){
