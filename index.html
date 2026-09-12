@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="lib/supabase.min.js/supabase.min.js"></script>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="ctp-favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="ctp-favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="ctp-apple-touch-icon.png">
+<meta name="theme-color" content="#0B1220">
 <style>
 /* ============================================================
    TOKENS — ChileTenis PRO (portal). Distinto de la identidad de
@@ -299,9 +304,32 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
 .foot-social{display:flex;gap:8px}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+/* ============================================================
+   SPLASH / PANTALLA DE CARGA
+   ============================================================
+   Se muestra fija sobre todo el contenido apenas carga el HTML
+   (antes de que I18N.init() y loadHomeSections() resuelvan) y se
+   desvanece cuando ambos terminan. Mismo patron que index.html
+   (splash + spinner), adaptado a la paleta navy/lima del portal. */
+.splash{
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;
+  transition:opacity .4s ease;
+}
+.splash-logo{width:200px;max-width:62vw;height:auto;filter:drop-shadow(0 12px 30px rgba(198,241,53,.18))}
+.splash-spin{width:30px;height:30px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--lime);border-radius:50%;animation:splashspin .8s linear infinite}
+@keyframes splashspin{to{transform:rotate(360deg)}}
+.splash.hide{opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.splash-spin{animation:none}}
 </style>
 </head>
 <body>
+
+<div id="splash" class="splash">
+  <img src="logo-chiletenis-pro.png" alt="ChileTenis PRO" class="splash-logo">
+  <div class="splash-spin" aria-hidden="true"></div>
+</div>
 
 <header>
   <div class="wrap headbar">
@@ -921,8 +949,21 @@ async function loadHomeSections(){
       I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
     });
   });
-  I18N.init();
-  loadHomeSections();
+
+  // Splash: se oculta apenas terminan las traducciones y las secciones
+  // dinamicas (club destacado, escalerillas, torneos, ranking). Si algo
+  // se demora de mas (red lenta, Supabase caido), un timeout de seguridad
+  // igual lo saca a los 4s para no dejar a la persona mirando el splash
+  // para siempre -- mismo criterio defensivo que el resto del sitio.
+  var splashOculto=false;
+  function ocultarSplash(){
+    if(splashOculto)return;
+    splashOculto=true;
+    var sp=document.getElementById('splash');
+    if(sp){sp.classList.add('hide');setTimeout(function(){sp.remove();},450);}
+  }
+  setTimeout(ocultarSplash,4000);
+  Promise.all([I18N.init(), loadHomeSections()]).then(ocultarSplash).catch(ocultarSplash);
 })();
 </script>
 
