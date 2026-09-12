@@ -856,7 +856,7 @@ const ENTITIES = {
     ]},
 
   clubes:{ label:'Clubes', group:'Club', table:'clubes', pk:'id',
-    select:'id,nombre,nombre_corto,comuna,encargado_nombre,encargado_contacto,link_cancha,logo_url,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,whatsapp_numero,color_tema,tema,zonas_entrega,albumes_galeria,activo,slug,organizacion_id,organizaciones(nombre)',
+    select:'id,nombre,nombre_corto,comuna,encargado_nombre,encargado_contacto,link_cancha,logo_url,mascota_hero_url,trofeo_url,hero_tagline,og_image_url,whatsapp_numero,color_tema,tema,zonas_entrega,albumes_galeria,activo,slug,organizacion_id,organizaciones(nombre),destacado,sitio_web_externo',
     order:{col:'nombre'}, searchCols:['nombre','comuna','nombre_corto'],
     columns:[
       {key:'nombre',label:'Nombre'},
@@ -864,6 +864,7 @@ const ENTITIES = {
       {key:'encargado_nombre',label:'Encargado'},
       {key:'tema',label:'Colores',render:v=>renderTemaSwatch(v)},
       {key:'organizaciones',label:'Organización',render:v=>v?.nombre||'<span class="hint">—</span>'},
+      {key:'destacado',label:'Destacado en portal',render:v=>v?'<span class="badge badge-green">⭐ Sí</span>':'<span class="badge badge-gray">No</span>'},
       {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
     ],
     fields:[
@@ -894,6 +895,8 @@ const ENTITIES = {
         {key:'competicion_mes',label:'Álbum Competición del mes (URL)',placeholder:'https://photos.app.goo.gl/...'},
       ]},
       {key:'organizacion_id',label:'Organización (plataforma/liga)',type:'fk',lookup:'organizaciones'},
+      {key:'destacado',label:'Mostrar como "Club destacado" en el portal ChileTenis PRO',type:'bool',default:false},
+      {key:'sitio_web_externo',label:'Sitio web propio (si lo completas, el portal redirige aquí en vez de abrir la plantilla)',type:'text'},
       {key:'activo',label:'Club activo',type:'bool',default:true},
     ]},
 
