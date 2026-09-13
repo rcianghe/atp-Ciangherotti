@@ -65,7 +65,11 @@ header{
 .brand-mark{width:34px;height:34px;flex:none}
 .brand-txt{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.05}
 .brand-txt b{color:var(--lime);font-weight:700}
-.brand-txt span{display:block;font-family:var(--mono);font-weight:500;font-size:9.5px;letter-spacing:.16em;color:var(--ink-faint);margin-top:1px;text-transform:uppercase}
+.brand-tagline{
+  font-family:var(--body);font-weight:500;font-size:12.5px;letter-spacing:.01em;color:var(--ink-faint);
+  margin-left:16px;padding-left:16px;border-left:1px solid var(--line);white-space:nowrap;
+}
+@media(max-width:760px){.brand-tagline{display:none}}
 
 nav.primary-nav{display:flex;align-items:center;gap:2px}
 nav.primary-nav a{
@@ -217,17 +221,18 @@ section{padding:64px 0}
 /* ============================================================
    FRANJA DE 5 FUNCIONALIDADES
    ============================================================ */
-.feature-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:-26px;position:relative;z-index:2}
-.feature-item{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;transition:border-color .2s ease,transform .2s ease}
-.feature-item:hover{border-color:var(--line-strong);transform:translateY(-2px)}
-.feature-ic{width:44px;height:44px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
+.feature-strip-section{background:var(--bg-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;z-index:2}
+.feature-strip{display:grid;grid-template-columns:repeat(5,1fr)}
+.feature-item{background:transparent;border:none;border-radius:0;padding:30px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;position:relative;transition:background .2s ease}
+.feature-item:hover{background:rgba(255,255,255,.02);transform:none}
+.feature-item:not(:first-child)::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line)}
+.feature-ic{width:44px;height:44px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin:0 auto 14px}
 .feature-ic svg{width:19px;height:19px}
 .feature-title{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:5px}
-.feature-desc{font-size:12.5px;line-height:1.5;color:var(--ink-faint)}
-@media(max-width:920px){.feature-strip{margin-top:0}}
-@media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.feature-strip{grid-template-columns:1fr}}
+.feature-desc{font-size:12.5px;line-height:1.5;color:var(--ink-faint);max-width:190px}
+@media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr)}.feature-item:nth-child(4)::before{display:none}}
+@media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr)}.feature-item:nth-child(2n+1)::before{display:none}}
+@media(max-width:520px){.feature-strip{grid-template-columns:1fr}.feature-item::before{display:none!important}}
 
 /* ============================================================
    CONTENIDO DINAMICO — Fase 5: Club destacado, Escalerillas
@@ -341,13 +346,28 @@ section{padding:64px 0}
 .pill-live::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--lime);box-shadow:0 0 6px var(--lime)}
 .pill-soon{background:rgba(63,169,245,.12);color:var(--sky)}
 
-/* fila tipo ranking, para reusar en el bloque de Ranking ChileTenis PRO */
+/* fila tipo ranking (vertical), reusable en otros listados */
 .rank-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
 .rank-row:last-child{border-bottom:none}
 .rank-pos{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink-faint);width:20px;flex-shrink:0}
 .rank-pos.top{color:var(--lime)}
 .rank-name{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);min-width:0;display:flex;align-items:center;flex-wrap:wrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank-pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);flex-shrink:0}
+
+/* Ranking ChileTenis PRO: tarjetas de persona en fila (avatar + bandera +
+   nombre + puntos), como en la referencia de diseño. */
+.rank-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:4px}
+.rank-person{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 10px;position:relative}
+.rank-person:not(:first-child)::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:1px;background:var(--line)}
+.rank-person-pos{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-faint);margin-bottom:8px}
+.rank-person-pos.top{color:var(--lime)}
+.rank-person-avatar-wrap{position:relative;margin-bottom:10px}
+.rank-person-avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--line-strong);display:block}
+.rank-person-avatar-i{width:56px;height:56px;border-radius:50%;background:var(--bg-2);border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;color:var(--lime)}
+.rank-person-flag{position:absolute;bottom:-1px;right:-2px;width:18px;height:13px;border-radius:2px;box-shadow:0 0 0 2px var(--bg-1);display:block}
+.rank-person-name{font-size:12.5px;font-weight:600;color:var(--ink);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-person-pts{font-family:var(--mono);font-size:12px;color:var(--lime);margin-top:3px;font-weight:600}
+@media(max-width:640px){.rank-grid{grid-template-columns:repeat(2,1fr)}.rank-person:nth-child(2n+1)::before{display:none}}
 
 /* ============================================================
    FOOTER
@@ -378,7 +398,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         <path d="M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30" stroke="#C6F135" stroke-width="1.6" fill="none" opacity=".75"/>
         <path d="M2 17h30" stroke="#C6F135" stroke-width="1.6" opacity=".4"/>
       </svg>
-      <span class="brand-txt">Chile<b>Tenis</b> PRO<span data-i18n="brand.tagline">Plataforma de clubes</span></span>
+      <span class="brand-txt">Chile<b>Tenis</b> PRO</span>
+      <span class="brand-tagline" data-i18n="brand.tagline">Conecta · Desafía · Compite</span>
     </a>
 
     <nav class="primary-nav" aria-label="Navegación principal">
@@ -488,7 +509,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
   <!-- ============================================================
        FRANJA DE 5 FUNCIONALIDADES — Fase 4
        ============================================================ -->
-  <section class="wrap" style="padding-top:0">
+  <section class="feature-strip-section">
+    <div class="wrap">
     <div class="feature-strip">
       <div class="feature-item">
         <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke-linecap="round"/></svg></div>
@@ -515,6 +537,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         <div class="feature-title" data-i18n="home.features.clubs.title">Clubes</div>
         <div class="feature-desc" data-i18n="home.features.clubs.description">Cada club con su propia identidad.</div>
       </div>
+    </div>
     </div>
   </section>
 
@@ -570,7 +593,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
       <h2 class="section-title" data-i18n="home.ranking.title">Ranking ChileTenis PRO</h2>
       <a href="#" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
     </div>
-    <div class="ranking-panel">
+    <div class="ranking-panel" style="max-width:100%">
       <div class="card" id="rankingCard">
         <div class="empty-note" data-i18n="home.states.loading">Cargando…</div>
       </div>
@@ -594,61 +617,6 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
     </div>
   </section>
 
-  <!-- ============================================================
-       SISTEMA DE TARJETAS Y BOTONES — vista previa de componentes
-       reutilizables (parte del alcance de esta Fase 2). No es
-       contenido real todavia: son variantes de muestra para validar
-       el sistema visual antes de conectarlo a Supabase en Fase 5.
-       ============================================================ -->
-  <section class="wrap">
-    <div class="section-head">
-      <div>
-        <div class="section-eyebrow">Sistema de diseño</div>
-        <h2 class="section-title">Tarjetas y botones — vista previa</h2>
-      </div>
-      <a href="#" class="section-link"><span data-i18n="actions.viewDocs">Ver documentación</span> →</a>
-    </div>
-
-    <div class="card-grid" style="margin-bottom:16px">
-      <div class="card card-feat">
-        <div class="card-top">
-          <span class="card-avatar">CQ</span>
-          <div>
-            <div class="card-title">Club de Tenis Quilicura</div>
-            <div class="card-sub">Escalerilla · Temporada 2026</div>
-          </div>
-        </div>
-        <div class="card-body">Tarjeta destacada — se usa para el "Club destacado" y elementos principales de cada bloque.</div>
-        <div style="margin-top:14px"><span class="pill pill-live">Escalerilla activa</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-top">
-          <span class="card-avatar" style="color:var(--sky)">TI</span>
-          <div>
-            <div class="card-title">Torneo Interno CTQ</div>
-            <div class="card-sub">12–18 dic 2026</div>
-          </div>
-        </div>
-        <div class="card-body">Tarjeta estándar — próximos torneos, escalerillas activas, desafíos.</div>
-        <div style="margin-top:14px"><span class="pill pill-soon">Próximamente</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-top" style="margin-bottom:6px"><div class="card-title">Ranking ChileTenis PRO</div></div>
-        <div class="rank-row"><span class="rank-pos top">1</span><span class="rank-name">Mateo Rojas</span><span class="rank-pts">1.230 pts</span></div>
-        <div class="rank-row"><span class="rank-pos top">2</span><span class="rank-name">Gonzalo Campbell</span><span class="rank-pts">1.120 pts</span></div>
-        <div class="rank-row"><span class="rank-pos">3</span><span class="rank-name">Felipe Morales</span><span class="rank-pts">980 pts</span></div>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-primary" data-i18n="actions.joinNow">Únete ahora</button>
-      <button class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</button>
-      <button class="btn btn-ghost" data-i18n="actions.viewFullRanking">Ver ranking completo</button>
-      <button class="btn btn-primary btn-sm" data-i18n="actions.moreInfo">Más información</button>
-    </div>
-  </section>
 
 </main>
 
@@ -989,19 +957,21 @@ function renderRankingChileTenisPro(list){
   var el=document.getElementById('rankingCard');
   if(!el)return;
   if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.ranking.empty'))+'</div>';return;}
-  el.innerHTML=list.map(function(p,i){
+  var puntosLbl=I18N.t('home.ranking.pointsLabel');
+  el.innerHTML='<div class="rank-grid">'+list.map(function(p,i){
     var pos=i+1;
-    var multiClub=p.clubes_participa>1?(' <span style="color:var(--ink-faint);font-weight:400">· '+p.clubes_participa+' clubes</span>'):'';
     var avatarHtml=p.avatar_url
-      ?'<img class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0;object-fit:cover;border-radius:50%" src="'+esc(p.avatar_url)+'" alt="">'
-      :'<span class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>';
-    return '<div class="rank-row">'
-      +'<span class="rank-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
-      +avatarHtml
-      +'<span class="rank-name">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+multiClub+'</span>'
-      +'<span class="rank-pts">'+Number(p.total_puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      ?'<img class="rank-person-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+      :'<span class="rank-person-avatar-i">'+esc(inicialesDe(p.nombre))+'</span>';
+    var flagHtml=p.bandera_iso?'<img class="rank-person-flag" src="https://flagcdn.com/20x15/'+esc(p.bandera_iso.toLowerCase())+'.png" alt="">':'';
+    var multiClub=p.clubes_participa>1?(' <span style="color:var(--ink-faint);font-weight:400">· '+p.clubes_participa+' clubes</span>'):'';
+    return '<div class="rank-person">'
+      +'<span class="rank-person-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
+      +'<span class="rank-person-avatar-wrap">'+avatarHtml+flagHtml+'</span>'
+      +'<span class="rank-person-name">'+esc(p.nombre)+'</span>'
+      +'<span class="rank-person-pts">'+Number(p.total_puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(puntosLbl)+multiClub+'</span>'
       +'</div>';
-  }).join('');
+  }).join('')+'</div>';
 }
 
 function renderHomeSections(){
