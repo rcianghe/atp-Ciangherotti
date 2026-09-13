@@ -3,7 +3,9 @@
     "hero": {
       "eyebrow": "Welcome to",
       "description": "The platform that connects clubs, players and tennis community across Chile. Ladders, tournaments, challenges and rankings, all in one place.",
-      "communityLabel": "Community"
+      "communityLabel": "Community",
+      "taglineLine1": "More tennis,",
+      "taglineLine2": "more community"
     },
     "features": {
       "profiles": {
@@ -30,7 +32,9 @@
     "sections": {
       "featuredClub": "Featured Club",
       "activeLadders": "Active Ladders",
-      "upcomingTournaments": "Upcoming Tournaments"
+      "upcomingTournaments": "Upcoming Tournaments",
+      "viewAllLadders": "View all",
+      "viewAllTournaments": "View all"
     },
     "club": {
       "viewClub": "View club",
@@ -61,7 +65,9 @@
     },
     "clubCta": {
       "title": "Have a club?",
-      "description": "Join ChileTenis PRO and digitize your ladder, tournaments, challenges and ranking in minutes — no need for your own website."
+      "description": "Join ChileTenis PRO and digitize your ladder, tournaments, challenges and ranking in minutes — no need for your own website.",
+      "emailSubject": "I want to add my club to ChileTenis PRO",
+      "emailBody": "Hi, I'd like to learn more about adding my club to ChileTenis PRO."
     }
   }
 }
