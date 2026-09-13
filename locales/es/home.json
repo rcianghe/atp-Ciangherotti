@@ -3,20 +3,22 @@
     "hero": {
       "eyebrow": "Bienvenido a",
       "description": "La plataforma que conecta clubes, jugadores y comunidad de tenis en todo Chile. Escalerillas, torneos, desafíos y rankings, todo en un solo lugar.",
-      "communityLabel": "Comunidad"
+      "communityLabel": "Comunidad",
+      "taglineLine1": "Más tenis,",
+      "taglineLine2": "más comunidad"
     },
     "features": {
       "profiles": {
         "title": "Perfiles de jugadores",
-        "description": "Crea tu perfil y encuentra rivales a tu nivel."
+        "description": "Creá tu perfil y encontrá rivales a tu nivel."
       },
       "ladders": {
         "title": "Escalerillas y torneos",
-        "description": "Compite en tu club o a nivel nacional junto a la comunidad."
+        "description": "Competí en tu club o a nivel nacional con la comunidad."
       },
       "challenges": {
         "title": "Desafíos",
-        "description": "Reta partidos, mejora tu ranking y juega limpio."
+        "description": "Retá partidos, mejorá tu ranking y jugá parejo."
       },
       "rankings": {
         "title": "Rankings automáticos",
@@ -30,7 +32,9 @@
     "sections": {
       "featuredClub": "Club destacado",
       "activeLadders": "Escalerillas Activas",
-      "upcomingTournaments": "Próximos Torneos"
+      "upcomingTournaments": "Próximos Torneos",
+      "viewAllLadders": "Ver todas",
+      "viewAllTournaments": "Ver todos"
     },
     "club": {
       "viewClub": "Ver club",
@@ -43,25 +47,27 @@
     },
     "states": {
       "loading": "Cargando…",
-      "emptyClub": "Aún no hay un club destacado.",
-      "emptyLadders": "Aún no hay escalerillas activas.",
-      "emptyTournaments": "Aún no hay próximos torneos."
+      "emptyClub": "Todavía no hay un club destacado.",
+      "emptyLadders": "Todavía no hay escalerillas activas.",
+      "emptyTournaments": "Todavía no hay torneos próximos."
     },
     "challengeBanner": {
       "eyebrow": "Desafía · Compite · Avanza",
       "title": "Encuentra tu próximo rival",
-      "description": "Juega partidos, mejora tu ranking y súmate a la comunidad de ChileTenis PRO.",
+      "description": "Jugá partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.",
       "cta": "Ver jugadores"
     },
     "ranking": {
       "title": "Ranking ChileTenis PRO",
       "pointsLabel": "puntos",
-      "empty": "Aún no hay jugadores con puntos vinculados entre clubes.",
-      "note": "Suma los puntos reales de cada escalerilla (con sus propias reglas y bonos) para jugadores con cuenta vinculada en más de un club."
+      "empty": "Todavía no hay jugadores con puntos vinculados entre clubes.",
+      "note": "Suma los puntos reales de la escalerilla de cada club (con sus propias reglas y bonos) para jugadores con cuenta vinculada en más de un club."
     },
     "clubCta": {
       "title": "¿Tienes un club?",
-      "description": "Súmate a ChileTenis PRO y digitaliza tu escalerilla, torneos, desafíos y ranking en minutos — sin necesidad de tu propio sitio web."
+      "description": "Sumate a ChileTenis PRO y digitalizá tu escalerilla, torneos, desafíos y ranking en minutos — sin necesidad de tener una web propia.",
+      "emailSubject": "Quiero sumar mi club a ChileTenis PRO",
+      "emailBody": "Hola, me gustaría conocer más sobre cómo incorporar mi club a ChileTenis PRO."
     }
   }
 }
