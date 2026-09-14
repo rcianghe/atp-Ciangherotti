@@ -8,11 +8,31 @@
       "taglineLine2": "más comunidad"
     },
     "features": {
-      "profiles": { "title": "Perfiles de jugadores", "description": "Creá tu perfil y encontrá rivales a tu nivel." },
-      "ladders": { "title": "Escalerillas y torneos", "description": "Competí en tu club o a nivel nacional." },
-      "challenges": { "title": "Desafíos", "description": "Retá partidos y mejorá tu ranking." },
-      "rankings": { "title": "Rankings automáticos", "description": "Tu progreso, en tiempo real." },
-      "clubs": { "title": "Clubes", "description": "Cada club con su propia identidad." }
+      "profiles": {
+        "title": "Perfiles de jugadores",
+        "description": "Creá tu perfil y encontrá rivales a tu nivel.",
+        "modalBody": "Tu perfil reúne tu nivel, tu historial de partidos y tus estadísticas en un solo lugar. Otros jugadores lo ven para proponerte desafíos a tu altura, y vos lo usás para elegir contra quién jugar."
+      },
+      "ladders": {
+        "title": "Escalerillas y torneos",
+        "description": "Competí en tu club o a nivel nacional.",
+        "modalBody": "Las escalerillas te dejan competir dentro de tu club, retando a jugadores en posiciones cercanas a la tuya para subir de puesto. Los torneos son eventos con fecha y cuadro definidos, dentro de tu club o abiertos a toda la comunidad ChileTenis PRO."
+      },
+      "challenges": {
+        "title": "Desafíos",
+        "description": "Retá partidos y mejorá tu ranking.",
+        "modalBody": "Desde el perfil de cualquier jugador podés enviarle un desafío directo para jugar un partido. Al cargar el resultado, este se refleja automáticamente en tu ranking, sin planillas de por medio."
+      },
+      "rankings": {
+        "title": "Rankings automáticos",
+        "description": "Tu progreso, en tiempo real.",
+        "modalBody": "Cada partido que jugás suma puntos a tu ranking, tanto en tu club como en el ranking general de ChileTenis PRO. El sistema calcula todo apenas se carga un resultado, sin actualizaciones manuales."
+      },
+      "clubs": {
+        "title": "Clubes",
+        "description": "Cada club con su propia identidad.",
+        "modalBody": "Cada club tiene su propio espacio dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores. Podés pertenecer a más de un club y participar en todos con el mismo perfil."
+      }
     },
     "sections": {
       "featuredClub": "Club destacado",
