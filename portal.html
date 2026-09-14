@@ -209,12 +209,42 @@ section{padding:64px 0}
    ============================================================ */
 .feature-band{position:relative;z-index:2;background:var(--bg-1);border-bottom:1px solid var(--line);padding:26px 0}
 .feature-strip{display:grid;grid-template-columns:repeat(5,1fr)}
-.feature-item{position:relative;display:flex;flex-direction:column;padding:0 20px}
-.feature-item:not(:first-child)::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:1px;background:var(--line)}
-.feature-ic{width:40px;height:40px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:12px;flex-shrink:0}
+.feature-item{position:relative;display:flex;flex-direction:column;padding:14px 20px;margin:-14px 0;text-align:left;background:none;border:none;border-radius:10px;color:inherit;font:inherit;cursor:pointer;transition:background .15s ease}
+.feature-item:hover{background:rgba(255,255,255,.04)}
+.feature-item:not(:first-child)::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:1px;background:var(--line)}
+.feature-ic{width:40px;height:40px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:12px;flex-shrink:0;transition:background .15s ease}
+.feature-item:hover .feature-ic{background:rgba(198,241,53,.1)}
 .feature-ic svg{width:18px;height:18px}
 .feature-title{font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:4px}
 .feature-desc{font-size:12px;line-height:1.5;color:var(--ink-faint)}
+
+/* ============================================================
+   MODAL REUTILIZABLE — Fase 4b. Un solo componente que recibe
+   icono/titulo/texto segun la division en que se hizo clic.
+   ============================================================ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(6,10,18,.72);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .18s ease;
+}
+.modal-overlay[data-open="true"]{opacity:1;pointer-events:auto}
+.modal-box{
+  position:relative;width:100%;max-width:420px;background:var(--bg-1);border:1px solid var(--line-strong);
+  border-radius:var(--radius);padding:30px 28px 26px;box-shadow:0 24px 60px rgba(0,0,0,.45);
+  transform:translateY(8px) scale(.98);transition:transform .18s ease;
+}
+.modal-overlay[data-open="true"] .modal-box{transform:translateY(0) scale(1)}
+.modal-close{
+  position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+  background:transparent;color:var(--ink-dim);display:flex;align-items:center;justify-content:center;transition:all .15s ease;
+}
+.modal-close:hover{color:var(--ink);border-color:var(--line-strong)}
+.modal-close svg{width:15px;height:15px}
+.modal-icon{width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:18px}
+.modal-icon svg{width:24px;height:24px}
+.modal-title{font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);margin:0 0 10px}
+.modal-body{font-size:13.5px;line-height:1.65;color:var(--ink-dim);margin:0}
+@media(prefers-reduced-motion:reduce){.modal-overlay,.modal-box{transition:none}}
 @media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr);row-gap:22px}.feature-item:nth-child(4)::before,.feature-item:nth-child(3n+1)::before{display:none}}
 @media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr);row-gap:20px}.feature-item:nth-child(odd)::before{display:none}}
 @media(max-width:520px){.feature-strip{grid-template-columns:1fr;row-gap:20px}.feature-item::before{display:none!important}.feature-item{padding:0}}
@@ -466,31 +496,31 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
   <section class="feature-band">
     <div class="wrap">
       <div class="feature-strip">
-        <div class="feature-item">
+        <button type="button" class="feature-item" data-feature="profiles" aria-haspopup="dialog">
           <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke-linecap="round"/></svg></div>
           <div class="feature-title" data-i18n="home.features.profiles.title">Perfiles de jugadores</div>
           <div class="feature-desc" data-i18n="home.features.profiles.description">Creá tu perfil y encontrá rivales a tu nivel.</div>
-        </div>
-        <div class="feature-item">
+        </button>
+        <button type="button" class="feature-item" data-feature="ladders" aria-haspopup="dialog">
           <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h12v3a6 6 0 01-12 0V3z"/><path d="M4 4.5H2a2 2 0 002 3.5M16 4.5h2a2 2 0 01-2 3.5"/><path d="M10 12v3M7 17h6" stroke-linecap="round"/></svg></div>
           <div class="feature-title" data-i18n="home.features.ladders.title">Escalerillas y torneos</div>
           <div class="feature-desc" data-i18n="home.features.ladders.description">Competí en tu club o a nivel nacional.</div>
-        </div>
-        <div class="feature-item">
+        </button>
+        <button type="button" class="feature-item" data-feature="challenges" aria-haspopup="dialog">
           <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3l14 14M17 3L3 17" stroke-linecap="round"/></svg></div>
           <div class="feature-title" data-i18n="home.features.challenges.title">Desafíos</div>
           <div class="feature-desc" data-i18n="home.features.challenges.description">Retá partidos y mejorá tu ranking.</div>
-        </div>
-        <div class="feature-item">
+        </button>
+        <button type="button" class="feature-item" data-feature="rankings" aria-haspopup="dialog">
           <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9M9.5 17V3M16 17v-6" stroke-linecap="round"/></svg></div>
           <div class="feature-title" data-i18n="home.features.rankings.title">Rankings automáticos</div>
           <div class="feature-desc" data-i18n="home.features.rankings.description">Tu progreso, en tiempo real.</div>
-        </div>
-        <div class="feature-item">
+        </button>
+        <button type="button" class="feature-item" data-feature="clubs" aria-haspopup="dialog">
           <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
           <div class="feature-title" data-i18n="home.features.clubs.title">Clubes</div>
           <div class="feature-desc" data-i18n="home.features.clubs.description">Cada club con su propia identidad.</div>
-        </div>
+        </button>
       </div>
     </div>
   </section>
@@ -620,6 +650,17 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
     </div>
   </div>
 </footer>
+
+<div class="modal-overlay" id="featureModalOverlay" data-open="false">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle" aria-describedby="featureModalBody" tabindex="-1">
+    <button type="button" class="modal-close" id="featureModalClose" data-i18n-aria-label="modal.close" aria-label="Cerrar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>
+    </button>
+    <div class="modal-icon" id="featureModalIcon"></div>
+    <h3 class="modal-title" id="featureModalTitle"></h3>
+    <p class="modal-body" id="featureModalBody"></p>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -946,6 +987,50 @@ async function loadHomeSections(){
 // Interacciones de shell (menu movil) + wiring del selector de
 // idioma al motor I18N real (ya no es solo visual como en Fase 2).
 // ============================================================
+// ============================================================
+// FASE 4b — Modal reutilizable de la franja de 5 divisiones.
+// Un solo componente: recibe icono/titulo/texto segun data-feature
+// del boton en que se hizo clic. Cierra con X, Escape o clic afuera.
+// ============================================================
+(function(){
+  var overlay=document.getElementById('featureModalOverlay');
+  var box=overlay?overlay.querySelector('.modal-box'):null;
+  var iconEl=document.getElementById('featureModalIcon');
+  var titleEl=document.getElementById('featureModalTitle');
+  var bodyEl=document.getElementById('featureModalBody');
+  var closeBtn=document.getElementById('featureModalClose');
+  var lastTrigger=null;
+  if(!overlay||!box)return;
+
+  function openModal(trigger){
+    lastTrigger=trigger;
+    var key=trigger.getAttribute('data-feature');
+    var icHtml=trigger.querySelector('.feature-ic').innerHTML;
+    iconEl.innerHTML=icHtml;
+    titleEl.textContent=I18N.t('home.features.'+key+'.title');
+    bodyEl.textContent=I18N.t('home.features.'+key+'.modalBody');
+    overlay.setAttribute('data-open','true');
+    document.body.style.overflow='hidden';
+    box.focus();
+  }
+  function closeModal(){
+    overlay.setAttribute('data-open','false');
+    document.body.style.overflow='';
+    if(lastTrigger)lastTrigger.focus();
+  }
+
+  document.querySelectorAll('.feature-item[data-feature]').forEach(function(btn){
+    btn.addEventListener('click',function(){openModal(btn);});
+  });
+  closeBtn.addEventListener('click',closeModal);
+  overlay.addEventListener('click',function(e){
+    if(e.target===overlay)closeModal(); // clic afuera de la caja
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&overlay.getAttribute('data-open')==='true')closeModal();
+  });
+})();
+
 (function(){
   var toggle=document.getElementById('menuToggle');
   var panel=document.getElementById('mobilePanel');
