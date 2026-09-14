@@ -166,69 +166,51 @@ section{padding:64px 0}
 .pending-block b{display:block;color:var(--ink-dim);font-family:var(--display);font-size:15px;margin-bottom:6px;font-weight:600}
 
 /* ============================================================
-   HERO
-   ============================================================
-   NOTA: todavia no hay fotografia deportiva real provista por el
-   cliente (el PDF pide "fotografia deportiva de tenis a pantalla
-   ancha"). En vez de usar un stock photo generico sin licencia
-   confirmada, el fondo se resuelve con un patron de lineas de cancha
-   + glow de marca (mismo lenguaje que ya usa index.html con sus
-   .hconn-path). Cuando haya foto real, .hero-bg-img reemplaza este
-   patron sin tocar el resto del layout. */
-.hero{position:relative;overflow:hidden;padding:96px 0 80px}
-.hero-bg{position:absolute;inset:0;z-index:0;background:
-    radial-gradient(ellipse 900px 520px at 15% -10%, rgba(198,241,53,.14), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 30%, rgba(63,169,245,.16), transparent 60%),
-    linear-gradient(180deg,#0B1220 0%,#0E1830 60%,#0B1220 100%);
+   HERO — foto real (subida por el cliente) como fondo full-bleed.
+   Ya trae impresos el logo en la pelota y el tagline "Más tenis, más
+   comunidad", asi que ya no se dibujan aparte por SVG. */
+.hero{position:relative;overflow:hidden;min-height:540px;display:flex;align-items:center;padding:64px 0}
+.hero-photo{position:absolute;inset:0;z-index:0;background-image:url('hero-chiletenis-pro.jpg');background-size:cover;background-position:96% 42%}
+.hero-scrim{position:absolute;inset:0;z-index:0;background:
+    linear-gradient(90deg,rgba(6,10,18,.94) 0%,rgba(6,10,18,.82) 26%,rgba(6,10,18,.42) 48%,rgba(6,10,18,.08) 66%,transparent 78%),
+    linear-gradient(180deg,rgba(6,10,18,.25) 0%,transparent 22%,rgba(6,10,18,.35) 100%);
 }
-.hero-courtlines{position:absolute;inset:0;z-index:0;opacity:.5}
-.hero::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,transparent 0%,var(--bg) 96%)}
-.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:center}
+.hero-inner{position:relative;z-index:1;max-width:600px}
 .hero-eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--lime);text-transform:uppercase;margin-bottom:14px}
-.hero-title{font-family:var(--display);font-weight:700;font-size:clamp(34px,5.4vw,58px);letter-spacing:-.02em;line-height:1.03;margin:0 0 18px}
+.hero-title{font-family:var(--display);font-weight:700;font-size:clamp(34px,5.4vw,58px);letter-spacing:-.02em;line-height:1.03;margin:0 0 18px;text-shadow:0 2px 24px rgba(0,0,0,.35)}
 .hero-title b{color:var(--lime);font-weight:700}
-.hero-desc{font-size:15.5px;line-height:1.65;color:var(--ink-dim);max-width:520px;margin:0 0 22px}
+.hero-desc{font-size:15.5px;line-height:1.65;color:var(--ink-dim);max-width:480px;margin:0 0 22px}
 .hero-themes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:30px}
 .hero-themes span.dot{color:var(--ink-faint);opacity:.5}
 .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
 .hero-cta .btn{padding:12px 22px;font-size:14px}
-
-/* grafico decorativo lateral: pelota + lineas de cancha, no una foto */
-.hero-visual{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1}
-.hero-ball{width:100%;max-width:340px;filter:drop-shadow(0 25px 50px rgba(198,241,53,.22)) drop-shadow(0 4px 14px rgba(0,0,0,.4))}
-.hero-tagline-deco{position:absolute;top:6%;right:2%;text-align:right;line-height:1.15;z-index:2}
-.hero-tagline-deco .l1{font-family:var(--display);font-weight:700;font-size:18px;color:#fff}
-.hero-tagline-deco .l2{font-family:'Caveat',cursive;font-weight:700;font-size:26px;color:var(--lime);margin-top:-2px}
 @media(max-width:920px){
-  .hero{padding:64px 0 56px}
-}
-/* Tablet: se mantiene la columna visual (pelota) pero mas chica y
-   compartiendo espacio, en vez de saltar directo a una sola columna
-   como en telefono. */
-@media(min-width:641px) and (max-width:920px){
-  .hero-grid{grid-template-columns:1fr 220px;gap:24px}
-  .hero-ball{max-width:200px}
-  .hero-tagline-deco{display:none}
+  .hero{min-height:480px;padding:56px 0}
 }
 @media(max-width:640px){
-  .hero-grid{grid-template-columns:1fr}
-  .hero-visual{display:none}
+  .hero{min-height:460px;padding:44px 0 40px}
+  .hero-photo{background-position:22% 38%}
+  .hero-scrim{background:
+      linear-gradient(180deg,rgba(6,10,18,.95) 0%,rgba(6,10,18,.82) 45%,rgba(6,10,18,.6) 75%,rgba(6,10,18,.42) 100%);
+  }
+  .hero-inner{max-width:100%}
+  .hero-desc{max-width:100%}
 }
 
 /* ============================================================
    FRANJA DE 5 FUNCIONALIDADES
    ============================================================ */
-.feature-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:-26px;position:relative;z-index:2}
-.feature-item{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;transition:border-color .2s ease,transform .2s ease}
-.feature-item:hover{border-color:var(--line-strong);transform:translateY(-2px)}
-.feature-ic{width:44px;height:44px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
-.feature-ic svg{width:19px;height:19px}
-.feature-title{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:5px}
-.feature-desc{font-size:12.5px;line-height:1.5;color:var(--ink-faint)}
-@media(max-width:920px){.feature-strip{margin-top:0}}
-@media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.feature-strip{grid-template-columns:1fr}}
+.feature-band{position:relative;z-index:2;background:var(--bg-1);border-bottom:1px solid var(--line);padding:26px 0}
+.feature-strip{display:grid;grid-template-columns:repeat(5,1fr)}
+.feature-item{position:relative;display:flex;flex-direction:column;padding:0 20px}
+.feature-item:not(:first-child)::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:1px;background:var(--line)}
+.feature-ic{width:40px;height:40px;border-radius:50%;background:transparent;border:1.5px solid rgba(198,241,53,.4);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:12px;flex-shrink:0}
+.feature-ic svg{width:18px;height:18px}
+.feature-title{font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:4px}
+.feature-desc{font-size:12px;line-height:1.5;color:var(--ink-faint)}
+@media(min-width:701px) and (max-width:920px){.feature-strip{grid-template-columns:repeat(3,1fr);row-gap:22px}.feature-item:nth-child(4)::before,.feature-item:nth-child(3n+1)::before{display:none}}
+@media(min-width:521px) and (max-width:700px){.feature-strip{grid-template-columns:repeat(2,1fr);row-gap:20px}.feature-item:nth-child(odd)::before{display:none}}
+@media(max-width:520px){.feature-strip{grid-template-columns:1fr;row-gap:20px}.feature-item::before{display:none!important}.feature-item{padding:0}}
 
 /* ============================================================
    CONTENIDO DINAMICO — Fase 5: Club destacado, Escalerillas
@@ -272,6 +254,7 @@ section{padding:64px 0}
 .list-row-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:13px;color:var(--lime);flex-shrink:0;object-fit:cover}
 .list-row-thumb{width:40px;height:40px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--lime)}
 .list-row-thumb svg{width:18px;height:18px}
+.list-row-thumb-img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--bg-2);border:1px solid var(--line);flex-shrink:0}
 .list-row-main{flex:1;min-width:0}
 .list-row-title{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-row-sub{font-size:11.5px;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -379,7 +362,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         <path d="M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30" stroke="#C6F135" stroke-width="1.6" fill="none" opacity=".75"/>
         <path d="M2 17h30" stroke="#C6F135" stroke-width="1.6" opacity=".4"/>
       </svg>
-      <span class="brand-txt">Chile<b>Tenis</b> PRO<span data-i18n="brand.tagline">Plataforma de clubes</span></span>
+      <span class="brand-txt">Chile<b>Tenis</b> PRO<span data-i18n="brand.tagline">Conecta · Desafía · Compite</span></span>
     </a>
 
     <nav class="primary-nav" aria-label="Navegación principal">
@@ -439,49 +422,22 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
        (data-i18n), sin texto de UI hardcodeado en ningun idioma.
        ============================================================ -->
   <section class="hero">
-    <div class="hero-bg" aria-hidden="true"></div>
-    <svg class="hero-courtlines" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
-      <rect x="640" y="40" width="500" height="420" rx="4" fill="none" stroke="#C6F135" stroke-width="1" opacity=".25"/>
-      <line x1="890" y1="40" x2="890" y2="460" stroke="#C6F135" stroke-width="1" opacity=".2"/>
-      <line x1="640" y1="180" x2="1140" y2="180" stroke="#3FA9F5" stroke-width="1" opacity=".18"/>
-    </svg>
-    <div class="wrap hero-grid">
-      <div>
-        <div class="hero-eyebrow" data-i18n="home.hero.eyebrow">Bienvenido a</div>
-        <h1 class="hero-title">Chile<b>Tenis</b> PRO</h1>
-        <p class="hero-desc" data-i18n="home.hero.description">La plataforma que conecta clubes, jugadores y comunidad de tenis en todo Chile.</p>
-        <div class="hero-themes">
-          <span data-i18n="navigation.ladders">Escalerillas</span><span class="dot">·</span>
-          <span data-i18n="navigation.tournaments">Torneos</span><span class="dot">·</span>
-          <span data-i18n="navigation.challenges">Desafíos</span><span class="dot">·</span>
-          <span data-i18n="navigation.rankings">Rankings</span><span class="dot">·</span>
-          <span data-i18n="home.hero.communityLabel">Comunidad</span>
-        </div>
-        <div class="hero-cta">
-          <a href="#" class="btn btn-primary" data-i18n="actions.joinNow">Únete ahora</a>
-          <a href="#" class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</a>
-        </div>
+    <div class="hero-photo" aria-hidden="true"></div>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <div class="hero-eyebrow" data-i18n="home.hero.eyebrow">Bienvenido a</div>
+      <h1 class="hero-title">Chile<b>Tenis</b> PRO</h1>
+      <p class="hero-desc" data-i18n="home.hero.description">La plataforma que conecta clubes, jugadores y comunidad de tenis en todo Chile.</p>
+      <div class="hero-themes">
+        <span data-i18n="navigation.ladders">Escalerillas</span><span class="dot">·</span>
+        <span data-i18n="navigation.tournaments">Torneos</span><span class="dot">·</span>
+        <span data-i18n="navigation.challenges">Desafíos</span><span class="dot">·</span>
+        <span data-i18n="navigation.rankings">Rankings</span><span class="dot">·</span>
+        <span data-i18n="home.hero.communityLabel">Comunidad</span>
       </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="hero-tagline-deco">
-          <div class="l1" data-i18n="home.hero.taglineLine1">Más tenis,</div>
-          <div class="l2" data-i18n="home.hero.taglineLine2">más comunidad</div>
-        </div>
-        <svg class="hero-ball" viewBox="0 0 200 200" fill="none">
-          <circle cx="100" cy="100" r="92" fill="#C6F135"/>
-          <circle cx="100" cy="100" r="92" fill="url(#ballShade)"/>
-          <path d="M100 8c-38 30-38 154 0 184M100 8c38 30 38 154 0 184" stroke="#0B1220" stroke-width="3.5" fill="none" opacity=".45"/>
-          <text x="100" y="94" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="21" fill="#0B1220">Chile<tspan fill="#0B1220">Tenis</tspan></text>
-          <text x="100" y="122" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="24" fill="#0B1220" letter-spacing="1">PRO</text>
-          <circle cx="100" cy="100" r="92" fill="none" stroke="#0B1220" stroke-width="1.5" opacity=".15"/>
-          <defs>
-            <radialGradient id="ballShade" cx="35%" cy="30%" r="75%">
-              <stop offset="0%" stop-color="#fff" stop-opacity=".35"/>
-              <stop offset="55%" stop-color="#fff" stop-opacity="0"/>
-              <stop offset="100%" stop-color="#000" stop-opacity=".18"/>
-            </radialGradient>
-          </defs>
-        </svg>
+      <div class="hero-cta">
+        <a href="#" class="btn btn-primary" data-i18n="actions.joinNow">Únete ahora</a>
+        <a href="#" class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</a>
       </div>
     </div>
   </section>
@@ -489,32 +445,34 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
   <!-- ============================================================
        FRANJA DE 5 FUNCIONALIDADES — Fase 4
        ============================================================ -->
-  <section class="wrap" style="padding-top:0">
-    <div class="feature-strip">
-      <div class="feature-item">
-        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke-linecap="round"/></svg></div>
-        <div class="feature-title" data-i18n="home.features.profiles.title">Perfiles de jugadores</div>
-        <div class="feature-desc" data-i18n="home.features.profiles.description">Creá tu perfil y encontrá rivales a tu nivel.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h12v3a6 6 0 01-12 0V3z"/><path d="M4 4.5H2a2 2 0 002 3.5M16 4.5h2a2 2 0 01-2 3.5"/><path d="M10 12v3M7 17h6" stroke-linecap="round"/></svg></div>
-        <div class="feature-title" data-i18n="home.features.ladders.title">Escalerillas y torneos</div>
-        <div class="feature-desc" data-i18n="home.features.ladders.description">Competí en tu club o a nivel nacional.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3l14 14M17 3L3 17" stroke-linecap="round"/></svg></div>
-        <div class="feature-title" data-i18n="home.features.challenges.title">Desafíos</div>
-        <div class="feature-desc" data-i18n="home.features.challenges.description">Retá partidos y mejorá tu ranking.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9M9.5 17V3M16 17v-6" stroke-linecap="round"/></svg></div>
-        <div class="feature-title" data-i18n="home.features.rankings.title">Rankings automáticos</div>
-        <div class="feature-desc" data-i18n="home.features.rankings.description">Tu progreso, en tiempo real.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
-        <div class="feature-title" data-i18n="home.features.clubs.title">Clubes</div>
-        <div class="feature-desc" data-i18n="home.features.clubs.description">Cada club con su propia identidad.</div>
+  <section class="feature-band">
+    <div class="wrap">
+      <div class="feature-strip">
+        <div class="feature-item">
+          <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke-linecap="round"/></svg></div>
+          <div class="feature-title" data-i18n="home.features.profiles.title">Perfiles de jugadores</div>
+          <div class="feature-desc" data-i18n="home.features.profiles.description">Creá tu perfil y encontrá rivales a tu nivel.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h12v3a6 6 0 01-12 0V3z"/><path d="M4 4.5H2a2 2 0 002 3.5M16 4.5h2a2 2 0 01-2 3.5"/><path d="M10 12v3M7 17h6" stroke-linecap="round"/></svg></div>
+          <div class="feature-title" data-i18n="home.features.ladders.title">Escalerillas y torneos</div>
+          <div class="feature-desc" data-i18n="home.features.ladders.description">Competí en tu club o a nivel nacional.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3l14 14M17 3L3 17" stroke-linecap="round"/></svg></div>
+          <div class="feature-title" data-i18n="home.features.challenges.title">Desafíos</div>
+          <div class="feature-desc" data-i18n="home.features.challenges.description">Retá partidos y mejorá tu ranking.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9M9.5 17V3M16 17v-6" stroke-linecap="round"/></svg></div>
+          <div class="feature-title" data-i18n="home.features.rankings.title">Rankings automáticos</div>
+          <div class="feature-desc" data-i18n="home.features.rankings.description">Tu progreso, en tiempo real.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
+          <div class="feature-title" data-i18n="home.features.clubs.title">Clubes</div>
+          <div class="feature-desc" data-i18n="home.features.clubs.description">Cada club con su propia identidad.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -840,7 +798,7 @@ async function fetchProximosTorneos(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('competiciones')
-      .select('id,nombre,tipo,serie,periodo,estado,fecha_inicio,clubes(nombre,slug)')
+      .select('id,nombre,tipo,serie,periodo,estado,fecha_inicio,clubes(nombre,slug,logo_url)')
       .neq('tipo','escalerilla').in('estado',['armado','en_curso'])
       .order('fecha_inicio',{ascending:true,nullsFirst:false}).limit(4);
     return res.error?[]:res.data;
@@ -923,8 +881,11 @@ function renderProximosTorneos(list){
     var estadoTxt=enCurso?I18N.t('home.tournament.statusOngoing'):I18N.t('home.tournament.statusUpcoming');
     var titulo=tn.nombre||((club.nombre?club.nombre+' · ':'')+(tn.tipo||''));
     var trofeoIc='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4h8v3a4 4 0 01-8 0V4z"/><path d="M6 4.8H4.2a1.6 1.6 0 001.6 2.8M14 4.8h1.8a1.6 1.6 0 01-1.6 2.8M10 11v2.5M8 16h4" stroke-linecap="round"/></svg>';
+    var thumbHtml=club.logo_url
+      ?'<img class="list-row-thumb-img" src="'+esc(club.logo_url)+'" alt="">'
+      :('<span class="list-row-thumb">'+trofeoIc+'</span>');
     return '<div class="list-row">'
-      +'<span class="list-row-thumb">'+trofeoIc+'</span>'
+      +thumbHtml
       +'<div class="list-row-main"><div class="list-row-title">'+esc(titulo)+'</div><div class="list-row-sub">'+esc(fechaTxt)+(club.nombre?' · '+esc(club.nombre):'')+'</div></div>'
       +'<span class="pill '+(enCurso?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span>'
       +'</div>';
