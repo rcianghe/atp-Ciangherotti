@@ -10,6 +10,9 @@
     "tagline": "Connect · Challenge · Compete",
     "description": "The platform that connects clubs, ladders, tournaments and tennis players all across Chile."
   },
+  "modal": {
+    "close": "Close"
+  },
   "footer": {
     "platformHeading": "Platform",
     "communityHeading": "Community",
