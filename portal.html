@@ -61,11 +61,16 @@ header{
   -webkit-backdrop-filter:blur(14px) saturate(140%);
 }
 .headbar{display:flex;align-items:center;gap:28px;height:68px}
-.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-right:auto}
-.brand-mark{width:34px;height:34px;flex:none}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0;margin-right:auto}
+.brand-mark{width:36px;height:36px;flex:none}
+.brand-logo{display:flex;flex-direction:column;line-height:1;font-family:var(--display);font-weight:700}
+.brand-logo-l1{font-size:15px;color:var(--ink);letter-spacing:-.01em}
+.brand-logo-l1 b{color:var(--ink);font-weight:700}
+.brand-logo-l2{font-size:13px;color:var(--lime);letter-spacing:.03em;margin-top:1px}
+.brand-tagline{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase;padding-left:12px;margin-left:1px;border-left:1px solid var(--line);white-space:nowrap}
+@media(max-width:640px){.brand-tagline{display:none}}
 .brand-txt{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.05}
 .brand-txt b{color:var(--lime);font-weight:700}
-.brand-txt span{display:block;font-family:var(--mono);font-weight:500;font-size:9.5px;letter-spacing:.16em;color:var(--ink-faint);margin-top:1px;text-transform:uppercase}
 
 nav.primary-nav{display:flex;align-items:center;gap:2px}
 nav.primary-nav a{
@@ -371,7 +376,11 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         <path d="M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30" stroke="#C6F135" stroke-width="1.6" fill="none" opacity=".75"/>
         <path d="M2 17h30" stroke="#C6F135" stroke-width="1.6" opacity=".4"/>
       </svg>
-      <span class="brand-txt">Chile<b>Tenis</b> PRO<span data-i18n="brand.tagline">Conecta · Desafía · Compite</span></span>
+      <span class="brand-logo">
+        <span class="brand-logo-l1">Chile<b>Tenis</b></span>
+        <span class="brand-logo-l2">PRO</span>
+      </span>
+      <span class="brand-tagline" data-i18n="brand.tagline">Conecta · Desafía · Compite</span>
     </a>
 
     <nav class="primary-nav" aria-label="Navegación principal">
