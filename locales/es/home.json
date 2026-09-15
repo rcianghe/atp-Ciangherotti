@@ -39,7 +39,18 @@
       "activeLadders": "Escalerillas Activas",
       "viewAllLadders": "Ver todas",
       "upcomingTournaments": "Próximos Torneos",
-      "viewAllTournaments": "Ver todos"
+      "viewAllTournaments": "Ver todos",
+      "featuredPlayers": "Jugadores destacados",
+      "viewAllPlayers": "Ver jugadores",
+      "recentChallenges": "Desafíos recientes",
+      "viewAllChallenges": "Ver desafíos",
+      "communityNews": "Noticias y Comunidad",
+      "viewAllNews": "Ver noticias"
+    },
+    "challenge": {
+      "statusFinished": "Finalizado",
+      "statusPending": "Pendiente",
+      "awaitingResult": "Esperando resultado"
     },
     "states": {
       "loading": "Cargando…",
