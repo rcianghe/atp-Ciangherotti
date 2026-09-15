@@ -553,6 +553,27 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
         </div>
         <div class="list-card"><div id="upcomingTournamentsList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div></div>
       </div>
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.featuredPlayers">Jugadores destacados</h2>
+          <a href="#ranking" class="section-link" style="font-size:12px"><span data-i18n="home.sections.viewAllPlayers">Ver jugadores</span> →</a>
+        </div>
+        <div class="list-card"><div id="featuredPlayersList" class="home-col-list"></div></div>
+      </div>
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.recentChallenges">Desafíos recientes</h2>
+          <a href="#" class="section-link" style="font-size:12px"><span data-i18n="home.sections.viewAllChallenges">Ver desafíos</span> →</a>
+        </div>
+        <div class="list-card"><div id="recentChallengesList" class="home-col-list"></div></div>
+      </div>
+      <div>
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:16px" data-i18n="home.sections.communityNews">Noticias y Comunidad</h2>
+          <a href="#" class="section-link" style="font-size:12px"><span data-i18n="home.sections.viewAllNews">Ver noticias</span> →</a>
+        </div>
+        <div class="list-card"><div id="communityNewsList" class="home-col-list"></div></div>
+      </div>
     </div>
   </section>
 
@@ -978,6 +999,72 @@ function renderHomeSections(){
   renderEscalerillasActivas(HOME_DATA.escalerillas);
   renderProximosTorneos(HOME_DATA.torneos);
   renderRankingChileTenisPro(HOME_DATA.ranking);
+  renderFeaturedPlayers(FEATURED_PLAYERS_MOCK);
+  renderRecentChallenges(RECENT_CHALLENGES_MOCK);
+  renderCommunityNews(COMMUNITY_NEWS_MOCK);
+}
+
+// ============================================================
+// FASE 5b — Jugadores destacados, Desafios recientes y Noticias
+// / Comunidad. El PDF permite datos de ejemplo (mock) en estos 3
+// modulos mientras no exista una tabla de Supabase dedicada a
+// cada uno. La estructura (arreglo de objetos + funcion render)
+// es identica a la de Escalerillas/Torneos, asi que reemplazar el
+// mock por un fetch real a Supabase el dia de manana es directo:
+// solo cambia de donde sale el arreglo, no como se pinta.
+// ============================================================
+var FEATURED_PLAYERS_MOCK=[
+  {nombre:'Matías Rojas',nivel:'Nivel 4.5',puntos:1280,bandera_iso:'cl'},
+  {nombre:'Ricardo Cianghgerotti',nivel:'Nivel 4.0',puntos:1220,bandera_iso:'it'},
+  {nombre:'Felipe González',nivel:'Nivel 4.0',puntos:1150,bandera_iso:'cl'},
+  {nombre:'Ignacio Torres',nivel:'Nivel 3.5',puntos:1120,bandera_iso:'cl'}
+];
+var RECENT_CHALLENGES_MOCK=[
+  {a:'Matías Rojas',b:'Felipe González',resultado:'6-4, 6-3',estado:'finalizado'},
+  {a:'Ricardo Cianghgerotti',b:'Ignacio Torres',resultado:null,estado:'pendiente'},
+  {a:'Carmen Soto',b:'Andrea Muñoz',resultado:'7-5, 6-2',estado:'finalizado'}
+];
+var COMMUNITY_NEWS_MOCK=[
+  {titulo:'ChileTenis PRO suma un tercer club en Santiago',categoria:'Comunidad',fecha:'2026-09-05'},
+  {titulo:'Comienza la Escalerilla Apertura 2026 en Quilicura',categoria:'Escalerillas',fecha:'2026-08-28'},
+  {titulo:'Inscripciones abiertas para el Torneo Copa Primavera',categoria:'Torneos',fecha:'2026-08-20'}
+];
+
+function renderFeaturedPlayers(list){
+  var el=document.getElementById('featuredPlayersList');
+  if(!el)return;
+  el.innerHTML=list.map(function(p){
+    return '<div class="list-row">'
+      +'<span class="list-row-avatar">'+esc(inicialesDe(p.nombre))+'</span>'
+      +'<div class="list-row-main"><div class="list-row-title">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+'</div><div class="list-row-sub">'+esc(p.nivel)+'</div></div>'
+      +'<span class="rank-pts">'+Number(p.puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      +'</div>';
+  }).join('');
+}
+function renderRecentChallenges(list){
+  var el=document.getElementById('recentChallengesList');
+  if(!el)return;
+  el.innerHTML=list.map(function(c){
+    var finalizado=c.estado==='finalizado';
+    var estadoTxt=finalizado?I18N.t('home.challenge.statusFinished'):I18N.t('home.challenge.statusPending');
+    var subTxt=finalizado?(c.resultado||''):I18N.t('home.challenge.awaitingResult');
+    return '<div class="list-row">'
+      +'<span class="list-row-avatar" style="font-size:10.5px">VS</span>'
+      +'<div class="list-row-main"><div class="list-row-title">'+esc(c.a)+' vs '+esc(c.b)+'</div><div class="list-row-sub">'+esc(subTxt)+'</div></div>'
+      +'<span class="pill '+(finalizado?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span>'
+      +'</div>';
+  }).join('');
+}
+function renderCommunityNews(list){
+  var el=document.getElementById('communityNewsList');
+  if(!el)return;
+  var newsIc='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12v12H4z"/><path d="M4 8h12M8 8v8" stroke-linecap="round"/></svg>';
+  el.innerHTML=list.map(function(n){
+    return '<div class="list-row">'
+      +'<span class="list-row-thumb">'+newsIc+'</span>'
+      +'<div class="list-row-main"><div class="list-row-title">'+esc(n.titulo)+'</div><div class="list-row-sub">'+esc(formatFecha(n.fecha))+' · '+esc(n.categoria)+'</div></div>'
+      +'</div>';
+  }).join('');
 }
 async function loadHomeSections(){
   var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro()]);
