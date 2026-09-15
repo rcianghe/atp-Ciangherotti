@@ -39,7 +39,18 @@
       "activeLadders": "Active Ladders",
       "viewAllLadders": "View all",
       "upcomingTournaments": "Upcoming Tournaments",
-      "viewAllTournaments": "View all"
+      "viewAllTournaments": "View all",
+      "featuredPlayers": "Featured players",
+      "viewAllPlayers": "View players",
+      "recentChallenges": "Recent challenges",
+      "viewAllChallenges": "View challenges",
+      "communityNews": "News & Community",
+      "viewAllNews": "View news"
+    },
+    "challenge": {
+      "statusFinished": "Finished",
+      "statusPending": "Pending",
+      "awaitingResult": "Awaiting result"
     },
     "states": {
       "loading": "Loading…",
