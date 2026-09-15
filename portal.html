@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>ChileTenis PRO — Portal</title>
 <meta name="description" content="La plataforma que conecta clubes, escalerillas, torneos, desafíos y jugadores de tenis en todo Chile.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%23C6F135' stroke-width='2.4'/%3E%3Cpath d='M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30' stroke='%23C6F135' stroke-width='1.8' fill='none' opacity='.75'/%3E%3Cpath d='M2 17h30' stroke='%23C6F135' stroke-width='1.8' opacity='.4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <script src="lib/supabase.min.js/supabase.min.js"></script>
@@ -1047,8 +1048,7 @@ async function loadHomeSections(){
       I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
     });
   });
-  I18N.init();
-  loadHomeSections();
+  I18N.init().then(loadHomeSections); // espera el idioma antes de traducir el contenido dinamico
 })();
 </script>
 
