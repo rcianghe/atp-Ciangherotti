@@ -328,22 +328,22 @@ section{padding:64px 0}
 /* ============================================================
    RANKING CHILETENIS PRO — Fase 6
    ============================================================ */
-.ranking-panel{max-width:640px;margin:0 auto}
+.ranking-club-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:stretch}
+.ranking-block{display:flex;flex-direction:column;min-width:0}
+.ranking-note{font-size:11.5px;color:var(--ink-faint);margin:10px 4px 0}
+@media(max-width:920px){.ranking-club-row{grid-template-columns:1fr}}
 
-/* ============================================================
-   BLOQUE COMERCIAL "¿TIENES UN CLUB?" — Fase 7
-   ============================================================ */
 .club-cta{
-  position:relative;overflow:hidden;border-radius:var(--radius);
-  border:1px solid rgba(198,241,53,.3);background:linear-gradient(135deg,rgba(198,241,53,.07),rgba(198,241,53,.02));
-  padding:36px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:space-between;
+  position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:24px;min-height:200px;
 }
-.club-cta-left{display:flex;align-items:center;gap:18px;flex:1;min-width:260px}
-.club-cta-ic{width:52px;height:52px;border-radius:14px;background:rgba(198,241,53,.14);display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
-.club-cta-ic svg{width:26px;height:26px}
-.club-cta-title{font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);margin-bottom:4px}
-.club-cta-desc{font-size:13px;color:var(--ink-dim);max-width:440px;line-height:1.5}
-@media(max-width:640px){.club-cta{padding:26px 22px}}
+.club-cta-bg{position:absolute;inset:0;z-index:0;background-image:url('tienes-un-club.jpg');background-size:cover;background-position:center}
+.club-cta-overlay{position:absolute;inset:0;z-index:0;background:linear-gradient(0deg,rgba(6,10,18,.93) 0%,rgba(6,10,18,.55) 55%,rgba(6,10,18,.2) 100%)}
+.club-cta-content{position:relative;z-index:1}
+.club-cta-ic{width:42px;height:42px;border-radius:12px;background:rgba(198,241,53,.16);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
+.club-cta-ic svg{width:20px;height:20px}
+.club-cta-title{font-family:var(--display);font-weight:700;font-size:17px;color:#fff;margin-bottom:6px}
+.club-cta-desc{font-size:12.5px;color:rgba(255,255,255,.78);line-height:1.5;margin-bottom:16px;max-width:300px}
 
 /* ============================================================
    SISTEMA DE TARJETAS — vista previa
@@ -372,12 +372,17 @@ section{padding:64px 0}
 .pill-soon{background:rgba(63,169,245,.12);color:var(--sky)}
 
 /* fila tipo ranking, para reusar en el bloque de Ranking ChileTenis PRO */
-.rank-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
-.rank-row:last-child{border-bottom:none}
-.rank-pos{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink-faint);width:20px;flex-shrink:0}
-.rank-pos.top{color:var(--lime)}
-.rank-name{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);min-width:0;display:flex;align-items:center;flex-wrap:wrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rank-pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);flex-shrink:0}
+/* grilla de columnas para el Ranking ChileTenis PRO — el PDF pide
+   explicitamente "jugadores en columnas", no una lista apilada */
+.ranking-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 14px}
+@media(max-width:560px){.ranking-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rank-col{display:flex;flex-direction:column;gap:7px;min-width:0}
+.rank-col-top{display:flex;align-items:center;gap:8px;min-width:0}
+.rank-col-pos{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-faint);flex-shrink:0}
+.rank-col-pos.top{color:var(--lime)}
+.rank-col-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;min-width:0}
+.rank-col-pts{font-family:var(--mono);font-size:12px;color:var(--ink-dim);padding-left:38px}
+.pts-label{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);flex-shrink:0}
 
 /* ============================================================
    FOOTER
@@ -594,34 +599,33 @@ footer{border-top:1px solid var(--line);padding:44px 0 26px;margin-top:40px}
   </section>
 
   <!-- ============================================================
-       RANKING CHILETENIS PRO — Fase 6
+       FILA 4 — RANKING + ¿TIENES UN CLUB? — Fase 6/7. Un solo
+       renglon de 2 bloques lado a lado en desktop, tal como pide
+       el PDF ("En desktop son dos bloques lado a lado").
        ============================================================ -->
   <section class="wrap" id="ranking">
-    <div class="section-head">
-      <h2 class="section-title" data-i18n="home.ranking.title">Ranking ChileTenis PRO</h2>
-      <a href="#" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
-    </div>
-    <div class="ranking-panel">
-      <div class="card" id="rankingCard">
-        <div class="empty-note" data-i18n="home.states.loading">Cargando…</div>
+    <div class="ranking-club-row">
+      <div class="ranking-block">
+        <div class="section-head" style="margin-bottom:14px">
+          <h2 class="section-title" style="font-size:18px" data-i18n="home.ranking.title">Ranking ChileTenis PRO</h2>
+          <a href="#" class="section-link" style="font-size:12px" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
+        </div>
+        <div class="card" id="rankingCard">
+          <div class="empty-note" data-i18n="home.states.loading">Cargando…</div>
+        </div>
+        <p class="ranking-note" data-i18n="home.ranking.note">Suma los puntos reales de la escalerilla de cada club.</p>
       </div>
-      <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 4px 0" data-i18n="home.ranking.note">Suma los puntos reales de la escalerilla de cada club.</p>
-    </div>
-  </section>
 
-  <!-- ============================================================
-       BLOQUE COMERCIAL "¿TIENES UN CLUB?" — Fase 7
-       ============================================================ -->
-  <section class="wrap">
-    <div class="club-cta">
-      <div class="club-cta-left">
-        <div class="club-cta-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
-        <div>
+      <div class="club-cta">
+        <div class="club-cta-bg" aria-hidden="true"></div>
+        <div class="club-cta-overlay" aria-hidden="true"></div>
+        <div class="club-cta-content">
+          <div class="club-cta-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 17V6l6-3 6 3v11" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke-linejoin="round"/></svg></div>
           <div class="club-cta-title" data-i18n="home.clubCta.title">¿Tienes un club?</div>
           <div class="club-cta-desc" data-i18n="home.clubCta.description">Sumate a ChileTenis PRO y digitalizá tu escalerilla, torneos, desafíos y ranking en minutos.</div>
+          <a href="#" id="clubCtaLink" class="btn btn-primary btn-sm" data-i18n="actions.moreInfo">Más información</a>
         </div>
       </div>
-      <a href="#" id="clubCtaLink" class="btn btn-primary" data-i18n="actions.moreInfo">Más información</a>
     </div>
   </section>
 
@@ -979,19 +983,21 @@ function renderRankingChileTenisPro(list){
   var el=document.getElementById('rankingCard');
   if(!el)return;
   if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.ranking.empty'))+'</div>';return;}
-  el.innerHTML=list.map(function(p,i){
+  var itemsHtml=list.map(function(p,i){
     var pos=i+1;
-    var multiClub=p.clubes_participa>1?(' <span style="color:var(--ink-faint);font-weight:400">· '+p.clubes_participa+' clubes</span>'):'';
     var avatarHtml=p.avatar_url
-      ?'<img class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0;object-fit:cover;border-radius:50%" src="'+esc(p.avatar_url)+'" alt="">'
-      :'<span class="card-avatar" style="width:30px;height:30px;font-size:12px;margin-right:2px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>';
-    return '<div class="rank-row">'
-      +'<span class="rank-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
-      +avatarHtml
-      +'<span class="rank-name">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+multiClub+'</span>'
-      +'<span class="rank-pts">'+Number(p.total_puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      ?'<img class="card-avatar" style="width:26px;height:26px;font-size:11px;flex-shrink:0;object-fit:cover;border-radius:50%" src="'+esc(p.avatar_url)+'" alt="">'
+      :'<span class="card-avatar" style="width:26px;height:26px;font-size:11px;flex-shrink:0">'+esc(inicialesDe(p.nombre))+'</span>';
+    return '<div class="rank-col">'
+      +'<div class="rank-col-top">'
+        +'<span class="rank-col-pos'+(pos<=3?' top':'')+'">'+pos+'</span>'
+        +avatarHtml
+        +'<span class="rank-col-name">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+'</span>'
+      +'</div>'
+      +'<div class="rank-col-pts">'+Number(p.total_puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</div>'
       +'</div>';
   }).join('');
+  el.innerHTML='<div class="ranking-grid">'+itemsHtml+'</div>';
 }
 
 function renderHomeSections(){
@@ -1037,7 +1043,7 @@ function renderFeaturedPlayers(list){
     return '<div class="list-row">'
       +'<span class="list-row-avatar">'+esc(inicialesDe(p.nombre))+'</span>'
       +'<div class="list-row-main"><div class="list-row-title">'+esc(p.nombre)+banderaImgHtml(p.bandera_iso)+'</div><div class="list-row-sub">'+esc(p.nivel)+'</div></div>'
-      +'<span class="rank-pts">'+Number(p.puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
+      +'<span class="pts-label">'+Number(p.puntos).toLocaleString(I18N.current==='en'?'en-US':'es-CL')+' '+esc(I18N.t('home.ranking.pointsLabel'))+'</span>'
       +'</div>';
   }).join('');
 }
