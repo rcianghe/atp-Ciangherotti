@@ -92,6 +92,10 @@ nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
 /* selector de idioma — presente pero SIN logica de traduccion todavia
    (eso es Fase 3, Fundacion i18n). Hoy solo alterna estado visual. */
 .lang-switch{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+/* la captura de referencia no muestra el selector ES/EN en el header
+   de escritorio (guia visual exacta, seccion 2); se oculta ahi y se
+   deja disponible solo en el panel movil para no perder la funcion */
+.head-actions .lang-switch{display:none}
 .lang-btn{
   font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;
   padding:5px 9px;border-radius:6px;border:none;background:transparent;color:var(--ink-faint);
@@ -375,7 +379,7 @@ section{padding:64px 0}
 /* grilla de columnas para el Ranking ChileTenis PRO — el PDF pide
    explicitamente "jugadores en columnas", no una lista apilada */
 .ranking-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 14px}
-@media(max-width:560px){.ranking-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.ranking-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .rank-col{display:flex;flex-direction:column;gap:7px;min-width:0}
 .rank-col-top{display:flex;align-items:center;gap:8px;min-width:0}
 .rank-col-pos{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-faint);flex-shrink:0}
