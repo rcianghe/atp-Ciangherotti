@@ -61,7 +61,7 @@ header{
   backdrop-filter:blur(14px) saturate(140%);
   -webkit-backdrop-filter:blur(14px) saturate(140%);
 }
-.headbar{display:flex;align-items:center;gap:28px;height:68px;min-width:0}
+.headbar{display:flex;align-items:center;gap:20px;height:52px;min-width:0}
 .brand{display:flex;align-items:center;gap:11px;flex-shrink:0;margin-right:auto;min-width:0}
 .brand-mark{width:36px;height:36px;flex:none}
 .brand-logo{display:flex;flex-direction:column;line-height:1;font-family:var(--display);font-weight:700}
@@ -137,7 +137,7 @@ nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
 
 /* menu movil: panel deslizante, mismo lenguaje visual que el header */
 .mobile-panel{
-  display:none;position:fixed;inset:68px 0 0 0;z-index:99;background:var(--bg);
+  display:none;position:fixed;inset:52px 0 0 0;z-index:99;background:var(--bg);
   overflow-y:auto;padding:20px 20px 40px;
 }
 .mobile-panel.open{display:block}
@@ -151,15 +151,15 @@ nav.primary-nav a.active{color:var(--ink);background:rgba(198,241,53,.1)}
    derecha, no como una pantalla completa (eso queda solo para
    telefono, donde el ancho real lo justifica). */
 @media(min-width:641px) and (max-width:920px){
-  .mobile-panel{inset:68px 0 0 auto;width:340px;border-left:1px solid var(--line);box-shadow:-20px 0 40px rgba(0,0,0,.35)}
+  .mobile-panel{inset:52px 0 0 auto;width:340px;border-left:1px solid var(--line);box-shadow:-20px 0 40px rgba(0,0,0,.35)}
 }
 
 /* ============================================================
    CONTENEDOR GENERAL DE SECCIONES
    ============================================================ */
 main{display:block}
-section{padding:14px 0}
-.section-head{margin-bottom:8px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+section{padding:6px 0}
+.section-head{margin-bottom:4px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .section-eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--lime);margin-bottom:8px}
 .section-title{font-family:var(--display);font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .section-link{font-size:13px;font-weight:600;color:var(--sky);display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
@@ -179,7 +179,7 @@ section{padding:14px 0}
    HERO — foto real (subida por el cliente) como fondo full-bleed.
    Ya trae impresos el logo en la pelota y el tagline "Más tenis, más
    comunidad", asi que ya no se dibujan aparte por SVG. */
-.hero{position:relative;overflow:hidden;min-height:300px;display:flex;align-items:center;padding:14px 0}
+.hero{position:relative;overflow:hidden;min-height:210px;display:flex;align-items:center;padding:6px 0}
 .hero-photo{position:absolute;inset:0;z-index:0;background-image:url('hero-chiletenis-pro.jpg');background-size:cover;background-position:96% 42%}
 .hero-scrim{position:absolute;inset:0;z-index:0;background:
     linear-gradient(90deg,rgba(6,10,18,.94) 0%,rgba(6,10,18,.82) 26%,rgba(6,10,18,.42) 48%,rgba(6,10,18,.08) 66%,transparent 78%),
@@ -197,10 +197,10 @@ section{padding:14px 0}
 .hero-cta{display:flex;gap:10px;flex-wrap:wrap}
 .hero-cta .btn{padding:8px 16px;font-size:13px}
 @media(max-width:920px){
-  .hero{min-height:280px;padding:12px 0}
+  .hero{min-height:200px;padding:6px 0}
 }
 @media(max-width:640px){
-  .hero{min-height:260px;padding:10px 0 10px}
+  .hero{min-height:190px;padding:6px 0 6px}
   .hero-photo{background-position:22% 38%}
   .hero-scrim{background:
       linear-gradient(180deg,rgba(6,10,18,.95) 0%,rgba(6,10,18,.82) 45%,rgba(6,10,18,.6) 75%,rgba(6,10,18,.42) 100%);
@@ -212,7 +212,7 @@ section{padding:14px 0}
 /* ============================================================
    FRANJA DE 5 FUNCIONALIDADES
    ============================================================ */
-.feature-band{position:relative;z-index:2;background:var(--bg-1);border-bottom:1px solid var(--line);padding:8px 0}
+.feature-band{position:relative;z-index:2;background:var(--bg-1);border-bottom:1px solid var(--line);padding:5px 0}
 .feature-strip{display:grid;grid-template-columns:repeat(5,1fr)}
 .feature-item{position:relative;display:flex;flex-direction:column;padding:8px 14px;margin:-8px 0;text-align:left;background:none;border:none;border-radius:10px;color:inherit;font:inherit;cursor:pointer;transition:background .15s ease}
 .feature-item:hover{background:rgba(255,255,255,.04)}
@@ -259,7 +259,7 @@ section{padding:14px 0}
    Activas, Proximos Torneos. Tres columnas, cada una alimentada
    por su propia consulta a Supabase (ver script al final).
    ============================================================ */
-.home-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.home-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}
 .home-cols>div{min-width:0}
 .home-col-list{display:flex;flex-direction:column;gap:12px}
 .empty-note{border:1px dashed var(--line-strong);border-radius:var(--radius-sm);padding:22px 16px;text-align:center;color:var(--ink-faint);font-size:12.5px}
@@ -274,7 +274,7 @@ section{padding:14px 0}
 }
 
 /* ---- Club destacado: tarjeta con foto de fondo ---- */
-.featured-club-card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;border:1px solid var(--line-strong);background:var(--bg-1)}
+.featured-club-card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:2.6/1;border:1px solid var(--line-strong);background:var(--bg-1)}
 .featured-club-bg{position:absolute;inset:0;background-size:cover;background-position:center}
 .featured-club-bg.placeholder{background:
     radial-gradient(ellipse 260px 180px at 20% 20%, rgba(198,241,53,.16), transparent 60%),
@@ -308,8 +308,8 @@ section{padding:14px 0}
    ============================================================ */
 .challenge-banner{
   position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--line);
-  padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-  min-height:64px;
+  padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  min-height:44px;
 }
 .challenge-banner-bg{position:absolute;inset:0;z-index:0;background-image:url('encuentra-tu-proximo-rival.JPG');background-size:cover;background-position:78% 30%}
 .challenge-banner-scrim{position:absolute;inset:0;z-index:0;background:
@@ -332,14 +332,14 @@ section{padding:14px 0}
 /* ============================================================
    RANKING CHILETENIS PRO — Fase 6
    ============================================================ */
-.ranking-club-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.ranking-club-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;align-items:stretch}
 .ranking-block{display:flex;flex-direction:column;min-width:0}
 .ranking-note{font-size:10px;color:var(--ink-faint);margin:4px 4px 0}
 @media(max-width:920px){.ranking-club-row{grid-template-columns:1fr}}
 
 .club-cta{
   position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--line-strong);
-  display:flex;flex-direction:column;justify-content:flex-end;padding:10px;min-height:100px;
+  display:flex;flex-direction:column;justify-content:flex-end;padding:8px;min-height:70px;
 }
 .club-cta-bg{position:absolute;inset:0;z-index:0;background-image:url('tienes-un-club.jpg');background-size:cover;background-position:center}
 .club-cta-overlay{position:absolute;inset:0;z-index:0;background:linear-gradient(0deg,rgba(6,10,18,.93) 0%,rgba(6,10,18,.55) 55%,rgba(6,10,18,.2) 100%)}
@@ -390,14 +390,14 @@ section{padding:14px 0}
 /* ============================================================
    FOOTER
    ============================================================ */
-footer{border-top:1px solid var(--line);padding:14px 0 8px;margin-top:8px}
-.foot-grid{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:10px}
+footer{border-top:1px solid var(--line);padding:8px 0 6px;margin-top:4px}
+.foot-grid{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
 .foot-brand .brand{margin-bottom:10px}
 .foot-brand p{font-size:12.5px;color:var(--ink-faint);max-width:260px;line-height:1.6}
 .foot-cols{display:flex;gap:48px;flex-wrap:wrap}
 @media(max-width:520px){.foot-cols{flex-direction:column;gap:22px}.foot-grid{gap:24px}}
-.foot-col h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint);margin:0 0 12px;font-weight:600;text-transform:uppercase}
-.foot-col a{display:block;font-size:13px;color:var(--ink-dim);padding:5px 0}
+.foot-col h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-faint);margin:0 0 5px;font-weight:600;text-transform:uppercase}
+.foot-col a{display:block;font-size:12px;color:var(--ink-dim);padding:2px 0}
 .foot-col a:hover{color:var(--ink)}
 .foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--line)}
 .foot-copy{font-size:11.5px;color:var(--ink-faint)}
