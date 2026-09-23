@@ -10,7 +10,8 @@
  *     ganador: "Humberto Varas",
  *     perdedor: "Hector Varela",
  *     score: "1-6 1-6",             // o "W.O."
- *     serie: "A" | "B" | "C"
+ *     serie: "A" | "B" | "C",
+ *     estadoPartido: "finalizado"   // 'finalizado' | 'cancelado' | 'suspendido' | ...
  *   }
  *
  *   DATA.players[i] = {
@@ -28,9 +29,17 @@ if (typeof parseFechaDDMMYYYY === 'undefined') {
   };
 }
 
+// Estados que no deben contar para ninguna estadistica derivada (rachas,
+// matagigantes, H2H, etc). Filtro defensivo: index.html ya deja afuera
+// estos partidos al armar DATA.results, pero si algun dia este motor
+// recibe resultados desde otra fuente que no pase por ese filtro, igual
+// queda protegido aca.
+var ESTADOS_ANULADOS = { cancelado: true, suspendido: true };
+
 /**
  * Ordena cronologicamente los resultados, excluyendo partidos donde
- * cualquiera de los dos jugadores este marcado como retirado.
+ * cualquiera de los dos jugadores este marcado como retirado, y excluyendo
+ * partidos anulados (cancelado/suspendido).
  */
 function partidosValidosOrdenados(results, players) {
   var retiradoSet = {};
@@ -41,7 +50,8 @@ function partidosValidosOrdenados(results, players) {
   return results
     .filter(function (r) {
       return r.ganador && r.perdedor &&
-        !retiradoSet[r.ganador] && !retiradoSet[r.perdedor];
+        !retiradoSet[r.ganador] && !retiradoSet[r.perdedor] &&
+        !ESTADOS_ANULADOS[r.estadoPartido];
     })
     .slice()
     .sort(function (a, b) {
