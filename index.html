@@ -2468,10 +2468,17 @@ async function cargarJugadoresYResultadosSupabase(){
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
 
+    // Partidos anulados: no cuentan para ranking, H2H, streaks, matagigantes
+    // ni ninguna estadistica derivada. Se filtran aca, en el unico punto de
+    // entrada de datos, para que todos los consumidores de jugadosRaw/
+    // DATA.results/DATA.players queden limpios automaticamente.
+    var estadosAnulados={cancelado:true,suspendido:true};
+    var resDataValidos=resRes.data.filter(function(r){return !estadosAnulados[r.estado_partido];});
+
     // Partidos con ganador_id -> ya se jugaron (ranking + DATA.results).
     // Partidos sin ganador_id -> pendientes (DATA.matches, ex hoja "Partidos").
-    var jugadosRaw=resRes.data.filter(function(r){return r.ganador_id||r.tipo==='Doble W.O.';});
-    var pendientesRaw=resRes.data.filter(function(r){return !r.ganador_id&&r.tipo!=='Doble W.O.';});
+    var jugadosRaw=resDataValidos.filter(function(r){return r.ganador_id||r.tipo==='Doble W.O.';});
+    var pendientesRaw=resDataValidos.filter(function(r){return !r.ganador_id&&r.tipo!=='Doble W.O.';});
     // Orden pedido para RESULTADOS / HISTORIAL COMPLETO: por fecha/hora de
     // creacion (created_at) descendente, el ultimo partido ingresado siempre
     // arriba de todo. Se ordena aca una sola vez porque tanto DATA.results
