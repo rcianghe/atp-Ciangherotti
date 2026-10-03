@@ -743,6 +743,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon.pop3d{animation:tintCampeonPop3D .42s cubic-bezier(.34,1.56,.64,1)}
 @media(prefers-reduced-motion:reduce){.tint-campeon.pop3d{animation:none}}
 .tint-campeon .ic{font-size:1.8rem}
+body.modal-trofeo-abierto .tint-campeon .trofeo-ic{animation:none!important}
 .tint-campeon .trofeo-ic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto;border-radius:50%;animation:trofeoLatido 2.4s ease-in-out infinite}
 .tint-campeon.tint-campeon-pendiente .trofeo-ic{animation:none;opacity:.45;filter:grayscale(1)}
 @media(prefers-reduced-motion:reduce){.tint-campeon .trofeo-ic,.tint-campeon-modal-card .trofeo-ic,.tint-estado b,.tint-live-dot{animation:none}}
@@ -756,7 +757,7 @@ span.diachip{cursor:default;display:inline-block}
 .tint-campeon .nom{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:1px;color:var(--serie-color);margin-top:.15rem}
 .tint-campeon.tint-campeon-pendiente{border-color:rgba(255,255,255,.15);box-shadow:none}
 .tint-campeon .nom-pendiente{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gl)}
-.tint-campeon-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;animation:tcmFade .2s ease}
+.tint-campeon-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;animation:tcmFade .2s ease}
 .tint-campeon-modal.activo{display:flex}
 @keyframes tcmFade{from{opacity:0}to{opacity:1}}
 .tint-campeon-modal-card{max-width:440px;width:100%;background:linear-gradient(135deg,color-mix(in srgb,var(--serie-color) 20%,transparent),color-mix(in srgb,var(--serie-color) 12%,transparent));border:2px solid color-mix(in srgb,var(--serie-color) 65%,transparent);border-radius:22px;padding:2.2rem 1.6rem 1.8rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 70px color-mix(in srgb,var(--serie-color) 35%,transparent);animation:tcmPop .4s cubic-bezier(.34,1.56,.64,1)}
@@ -1493,6 +1494,19 @@ var OBS=new IntersectionObserver(function(e){for(var i=0;i<e.length;i++){if(e[i]
 // media la barra de scroll para que el ancho no salte) resuelve ambos
 // casos a la vez y es la que se usa en la mayoria de librerias de UI.
 var SCROLL_LOCK_Y=0, bodyScrollLocked=false;
+// <html> tiene scroll-behavior:smooth. Eso hace que window.scrollTo() ANIME el
+// desplazamiento en vez de saltar. Al cerrar un modal el body deja de estar
+// fijo (la pagina vuelve a scrollTop 0) y el scrollTo hacia la posicion
+// guardada se animaba desde arriba: "se sube y se baja", con parpadeo y
+// mucha carga de dibujo, hasta que iOS mata la pagina. Este helper fuerza
+// un salto instantaneo.
+function scrollInstantaneo(y){
+  var root=document.documentElement;
+  var prev=root.style.scrollBehavior;
+  root.style.scrollBehavior='auto';
+  window.scrollTo(0,y);
+  root.style.scrollBehavior=prev;
+}
 function bloquearScrollBody(){
   if(bodyScrollLocked)return; // ya estaba bloqueado -- no pisar SCROLL_LOCK_Y de nuevo
   bodyScrollLocked=true;
@@ -1514,7 +1528,7 @@ function restaurarScrollBody(){
   document.body.style.right='';
   document.body.style.width='';
   document.body.style.paddingRight='';
-  window.scrollTo(0,SCROLL_LOCK_Y);
+  scrollInstantaneo(SCROLL_LOCK_Y);
 }
 // Red de seguridad: si por cualquier motivo (una excepcion en algun otro
 // codigo, un evento que no llego a dispararse, etc.) el bloqueo de scroll
@@ -1530,6 +1544,7 @@ document.addEventListener('click',function(){
   var carritoAbierto=carritoModalEl&&carritoModalEl.classList.contains('open');
   if(!campeonAbierto&&!carritoAbierto){
     if(campeonModalEl)campeonModalEl.classList.remove('activo');
+    document.body.classList.remove('modal-trofeo-abierto');
     bodyScrollLocked=false;
     document.body.style.position='';
     document.body.style.top='';
@@ -1548,7 +1563,7 @@ function conScrollPreservado(fn){
   if(yAntes>0){
     var altoDespues=document.documentElement.scrollHeight;
     var delta=altoDespues-altoAntes;
-    if(delta!==0)window.scrollTo(0,Math.max(0,yAntes+delta));
+    if(delta!==0)scrollInstantaneo(Math.max(0,yAntes+delta));
   }
 }
 var WA="56974723654";
@@ -3025,12 +3040,14 @@ function abrirCampeonModal(tipo){
     card.innerHTML=img+'<div class="lbl">Campe\u00f3n'+(t.periodo?(' '+esc(t.periodo)):'')+' \u2014 '+etiquetaModal+'</div><div class="nom-pendiente">Por definir</div><button class="tint-campeon-modal-close" onclick="cerrarCampeonModal()">Cerrar</button>';
   }
   modal.classList.add('activo');
+  document.body.classList.add('modal-trofeo-abierto');
   bloquearScrollBody();
 }
 function cerrarCampeonModal(){
   var modal=document.getElementById('tintCampeonModal');
   if(!modal||!modal.classList.contains('activo'))return; // ya estaba cerrado: no descontar el contador de bloqueo de nuevo
   modal.classList.remove('activo');
+  document.body.classList.remove('modal-trofeo-abierto');
   restaurarScrollBody();
 }
 
