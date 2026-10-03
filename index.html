@@ -1341,9 +1341,6 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="tabs" id="tintTabs" role="tablist" aria-label="Filtrar Torneo Interno por serie"></div>
     <div class="tint-estado" id="tintEstado"></div>
     <div id="tintCampeon"></div>
-    <div class="tint-campeon-modal" id="tintCampeonModal" onclick="cerrarCampeonModal()">
-      <div class="tint-campeon-modal-card" id="tintCampeonModalCard" onclick="event.stopPropagation()"></div>
-    </div>
     <div class="tint-rondanav" id="tintRondaNav">
       <button class="tint-rondanav-btn" id="tintRondaPrev" onclick="cambiarRondaMostrada(-1)">&larr; Anterior</button>
       <div class="tint-rondanav-tit" id="tintRondaTit"></div>
@@ -1401,6 +1398,9 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   </div>
 </div>
 
+<div class="tint-campeon-modal" id="tintCampeonModal" onclick="cerrarCampeonModal()">
+      <div class="tint-campeon-modal-card" id="tintCampeonModalCard" onclick="event.stopPropagation()"></div>
+    </div>
 <footer>
   <div class="fl2" id="footerClubNombre">CLUB DE TENIS ESTADIO QUILICURA</div>
   <div class="fs">Escalerilla por Series 2026</div>
@@ -1526,9 +1526,10 @@ document.addEventListener('click',function(){
   if(!bodyScrollLocked&&document.body.style.position!=='fixed')return;
   var campeonModalEl=document.getElementById('tintCampeonModal');
   var carritoModalEl=document.getElementById('mo');
-  var campeonAbierto=campeonModalEl&&campeonModalEl.classList.contains('activo');
+  var campeonAbierto=campeonModalEl&&campeonModalEl.classList.contains('activo')&&campeonModalEl.getClientRects().length>0;
   var carritoAbierto=carritoModalEl&&carritoModalEl.classList.contains('open');
   if(!campeonAbierto&&!carritoAbierto){
+    if(campeonModalEl)campeonModalEl.classList.remove('activo');
     bodyScrollLocked=false;
     document.body.style.position='';
     document.body.style.top='';
@@ -3011,6 +3012,7 @@ function abrirCampeonModal(tipo){
   var modal=document.getElementById('tintCampeonModal');
   var card=document.getElementById('tintCampeonModalCard');
   if(!modal||!card)return;
+  if(modal.parentNode!==document.body)document.body.appendChild(modal); // nunca dentro de una seccion que puede estar oculta
   if(modal.classList.contains('activo'))return; // ya esta abierto: no volver a bloquear el scroll encima
   card.style.setProperty('--serie-color',colorDeTorneo(t));
   var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo">';
