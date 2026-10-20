@@ -714,9 +714,9 @@ const ENTITIES = {
       {key:'set1',label:'Set 1 (ej. 6-4)',type:'text'},
       {key:'set2',label:'Set 2',type:'text'},
       {key:'set3',label:'Set 3 / super tie-break',type:'text'},
-      {key:'ganador_id',label:'Ganador',type:'fk',lookup:'jugadores',required:true},
-      {key:'tipo',label:'Tipo',type:'select',options:['Normal','W.O.']},
-      {key:'estado_partido',label:'Estado del partido',type:'select',options:['programado','en_juego','finalizado','w_o','retirado','cancelado','suspendido'],default:'finalizado'},
+      {key:'ganador_id',label:'Ganador (vacío si es doble W.O.)',type:'fk',lookup:'jugadores'},
+      {key:'tipo',label:'Tipo',type:'select',options:['Normal','W.O.','Doble W.O.']},
+      {key:'estado_partido',label:'Estado del partido',type:'select',options:['programado','en_juego','finalizado','w_o','doble_w_o','retirado','cancelado','suspendido'],default:'finalizado'},
       {key:'fecha',label:'Fecha',type:'date'},
       {key:'hora',label:'Hora',type:'text'},
       {key:'cancha',label:'Cancha',type:'text'},
@@ -1114,11 +1114,11 @@ function bracketRowActions(r){
    ========================================================================= */
 const ESTADO_PARTIDO_LABELS = {
   programado:'Programado', en_juego:'En juego', finalizado:'Finalizado',
-  w_o:'W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido'
+  w_o:'W.O.', doble_w_o:'Doble W.O.', retirado:'Retirado', cancelado:'Cancelado', suspendido:'Suspendido'
 };
 function badgeEstadoPartido(v){
   const estado = v || 'programado';
-  const map = {programado:'badge-gray',en_juego:'badge-warn',finalizado:'badge-green',w_o:'badge-clay',retirado:'badge-clay',cancelado:'badge-red',suspendido:'badge-red'};
+  const map = {programado:'badge-gray',en_juego:'badge-warn',finalizado:'badge-green',w_o:'badge-clay',doble_w_o:'badge-clay',retirado:'badge-clay',cancelado:'badge-red',suspendido:'badge-red'};
   return `<span class="badge ${map[estado]||'badge-gray'}">${ESTADO_PARTIDO_LABELS[estado]||estado}</span>`;
 }
 
@@ -2101,6 +2101,18 @@ async function saveRecord(){
     else { payload[f.key] = el.value===''? null : el.value; }
     if(f.required && (payload[f.key]===null || payload[f.key]==='')){
       toast(`El campo "${f.label}" es obligatorio.`, true); return;
+    }
+  }
+  if(currentEntity==='resultados'){
+    // Doble W.O.: ninguno se presentó -> no hay ganador ni marcador.
+    const esDoble = payload.estado_partido==='doble_w_o' || payload.tipo==='Doble W.O.';
+    if(esDoble){
+      payload.estado_partido = 'doble_w_o';
+      payload.tipo = 'Doble W.O.';
+      payload.ganador_id = null;
+      payload.set1 = null; payload.set2 = null; payload.set3 = null;
+    } else if(!payload.ganador_id && ['finalizado','w_o','retirado'].includes(payload.estado_partido)){
+      toast('El campo "Ganador" es obligatorio (salvo en un doble W.O.).', true); return;
     }
   }
   const btn = document.getElementById('modalSaveBtn');
