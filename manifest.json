@@ -1,14 +1,23 @@
 {
+  "id": "./",
   "name": "Club de Tenis Estadio Quilicura - Escalerilla 2026",
   "short_name": "CTQ Escalerilla",
   "description": "Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026",
-  "start_url": "./",
+  "start_url": "./?utm_source=pwa",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#0e0e0e",
   "theme_color": "#0e0e0e",
   "lang": "es-CL",
+  "dir": "ltr",
+  "categories": [
+    "sports"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
@@ -23,10 +32,45 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ranking",
+      "short_name": "Ranking",
+      "url": "./#ranking",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Resultados",
+      "short_name": "Resultados",
+      "url": "./#resultados",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Mi perfil",
+      "short_name": "Perfil",
+      "url": "./#perfil",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
