@@ -19,6 +19,13 @@
 <meta name="twitter:image" content="https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg">
 
 <link rel="manifest" href="manifest.json">
+<link rel="canonical" href="https://rcianghe.github.io/atp-Ciangherotti/">
+<meta property="og:locale" content="es_CL">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://hjqzpxsqdbjcidmlvgkv.supabase.co" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SportsClub","name":"Club de Tenis Estadio Quilicura","sport":"Tennis","url":"https://rcianghe.github.io/atp-Ciangherotti/","logo":"https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg","address":{"@type":"PostalAddress","addressLocality":"Quilicura","addressCountry":"CL"}}</script>
 <meta name="theme-color" content="#0e0e0e">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1173,6 +1180,27 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   #hero{padding-bottom:0}
   .hc{padding-bottom:0}
 }
+
+/* ============================================================
+   ESTABILIDAD / RENDIMIENTO (revision)
+   En pantallas tactiles o chicas se desactivan las animaciones
+   infinitas que animan box-shadow / filter (repintan en cada frame,
+   no van por GPU y en iOS terminan matando la pagina). Se dejan los
+   brillos estaticos. En escritorio se mantienen igual que antes.
+   ============================================================ */
+@media (max-width:900px),(hover:none){
+  .heroMascot,.herofig{animation:fxIn .9s cubic-bezier(.2,.9,.3,1) both,fxBreathe 4.5s ease-in-out .9s infinite;filter:drop-shadow(0 0 12px rgba(91,191,42,.5)) drop-shadow(0 12px 16px rgba(0,0,0,.5))}
+  .pav.foto{animation:fxIn .7s ease-out both}
+  .ppcbadge,.pavrank,.pst,.chalbtn,.chalbtn-ic,.descard.ok.proximo,.insfeature,.insfeature .insitem,.insfeature .insitem.gold,.insfeature .insic,.tint-estado b{animation:none}
+  .insfeature::before,.insfeature::after{animation:none;display:none}
+  .lc-wrap::after{animation:none}
+  .hticker,.hstCard{backdrop-filter:none;-webkit-backdrop-filter:none}
+  .hticker{background:rgba(30,30,30,.85)}
+}
+@media (prefers-reduced-motion:reduce){
+  .heroMascot,.herofig,.pav.foto,.pav.foto img,.ppcbadge,.pavrank,.pst,.chalbtn,.chalbtn-ic,.descard.ok.proximo,.insfeature,.insfeature .insitem,.insfeature .insic,.tint-estado b,.hstats-dot,.hticker-dot,.podio-avatar-wrap::before{animation:none!important}
+  .insfeature::before,.insfeature::after{display:none}
+}
 </style>
 </head>
 <body>
@@ -1425,15 +1453,16 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <a class="mni" href="#tienda"><span class="mnio">🛒</span><span class="mnil">Tienda</span></a>
 </nav>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js" defer></script>
 
 <!-- Cliente de Supabase: se carga e inicializa ANTES del script principal
      para que window.supabaseClient ya exista cuando init() corre y
      getTitulos()/contarTitulos() consultan la tabla "titulos". -->
 <script src="lib/supabase.min.js/supabase.min.js"></script>
+<script>window.supabase||document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>');</script>
 <!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
      Fuente unica de verdad -- ver match-result-card.js. -->
 <script src="match-result-card.js"></script>
@@ -1556,15 +1585,76 @@ document.addEventListener('click',function(){
 },true);
 
 
+// Antes esta funcion sumaba a scrollY el cambio de alto TOTAL de la pagina,
+// aunque lo que cambiara estuviera debajo de lo que la persona veia; en
+// Chrome/Firefox (que ya compensan solos con scroll anchoring) se corregia
+// dos veces y la pagina saltaba. Ahora se usa como ancla la primera seccion
+// que toca el borde superior de la pantalla: se mide su posicion antes y
+// despues (ya con el layout asentado) y solo se corrige la diferencia real.
 function conScrollPreservado(fn){
-  var yAntes=window.scrollY;
-  var altoAntes=document.documentElement.scrollHeight;
-  fn();
-  if(yAntes>0){
-    var altoDespues=document.documentElement.scrollHeight;
-    var delta=altoDespues-altoAntes;
-    if(delta!==0)scrollInstantaneo(Math.max(0,yAntes+delta));
+  var yAntes=window.scrollY||0;
+  if(yAntes<=0||bodyScrollLocked||typeof SECS==='undefined'){fn();return;}
+  var ancla=null,topAntes=0;
+  for(var i=0;i<SECS.length;i++){
+    var sec=document.getElementById(SECS[i]);
+    if(!sec)continue;
+    var r=sec.getBoundingClientRect();
+    if(r.height>0&&r.bottom>0){ancla=sec;topAntes=r.top;break;}
   }
+  fn();
+  if(!ancla||!ancla.isConnected)return;
+  var d=ancla.getBoundingClientRect().top-topAntes;
+  if(Math.abs(d)>=1)scrollInstantaneo(Math.max(0,(window.scrollY||0)+d));
+}
+
+// ---- Utilidades de estabilidad ----
+function debounce(fn,ms){
+  var t=null;
+  return function(){
+    var args=arguments,ctx=this;
+    clearTimeout(t);
+    t=setTimeout(function(){t=null;fn.apply(ctx,args);},ms);
+  };
+}
+// Evita cargas simultaneas de la misma funcion async: si llega otra llamada
+// mientras hay una en curso, NO se descarta ni se superpone; se agenda UNA
+// repeticion al terminar (asi un evento Realtime nunca se pierde y las
+// respuestas no llegan en desorden).
+function coalescer(fn){
+  var enCurso=null,pendiente=false;
+  function lanzar(){
+    enCurso=Promise.resolve().then(function(){return fn();}).catch(function(e){console.warn('Error en carga.',e);}).then(function(){
+      enCurso=null;
+      if(pendiente){pendiente=false;return lanzar();}
+    });
+    return enCurso;
+  }
+  return function(){
+    if(enCurso){pendiente=true;return enCurso;}
+    return lanzar();
+  };
+}
+// Varias cargas de datos terminan casi a la vez (jugadores, desafios,
+// Realtime, volver a la pestana): en vez de repintar TODA la pagina por
+// cada una, se agrupan en un solo rAll() y se omite si los datos no
+// cambiaron desde el ultimo render.
+var rAllTimer=null,rAllFirmaPrev=null;
+function firmaDatosRender(){
+  try{
+    return JSON.stringify([DATA.players,DATA.results,DATA.matches,DATA.desafios,
+      typeof FIXTURE_SIZE_ACTUAL!=='undefined'?FIXTURE_SIZE_ACTUAL:null,
+      CLUB_NOMBRE,CLUB_LOGO_URL,CLUB_MASCOTA_URL,Math.floor(Date.now()/600000)]);
+  }catch(e){return null;}
+}
+function programarRAll(){
+  if(rAllTimer)return;
+  rAllTimer=setTimeout(function(){
+    rAllTimer=null;
+    var f=firmaDatosRender();
+    if(f!==null&&f===rAllFirmaPrev)return;
+    rAllFirmaPrev=f;
+    conScrollPreservado(function(){rAll();});
+  },150);
 }
 var WA="56974723654";
 var METRO=["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
@@ -1687,7 +1777,7 @@ async function sincronizarJugadorVinculado(){
   // terminara de confirmarse, el boton de disponibilidad y "Editar
   // ficha" quedaban calculados con jugadorVinculado en null para
   // siempre, aunque el login ya hubiera terminado un instante despues.
-  if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))showProfile(currentProfileName,false);
+  if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))showProfile(currentProfileName,false,true);
 }
 
 // Lista de jugadores sin cuenta vinculada todavia (para el selector
@@ -1812,8 +1902,13 @@ if(window.supabaseClient){
     sincronizarJugadorVinculado();
   });
   window.supabaseClient.auth.onAuthStateChange(function(event,session){
-    usuarioActual=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,foto:session.user.user_metadata.avatar_url,email:session.user.email}:null;
+    var nuevo=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,foto:session.user.user_metadata.avatar_url,email:session.user.email}:null;
+    // supabase-js re-emite SIGNED_IN / TOKEN_REFRESHED al volver a la pestana:
+    // si es el mismo usuario y ya hay perfil vinculado, no hay nada que rehacer.
+    var mismo=(nuevo&&usuarioActual&&nuevo.uid===usuarioActual.uid)||(!nuevo&&!usuarioActual);
+    usuarioActual=nuevo;
     if(!usuarioActual)jugadorVinculado=null;
+    if(mismo&&jugadorVinculado&&event!=='USER_UPDATED')return;
     sincronizarJugadorVinculado();
   });
 }
@@ -2394,6 +2489,8 @@ function construirTickerHero(){
   partes.push('\ud83d\udcca '+jugados+' partidos jugados \u00b7 '+pend+' pendientes esta temporada');
   if(!partes.length)partes.push('\ud83c\udfbe Bienvenido al Club de Tenis Estadio Quilicura');
   var html=partes.map(function(p){return '<span class="hticker-part">'+p+'</span>';}).join('');
+  if(g1.__html===html)return; // sin cambios: no reiniciar el marquee
+  g1.__html=html;
   g1.innerHTML=html;
   g2.innerHTML=html;
 }
@@ -2566,7 +2663,7 @@ async function cargarJugadoresYResultadosSupabase(){
 
     toggleRankErr(false);
     jugadoresSupabaseListo=true;
-    conScrollPreservado(function(){rAll();});
+    programarRAll();
     console.log('Jugadores, resultados y fixture cargados desde Supabase:',jugadoresRaw.length,resultadosRaw.length,DATA.matches.length);
   }catch(err){
     console.warn('Sin conexion a Supabase para jugadores/resultados, se mantienen los datos previos.',err);
@@ -2613,7 +2710,7 @@ async function cargarFichasSupabase(){
     // reconstruia el HTML de la ficha con los valores viejos y borraba
     // lo que la persona estuviera escribiendo/seleccionando en ese
     // momento, dando la sensacion de "no me deja cambiar nada".
-    if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))conScrollPreservado(function(){showProfile(currentProfileName,false);});
+    if(currentProfileName&&!hayEdicionAbiertaPara(currentProfileName))conScrollPreservado(function(){showProfile(currentProfileName,false,true);});
   }catch(err){
     console.warn('Sin conexion a Supabase para fichas tecnicas.',err);
   }
@@ -2681,7 +2778,7 @@ async function cargarDesafiosSupabase(){
       });
     }
 
-    conScrollPreservado(function(){rAll();});
+    programarRAll();
   }catch(err){
     console.warn('Sin conexion a Supabase para desafios.',err);
   }
@@ -3326,35 +3423,33 @@ function ocultarSplash(){
 // (respaldo por si un canal de Realtime se desconecta), asi los cambios se reflejan
 // solos sin necesidad de recargar (F5).
 var LIVE_REFRESH_MS=300000;
+var ultimoRefrescoTs=Date.now(),ocultoDesdeTs=0;
+function refrescarTodo(){
+  ultimoRefrescoTs=Date.now();
+  cargarFixtureSizeSupabase().catch(function(){}).then(function(){
+    return cargarJugadoresYResultadosSupabase();
+  }).then(function(){
+    cargarFichasSupabase();
+    cargarDesafiosSupabase();
+    cargarTorneosInternos();
+  });
+  cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
+  cargarConfigClubSupabase();
+  cargarAfichePortadaSupabase();
+}
 function startLiveRefresh(){
   setInterval(function(){
-    if(document.visibilityState==='visible'){
-      cargarFixtureSizeSupabase().then(function(){
-        cargarJugadoresYResultadosSupabase().then(function(){
-          cargarFichasSupabase();
-          cargarDesafiosSupabase();
-          cargarTorneosInternos();
-        });
-      });
-      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
-      cargarConfigClubSupabase();
-      cargarAfichePortadaSupabase();
-    }
+    if(document.visibilityState==='visible'&&Date.now()-ultimoRefrescoTs>=LIVE_REFRESH_MS-1000)refrescarTodo();
   },LIVE_REFRESH_MS);
+  // Al volver a la pestana solo se recarga si estuvo oculta un rato: un
+  // cambio rapido de app no debe disparar una cascada de repintados. Si se
+  // oculto poco tiempo, Realtime ya mantuvo los datos al dia.
   document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible'){
-      cargarFixtureSizeSupabase().then(function(){
-        cargarJugadoresYResultadosSupabase().then(function(){
-          cargarFichasSupabase();
-          cargarDesafiosSupabase();
-          cargarTorneosInternos();
-        });
-      });
-      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
-      cargarConfigClubSupabase();
-      cargarAfichePortadaSupabase();
-    }
+    if(document.visibilityState==='hidden'){ocultoDesdeTs=Date.now();return;}
+    if(ocultoDesdeTs&&Date.now()-ocultoDesdeTs>=45000)refrescarTodo();
+    ocultoDesdeTs=0;
   });
+  window.addEventListener('online',function(){refrescarTodo();});
 }
 
 // Suscripciones Realtime: en vez de esperar el setInterval de 5 min,
@@ -3367,46 +3462,46 @@ function iniciarRealtime(){
   // Evita suscripciones duplicadas si initRealtime se llama mas de una vez
   realtimeChannels.forEach(function(ch){window.supabaseClient.removeChannel(ch);});
   realtimeChannels=[];
+  // Cada evento Realtime (uno por fila modificada) se agrupa 500 ms: una
+  // edicion masiva del admin dispara UNA recarga, no decenas.
+  var dJug=debounce(function(){cargarJugadoresYResultadosSupabase();},500);
+  var dDes=debounce(function(){cargarDesafiosSupabase();},500);
+  var dTor=debounce(function(){cargarTorneosInternos();},500);
+  var dCfg=debounce(function(){
+    cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
+    cargarFixtureSizeSupabase().then(function(){cargarJugadoresYResultadosSupabase();});
+  },500);
+  var dAfi=debounce(function(){cargarAfichePortadaSupabase();},500);
+  function estado(nombre){
+    return function(status){
+      if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Realtime '+nombre+': '+status+' (el refresco periodico lo respalda).');
+    };
+  }
   var chJugadores=window.supabaseClient.channel('rt-jugadores-resultados')
-    .on('postgres_changes',{event:'*',schema:'public',table:'jugadores'},function(){
-      cargarJugadoresYResultadosSupabase();
-    })
-    .on('postgres_changes',{event:'*',schema:'public',table:'resultados'},function(){
-      cargarJugadoresYResultadosSupabase();
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'jugadores'},dJug)
+    .on('postgres_changes',{event:'*',schema:'public',table:'resultados'},dJug)
+    .subscribe(estado('jugadores-resultados'));
   realtimeChannels.push(chJugadores);
 
   var chDesafios=window.supabaseClient.channel('rt-desafios')
-    .on('postgres_changes',{event:'*',schema:'public',table:'desafios'},function(){
-      cargarDesafiosSupabase();
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'desafios'},dDes)
+    .subscribe(estado('desafios'));
   realtimeChannels.push(chDesafios);
 
   var chTorneo=window.supabaseClient.channel('rt-torneo-interno')
-    .on('postgres_changes',{event:'*',schema:'public',table:'torneo_partidos'},function(){
-      cargarTorneosInternos();
-    })
-    .on('postgres_changes',{event:'*',schema:'public',table:'competiciones'},function(){
-      cargarTorneosInternos();
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'torneo_partidos'},dTor)
+    .on('postgres_changes',{event:'*',schema:'public',table:'competiciones'},dTor)
+    .subscribe(estado('torneo-interno'));
   realtimeChannels.push(chTorneo);
 
   var chConfig=window.supabaseClient.channel('rt-configuracion-sitio')
-    .on('postgres_changes',{event:'*',schema:'public',table:'configuracion_sitio'},function(){
-      cargarVisibilidadTorneo('interno');cargarVisibilidadTorneo('abierto');
-      cargarFixtureSizeSupabase().then(function(){cargarJugadoresYResultadosSupabase();});
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'configuracion_sitio'},dCfg)
+    .subscribe(estado('configuracion-sitio'));
   realtimeChannels.push(chConfig);
 
   var chAfiches=window.supabaseClient.channel('rt-afiches')
-    .on('postgres_changes',{event:'*',schema:'public',table:'afiches'},function(){
-      cargarAfichePortadaSupabase();
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'afiches'},dAfi)
+    .subscribe(estado('afiches'));
   realtimeChannels.push(chAfiches);
 }
 
@@ -3477,7 +3572,7 @@ function rHeroStats(){
   animarContador(document.getElementById("sr"),jugados);
   var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - Escalerilla 2026 - "+activos+" jugadores activos - "+jugados+" partidos jugados";
   var elHm=document.getElementById("heroMascotImg");
-  if(elHm){elHm.src=CLUB_MASCOTA_URL;elHm.style.display="block";}
+  if(elHm){if(elHm.getAttribute("src")!==CLUB_MASCOTA_URL)elHm.src=CLUB_MASCOTA_URL;elHm.style.display="block";}
   rJugadorDelMes();
   construirTickerHero();
 }
@@ -3513,7 +3608,7 @@ function rAll(){
   // escribiendo en ese momento. El resto de la pagina (ranking,
   // resultados, etc.) se sigue actualizando normal, esto solo protege
   // el formulario abierto.
-  if(nombreAMostrar&&!hayEdicionAbiertaPara(nombreAMostrar))showProfile(nombreAMostrar,false);
+  if(nombreAMostrar&&!hayEdicionAbiertaPara(nombreAMostrar))showProfile(nombreAMostrar,false,true);
   var e=document.querySelectorAll(".fi2");
   for(var i=0;i<e.length;i++)OBS.observe(e[i]);
 }
@@ -3546,8 +3641,11 @@ function hayEdicionAbiertaPara(nombre){
 function prefiereReducedMotion(){
   return window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+// Desactivado: el cross-fade de toda la pagina (0,42 s) bloquea la interaccion
+// y provoca destellos al cambiar de pestana o abrir un perfil.
+var USAR_VIEW_TRANSITIONS=false;
 function conViewTransition(fn){
-  if(document.startViewTransition&&!prefiereReducedMotion()){
+  if(USAR_VIEW_TRANSITIONS&&document.startViewTransition&&!prefiereReducedMotion()){
     return document.startViewTransition(fn);
   }
   return fn();
@@ -3686,22 +3784,29 @@ function rRanking(){
 // seccion #ranking entra realmente en pantalla (ver rankingObs mas abajo):
 // asi el refresco automatico cada 5 min no vuelve a "saltar" el ranking
 // entero cada vez que se repinta.
-var rankingListoParaAnimar=false;
+var rankingListoParaAnimar=false,rankingYaAnimado=false;
 function activarStaggerRanking(){
-  if(!rankingListoParaAnimar)return;
+  // Antes el flag "listo" nunca se apagaba, asi que cada rRanking() volvia a
+  // aplicar rb-row-anim (fade desde opacidad 0) y el ranking parpadeaba en
+  // cada refresco. Ahora la entrada escalonada ocurre una sola vez.
+  if(!rankingListoParaAnimar||rankingYaAnimado)return;
+  var n=0;
   var body=document.getElementById('rb');
   if(body){
     var rows=body.querySelectorAll('tr');
     for(var i=0;i<rows.length&&i<20;i++){
       rows[i].style.animationDelay=(i*35)+'ms';
       rows[i].classList.add('rb-row-anim');
+      n++;
     }
   }
   var cards=document.querySelectorAll('#rcards .rcard');
   for(var j=0;j<cards.length&&j<20;j++){
     cards[j].style.animationDelay=(j*35)+'ms';
     cards[j].classList.add('rb-row-anim');
+    n++;
   }
+  if(n>0)rankingYaAnimado=true;
 }
 var rankingObs=new IntersectionObserver(function(entries){
   entries.forEach(function(e){
@@ -3738,7 +3843,7 @@ function rPodio(){
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
     var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
     h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", Serie "+esc(p.serie)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
-      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"this.parentNode.innerHTML='"+["🥇","🥈","🥉"][i]+"';this.parentNode.style.fontSize='2.4rem';this.parentNode.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
+      +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"var pn=this.parentNode;this.onerror=null;pn.innerHTML='"+["🥇","🥈","🥉"][i]+"';pn.style.fontSize='2.4rem';pn.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
       +"<div class=\"podio-name\">"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
       +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
@@ -4071,6 +4176,11 @@ function poolResultados(){
 function pintarMediaBox(contId,item,vacioTexto){
   var el=document.getElementById(contId);
   if(!el)return;
+  // Si es el mismo afiche/video que ya se esta mostrando no se toca el DOM:
+  // evita recargar iframes de YouTube y reiniciar videos en cada refresco.
+  var claveMedia=item?(item.url+'|'+(item.titulo||'')+'|'+(item.sub||'')):('vacio|'+vacioTexto);
+  if(el.getAttribute('data-media-key')===claveMedia&&el.firstChild)return;
+  el.setAttribute('data-media-key',claveMedia);
   if(!item){el.innerHTML='<div class="ec"><div class="eci">🖼️</div><div class="ect">'+vacioTexto+'</div></div>';return;}
   if(/photos\.app\.goo\.gl|photos\.google\.com\/share/i.test(item.url)){
     el.innerHTML='<div class="ec"><div class="eci">⚠️</div><div class="ect">Ese link es de un album de Google Fotos y no se puede mostrar aqui.<br>Sube la foto a Google Drive y pega ese link.</div></div>';
@@ -4138,6 +4248,7 @@ function rAfichesGrandes(){
   if(!aficheRotTimerSet){
     aficheRotTimerSet=true;
     setInterval(function(){
+      if(document.hidden)return;
       var pa2=poolAfiches(),pr2=poolResultados();
       if(pa2.length)aficheIdx=(aficheIdx+1)%pa2.length;
       if(pr2.length)resultadoIdx=(resultadoIdx+1)%pr2.length;
@@ -4235,7 +4346,16 @@ function limpiarNombreJugador(nombre){
 // por nombre. Si Supabase no responde (sin red, tabla vacia, etc.) se
 // cae de vuelta a DATA.titulos (sincronizado desde la planilla) para
 // no dejar la seccion vacia.
-async function getTitulos(nombre){
+var TITULOS_CACHE={},TITULOS_TTL_MS=180000;
+function getTitulos(nombre){
+  var k=limpiarNombreJugador(nombre),c=TITULOS_CACHE[k],ahora=Date.now();
+  if(c&&(c.pendiente||ahora-c.ts<TITULOS_TTL_MS))return c.promesa;
+  var entrada={ts:ahora,pendiente:true};
+  entrada.promesa=_getTitulosRed(nombre).then(function(t){entrada.pendiente=false;entrada.ts=Date.now();return t;},function(e){delete TITULOS_CACHE[k];throw e;});
+  TITULOS_CACHE[k]=entrada;
+  return entrada.promesa;
+}
+async function _getTitulosRed(nombre){
   var nombreLimpio=limpiarNombreJugador(nombre);
   var pOrd={"Clausura":1,"Apertura":0};
   function ordenar(t){
@@ -5102,14 +5222,21 @@ function refrescarPerfilActual(){
 // envolvemos en View Transition la navegacion real del usuario hacia un
 // perfil (scroll!==false), para no generar un flash de transicion en
 // cada actualizacion de fondo.
-function showProfile(nombre,scroll){
+var perfilRenderVersion=0;
+// fondo===true: llamada desde un refresco automatico (no desde una accion de
+// la persona); en ese caso, si el HTML resultante es identico al ya pintado
+// no se reescribe el DOM (sin parpadeo ni reinicio de animaciones).
+function showProfile(nombre,scroll,fondo){
   if(scroll!==false){
-    return conViewTransition(function(){return _showProfileImpl(nombre,scroll);});
+    return conViewTransition(function(){return _showProfileImpl(nombre,scroll,false);});
   }
-  return _showProfileImpl(nombre,scroll);
+  return _showProfileImpl(nombre,scroll,!!fondo);
 }
 
-async function _showProfileImpl(nombre,scroll){
+async function _showProfileImpl(nombre,scroll,fondo){
+  // Cada render recibe un numero; si mientras esperaba los titulos arranco
+  // otro render mas nuevo, este se descarta (evita que gane uno con datos viejos).
+  var miVersion=++perfilRenderVersion;
   currentProfileName=nombre;
   document.getElementById("psr").style.display="none";
   document.getElementById("psi").value=nombre;
@@ -5156,7 +5283,8 @@ async function _showProfileImpl(nombre,scroll){
   var rv=getRivalStats(nombre);
   var favH=rv.fav?("<div class=\"rvn\">"+esc(rv.fav.name)+"</div><div class=\"rvs2\">"+rv.fav.w+"V - "+rv.fav.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   var difH=rv.dif?("<div class=\"rvn\">"+esc(rv.dif.name)+"</div><div class=\"rvs2\">"+rv.dif.w+"V - "+rv.dif.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
-  var tits=await getTitulos(nombre); // consulta la tabla "titulos" en Supabase filtrando por jugador
+  var tits=await getTitulos(nombre); // consulta la tabla "titulos" en Supabase filtrando por jugador (con cache)
+  if(miVersion!==perfilRenderVersion)return;
   var ftH=renderFichaTecnica(nombre);
   // Rachas y tendencias
   var tend=tendenciasJugador(nombre);
@@ -5241,7 +5369,7 @@ async function _showProfileImpl(nombre,scroll){
     +"</div>"
     +(p.linkCancha?"<div class=\"pinfocancha\"><a class=\"pcanchalink\" href=\""+esc(p.linkCancha)+"\" target=\"_blank\" rel=\"noopener\">"+icPin+" Ver cancha</a></div>":"")
     +"</div>";
-  document.getElementById("pcc").innerHTML=
+  var pccHtml=
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
     +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
     +"<h2>"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
@@ -5270,8 +5398,11 @@ async function _showProfileImpl(nombre,scroll){
     +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>"
     +"<div class=\"ppcbadge\"><img src=\""+CLUB_LOGO_URL+"\" alt=\"\"></div>"
     +"</div>";
+  var pccEl=document.getElementById("pcc");
+  var cambio=!(fondo&&pccEl.__ultimoHtml===pccHtml);
+  if(cambio){pccEl.innerHTML=pccHtml;pccEl.__ultimoHtml=pccHtml;}
   if(scroll!==false)document.getElementById("perfil").scrollIntoView({behavior:"smooth"});
-  restaurarChatAbiertoSiCorresponde();
+  if(cambio)restaurarChatAbiertoSiCorresponde();
 }
 
 function populateH2H(){
@@ -5279,8 +5410,12 @@ function populateH2H(){
   for(var i=0;i<DATA.players.length;i++){
     o+="<option value=\""+esc(DATA.players[i].nombre)+"\">"+esc(DATA.players[i].nombre)+" ("+esc(DATA.players[i].serie)+")</option>";
   }
-  document.getElementById("h1").innerHTML=o;
-  document.getElementById("h2").innerHTML=o;
+  var h1El=document.getElementById("h1"),h2El=document.getElementById("h2");
+  if(h1El.__o===o)return; // misma lista: no tocar (conserva la seleccion)
+  var v1=h1El.value,v2=h2El.value;
+  h1El.innerHTML=o;h2El.innerHTML=o;h1El.__o=o;
+  if(v1)h1El.value=v1;
+  if(v2)h2El.value=v2;
 }
 
 function rankEnSerie(nombre){
@@ -5865,16 +6000,13 @@ SECS.forEach(function(id){
   if(el)seccionActivaObs.observe(el);
 });
 
-init();
+// Cargas coalescidas: nunca dos en paralelo y ninguna se pierde (ver coalescer()).
+cargarJugadoresYResultadosSupabase=coalescer(cargarJugadoresYResultadosSupabase);
+cargarDesafiosSupabase=coalescer(cargarDesafiosSupabase);
+cargarFichasSupabase=coalescer(cargarFichasSupabase);
+cargarTorneosInternos=coalescer(cargarTorneosInternos);
 
-if (window.elHm) {
-  elHm.src="jugadores/big-3.png";
-  elHm.style.display="block";
-  elHm.style.width="75%";
-  elHm.style.maxWidth="300px";
-  elHm.style.height="auto";
-  elHm.style.margin="15px auto";
-  }
+init();
   // --- INTEGRACIÓN NOTIFICACIONES PUSH ---
   window.suscribirANotificaciones = async function(jugadorId) {
   try {
