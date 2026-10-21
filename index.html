@@ -27,8 +27,9 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SportsClub","name":"Club de Tenis Estadio Quilicura","sport":"Tennis","url":"https://rcianghe.github.io/atp-Ciangherotti/","logo":"https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg","address":{"@type":"PostalAddress","addressLocality":"Quilicura","addressCountry":"CL"}}</script>
 <meta name="theme-color" content="#0e0e0e">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CTQ Escalerilla">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bevan&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1201,6 +1202,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   .heroMascot,.herofig,.pav.foto,.pav.foto img,.ppcbadge,.pavrank,.pst,.chalbtn,.chalbtn-ic,.descard.ok.proximo,.insfeature,.insfeature .insitem,.insfeature .insic,.tint-estado b,.hstats-dot,.hticker-dot,.podio-avatar-wrap::before{animation:none!important}
   .insfeature::before,.insfeature::after{display:none}
 }
+
+/* Aviso de modo offline (PWA) */
+.offpill{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:9998;background:rgba(26,26,26,.96);color:var(--bl);border:1px solid var(--am);border-radius:999px;padding:.45rem .95rem;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+.offpill.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:900px){.offpill{bottom:1.2rem}}
 </style>
 </head>
 <body>
@@ -1441,6 +1447,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="fvc"><div class="viscount"><span class="visball">🎾</span><span class="vislabel">Visitas al club</span><span class="visnum" id="visitasNum">65</span></div></div>
 </footer>
 
+<div class="offpill" id="offPill" role="status" aria-live="polite">Sin conexión · mostrando la última versión</div>
 <nav class="mn">
   <a class="mni active" href="#ranking"><span class="mnio">🏆</span><span class="mnil">Ranking</span></a>
   <a class="mni" href="#afiches"><span class="mnio">📣</span><span class="mnil">Afiches</span></a>
@@ -5999,6 +6006,21 @@ SECS.forEach(function(id){
   var el=document.getElementById(id);
   if(el)seccionActivaObs.observe(el);
 });
+
+// PWA: un solo service worker (offline + push). Se registra al cargar para que
+// el modo offline funcione aunque la persona nunca active las notificaciones.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(function(e){console.warn('No se pudo registrar el service worker.',e);});
+  });
+}
+(function(){
+  var pill=document.getElementById('offPill');
+  function estado(){if(pill)pill.classList.toggle('show',navigator.onLine===false);}
+  window.addEventListener('offline',estado);
+  window.addEventListener('online',estado);
+  estado();
+})();
 
 // Cargas coalescidas: nunca dos en paralelo y ninguna se pierde (ver coalescer()).
 cargarJugadoresYResultadosSupabase=coalescer(cargarJugadoresYResultadosSupabase);
