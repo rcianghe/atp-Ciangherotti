@@ -190,7 +190,7 @@ function normalizarMatchDesdeResultado(r, jugadoresById, opts){
     origen: 'resultado',
     estado: r.estado_partido || (r.ganador_id ? 'finalizado' : 'programado'),
     serie: r.serie,
-    fecha: r.fecha, hora: r.hora, cancha: r.cancha,
+    fecha: r.fecha, hora: r.hora ? String(r.hora).substring(0,5) : r.hora, cancha: r.cancha,
     set1: r.set1, set2: r.set2, set3: r.set3,
     tipo: r.tipo,
     ganadorId: r.ganador_id || null,
@@ -207,7 +207,7 @@ function normalizarMatchDesdeTorneoPartido(p, jugadoresById, opts){
     origen: 'torneo_partido',
     estado: p.estado_partido || (p.ganador_id ? 'finalizado' : 'programado'),
     serie: opts.serie || null,
-    fecha: p.fecha, hora: null, cancha: null,
+    fecha: p.fecha, hora: p.hora ? String(p.hora).substring(0,5) : null, cancha: p.cancha || null,
     set1: p.set1, set2: p.set2, set3: p.set3,
     tipo: p.tipo,
     ganadorId: p.ganador_id || null,
@@ -254,8 +254,11 @@ function renderMatchResultCard(match, opts){
   }
 
   var centroH;
+  var horaEnCentro = esProgramado && match.hora ? String(match.hora).substring(0,5) : '';
   if(esProgramado){
-    centroH = '<div class="mrc-centro mrc-centro-txt">'+mrcEsc(mrcT('match.vs',idioma))+'</div>';
+    centroH = horaEnCentro
+      ? '<div class="mrc-centro mrc-centro-sets">'+mrcEsc(horaEnCentro)+'</div>'
+      : '<div class="mrc-centro mrc-centro-txt">'+mrcEsc(mrcT('match.vs',idioma))+'</div>';
   } else if(esEnJuego){
     centroH = '<div class="mrc-centro mrc-centro-live">'+mrcEsc(mrcT('match.vs',idioma))+'</div>';
   } else if(esCancelado || esSuspendido){
@@ -286,7 +289,7 @@ function renderMatchResultCard(match, opts){
 
   var metaPartes = [];
   if(match.fecha) metaPartes.push(mrcEsc(match.fecha));
-  if(match.hora) metaPartes.push(mrcEsc(match.hora));
+  if(match.hora && !horaEnCentro) metaPartes.push(mrcEsc(match.hora));
   if(match.cancha) metaPartes.push(mrcEsc(mrcT('match.court',idioma,{n:match.cancha})));
   if(match.serie) metaPartes.push('Serie '+mrcEsc(match.serie));
   if(opts.mostrarTorneo!==false && match.torneoNombre) metaPartes.push(mrcEsc(match.torneoNombre));
