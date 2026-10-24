@@ -781,7 +781,7 @@ const ENTITIES = {
     ]},
 
   torneo_partidos:{ label:'Llave de partidos', group:'Competición', table:'torneo_partidos', pk:'id', clubFilter:'direct',
-    select:'id,ronda,posicion,set1,set2,set3,tipo,estado_partido,es_bye,es_mejor_perdedor,fecha,torneo_id,club_id,j1:jugador1_id(nombre,avatar_url,bandera_iso),j2:jugador2_id(nombre,avatar_url,bandera_iso),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id',
+    select:'id,ronda,posicion,set1,set2,set3,tipo,estado_partido,es_bye,es_mejor_perdedor,fecha,hora,cancha,torneo_id,club_id,j1:jugador1_id(nombre,avatar_url,bandera_iso),j2:jugador2_id(nombre,avatar_url,bandera_iso),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id',
     order:{col:'ronda'}, searchCols:[], filterField:'torneo_id', filterLookup:'competiciones',
     columns:[
       {key:'ronda',label:'Ronda'},
@@ -791,6 +791,7 @@ const ENTITIES = {
       {key:'sets',label:'Sets',render:(v,r)=>renderSets(r)},
       {key:'g',label:'Ganador',render:v=>v?`<b>${v.nombre}</b>`:'—'},
       {key:'estado_partido',label:'Estado',render:v=>badgeEstadoPartido(v)},
+      {key:'fecha',label:'Fecha y hora',render:(v,r)=>v?`${v}${r.hora?' · <b>'+String(r.hora).substring(0,5)+'</b>':' · <span class="hint">sin hora</span>'}${r.cancha?' · Cancha '+r.cancha:''}`:'<span class="hint">sin fecha</span>'},
       {key:'es_bye',label:'Bye',render:v=>v?'<span class="badge badge-gray">Sí</span>':''},
       {key:'_acciones',label:'',render:(v,r)=>bracketRowActions(r)},
     ],
@@ -807,6 +808,8 @@ const ENTITIES = {
       {key:'tipo',label:'Tipo',type:'select',options:['normal','W.O.']},
       {key:'estado_partido',label:'Estado del partido',type:'select',options:['programado','en_juego','finalizado','w_o','retirado','cancelado','suspendido'],default:'programado'},
       {key:'fecha',label:'Fecha',type:'date'},
+      {key:'hora',label:'Hora del encuentro',type:'time'},
+      {key:'cancha',label:'Cancha',type:'text'},
       {key:'es_bye',label:'Es bye',type:'bool'},
       {key:'es_mejor_perdedor',label:'Es mejor perdedor',type:'bool'},
     ]},
@@ -2278,7 +2281,7 @@ function renderField(f, record){
       <div class="fileurl-preview" id="fu_preview_${f.key}"></div>
     </div>`;
   }
-  const inputType = f.type==='number'?'number':(f.type==='date'?'date':(f.type==='email'?'email':'text'));
+  const inputType = f.type==='number'?'number':(f.type==='date'?'date':(f.type==='time'?'time':(f.type==='email'?'email':'text')));
   return `<div class="field"><label>${f.label}${f.required?' *':''}</label><input id="f_${f.key}" type="${inputType}" value="${escAttr(val)}" ${disabled}></div>`;
 }
 function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
