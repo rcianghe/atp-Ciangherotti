@@ -2234,6 +2234,12 @@ var PUNTOS = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:3
 // cargarFixtureSizeSupabase(), y se reutiliza cuando se recalcula el
 // ranking con datos de Supabase.
 var FIXTURE_SIZE_ACTUAL={A:9,B:9,C:22};
+// Bonos de disponibilidad (registrados a mano en el admin, tabla
+// bonos_disponibilidad). Solo suman las series activadas en
+// configuracion_sitio ("bono_disponibilidad_activo": {"A":true,...}).
+// Mapa jugador_id -> puntos, ya filtrado por series activas; se llena en
+// cargarBonosDisponibilidadSupabase() y lo consume calcularRanking().
+var BONOS_DISP_PTS={};
 
 function numSets(m){var n=0;if(m.set1)n++;if(m.set2)n++;if(m.set3)n++;return n;}
 function esBagel(setStr,ganadorEsJ1){if(!setStr)return false;var p=setStr.split('-');var a=parseInt(p[0],10),b=parseInt(p[1],10);if(isNaN(a)||isNaN(b))return false;return ganadorEsJ1?(a===6&&b===0):(b===6&&a===0);}
@@ -2296,16 +2302,19 @@ function calcularRanking(jugadores,resultados,fixtureSize){
       if(esAnulado)return {nombre:nombre,serie:serie,estado:j.estado,pj:0,pg:0,pp:0,ptsBase:0,bonos:0,total:0,racha:0,pctTriunfos:0,retirado:true};
       var misPartidos=partidosSerie.filter(function(r){return (r.jugador1===nombre||r.jugador2===nombre)&&!anulados[r.jugador1]&&!anulados[r.jugador2];});
       var ordenados=misPartidos.slice().sort(function(a,b){return parseFechaDDMMYYYY(a.fecha)-parseFechaDDMMYYYY(b.fecha);});
-      var pg=0,ptsBase=0,bonoBagel=0,racha=0;
+      var pg=0,ptsBase=0,bonoBagel=0,racha=0,woCount=0;
       ordenados.forEach(function(r){
         var gane=r.ganador===nombre;
         var esWO=r.tipo==='W.O.'||r.tipo==='Doble W.O.';
+        // Para el bono "todos jugados" cualquier W.O. (ganado, perdido o doble) cuenta como no jugado en cancha.
+        if(esWO||r.estadoPartido==='w_o'||r.estadoPartido==='doble_w_o')woCount++;
         var sets=esWO?0:numSets(r);
         if(gane){
           pg++;racha++;
           ptsBase+=esWO?PUNTOS.ganaWO:(sets===2?PUNTOS.gana2sets:PUNTOS.gana3sets);
           var ganadorEsJ1=r.jugador1===nombre;
-          if(!esWO&&esBagel(r.set1,ganadorEsJ1)&&esBagel(r.set2,ganadorEsJ1))bonoBagel+=PUNTOS.bonoBagelBagel;
+          // Bonus 6-0 6-0: gana en exactamente 2 sets; un W.O. no cuenta.
+          if(!esWO&&r.estadoPartido!=='w_o'&&sets===2&&esBagel(r.set1,ganadorEsJ1)&&esBagel(r.set2,ganadorEsJ1))bonoBagel+=PUNTOS.bonoBagelBagel;
         } else {
           racha=0;
           ptsBase+=esWO?PUNTOS.pierdeWO:(sets===2?PUNTOS.pierde2sets:PUNTOS.pierde3sets);
@@ -2313,11 +2322,15 @@ function calcularRanking(jugadores,resultados,fixtureSize){
       });
       var pj=misPartidos.length,pp=pj-pg;
       var bonos=0;
-      if(!esRetirado){
+      if(!esRetirado&&totalPartidosTemporada>0){
+        // 500: gana todos los partidos del fixture (los ganados por W.O. cuentan).
         if(pj===totalPartidosTemporada&&pg===totalPartidosTemporada)bonos+=PUNTOS.bonoTodosGanados;
-        if(pj===totalPartidosTemporada)bonos+=PUNTOS.bonoTodosJugados;
+        // 150: juega todos los partidos del fixture en cancha; con un solo W.O. se anula.
+        if(pj===totalPartidosTemporada&&woCount===0)bonos+=PUNTOS.bonoTodosJugados;
       }
       bonos+=bonoBagel;
+      // Bono de disponibilidad (manual, solo series activadas).
+      bonos+=(BONOS_DISP_PTS[j.id]||0);
       var total=ptsBase+bonos;
       var pct=pj>0?Math.round((pg/pj)*1000)/10:0;
       return {nombre:nombre,serie:serie,estado:j.estado,pj:pj,pg:pg,pp:pp,ptsBase:ptsBase,bonos:bonos,total:total,racha:racha,pctTriunfos:pct,retirado:esRetirado};
@@ -2875,11 +2888,39 @@ async function cargarFixtureSizeSupabase(){
     var res=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','fixture_size').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
     if(res.error){
       console.warn('No se pudo cargar el tamaño de fixture, se usa el valor por defecto.',res.error);
-      return;
+    }else if(res.data&&res.data.valor){
+      FIXTURE_SIZE_ACTUAL=res.data.valor;
     }
-    if(res.data&&res.data.valor)FIXTURE_SIZE_ACTUAL=res.data.valor;
   }catch(err){
     console.warn('Sin conexion al cargar el tamaño de fixture.',err);
+  }
+  // Los bonos de disponibilidad se cargan en el mismo paso, asi todos los
+  // lugares que ya refrescan el fixture tambien refrescan estos bonos
+  // antes de recalcular el ranking.
+  await cargarBonosDisponibilidadSupabase();
+}
+
+async function cargarBonosDisponibilidadSupabase(){
+  if(!window.supabaseClient)return;
+  try{
+    var cfg=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','bono_disponibilidad_activo').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
+    if(cfg.error){
+      console.warn('No se pudo cargar la activacion de bonos de disponibilidad, se mantienen los anteriores.',cfg.error);
+      return;
+    }
+    var activo=(cfg.data&&cfg.data.valor&&typeof cfg.data.valor==='object')?cfg.data.valor:{};
+    var bon=await window.supabaseClient.from('bonos_disponibilidad').select('jugador_id,serie,puntos').eq('club_id',CLUB_ACTUAL_ID);
+    if(bon.error){
+      console.warn('No se pudieron cargar los bonos de disponibilidad, se mantienen los anteriores.',bon.error);
+      return;
+    }
+    var mapa={};
+    (bon.data||[]).forEach(function(b){
+      if(activo[b.serie]===true)mapa[b.jugador_id]=(mapa[b.jugador_id]||0)+(b.puntos||0);
+    });
+    BONOS_DISP_PTS=mapa;
+  }catch(err){
+    console.warn('Sin conexion al cargar los bonos de disponibilidad.',err);
   }
 }
 
