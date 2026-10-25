@@ -90,7 +90,7 @@ var torneoAbierto=null; // fila de torneos_internos
 var partidos=[]; // filas de torneo_partidos del torneo abierto
 var seedList=[]; // [{id,nombre,pts,incluido}] solo mientras no hay ronda 1 creada
 var mensaje=null; // {tipo:'ok'|'err', texto}
-var mpSeleccion=null; // jugador_id elegido como "mejor perdedor" al avanzar de ronda
+var mpSel={}; // {partido_id|'_extra': jugador_id} mejor perdedor elegido para cada cupo vacio al avanzar de ronda
 var guardando=false;
 
 // ---- Fase 3: club administrado en esta sesion ----
@@ -129,7 +129,7 @@ var vistaPlataforma=false;      // true = viendo/administrando torneos de plataf
 var jugadoresTodos=[];          // jugadores de TODOS los clubes (para el seeding cross-club)
 var jugadoresTodosCargados=false;
 var torneosPlataforma=[];       // listado de competiciones tipo=plataforma
-// torneoAbierto / partidos / seedList / mpSeleccion se REUSAN tal cual
+// torneoAbierto / partidos / seedList / mpSel se REUSAN tal cual
 // para torneos de plataforma: toda la maquinaria de bracket (generar
 // Ronda 1, avanzar ronda, registrar/deshacer resultado) es identica sin
 // importar si el torneo tiene club_id o no, asi que no hace falta
@@ -407,7 +407,7 @@ async function prepararSeedingPlataforma(){
 
 function abrirTorneoIdx(idx){abrirTorneo(torneosSerie[idx]);}
 async function abrirTorneo(t){
-  torneoAbierto=t;mensaje=null;mpSeleccion=null;
+  torneoAbierto=t;mensaje=null;mpSel={};
   await cargarPartidos(t.id);
   if(!partidos.length)await prepararSeeding();
   render();
@@ -563,7 +563,23 @@ async function generarRonda1(){
 
 function rondaMaxima(){var m=0;partidos.forEach(function(p){if(p.ronda>m)m=p.ronda;});return m;}
 function partidosDeRonda(r){return partidos.filter(function(p){return p.ronda===r;}).sort(function(a,b){return a.posicion-b.posicion;});}
-function rondaCompleta(r){return partidosDeRonda(r).every(function(p){return !!p.ganador_id;});}
+// Doble W.O.: ninguno de los dos jugadores se presento, el partido no tiene ganador.
+function esDobleWO(p){return !p.es_bye&&!p.ganador_id&&p.estado_partido==='w_o';}
+function rondaCompleta(r){return partidosDeRonda(r).every(function(p){return !!p.ganador_id||esDobleWO(p);});}
+
+// La Qualy NO es una ronda: en un cuadro ATP con byes, los partidos reales de
+// la ronda 1 solo definen los cupos que le faltan al cuadro principal. El
+// cuadro principal parte en la ronda 2 de la base, que se muestra como Ronda 1.
+function hayQualy(){
+  return !!(torneoAbierto&&torneoAbierto.seeding_tipo==='atp'&&partidosDeRonda(1).some(function(p){return p.es_bye;}));
+}
+function etiquetaRonda(r){
+  if(r===1&&hayQualy())return 'Qualy &middot; define los cupos que faltan del cuadro principal';
+  var num=r-(hayQualy()?1:0),n=partidosDeRonda(r).length*2;
+  var pot=(n&(n-1))===0;
+  var fase=!pot?'':(n===2?'Final':n===4?'Semifinal':n===8?'Cuartos de final':n===16?'Octavos de final':n+' jugadores');
+  return 'Ronda '+num+(fase?' &middot; '+fase:'');
+}
 
 async function guardarResultado(partidoId,jugador1Id,jugador2Id){
   var s1=document.getElementById('s1-'+partidoId).value.trim();
@@ -708,26 +724,52 @@ function perdedoresRealesDeRonda(r){ // excluye byes, que no tienen "perdedor"
 
 async function avanzarRonda(){
   var r=rondaMaxima();
-  var ganadores=ganadoresDeRonda(r);
-  if(ganadores.length===1){setMsg('err','Ya no hay mas rondas: el campeon ya deberia estar definido.');return;}
-  var listaAvance=ganadores.slice();
-  if(listaAvance.length%2!==0){
-    if(!mpSeleccion){setMsg('err','Cantidad impar de ganadores: selecciona abajo el "mejor perdedor" que avanza junto con ellos.');return;}
-    listaAvance.push(mpSeleccion);
+  var ps=partidosDeRonda(r);
+  if(ps.length===1&&ps[0].ganador_id){setMsg('err','Ya no hay mas rondas: el campeon ya deberia estar definido.');return;}
+  // Un cupo por partido, en el mismo orden del cuadro. Un doble W.O. deja el
+  // cupo vacio y lo ocupa el mejor perdedor elegido (en ese mismo lugar).
+  var lista=[],mpIds={};
+  for(var k=0;k<ps.length;k++){
+    var p=ps[k];
+    if(p.ganador_id){lista.push(p.ganador_id);continue;}
+    if(!esDobleWO(p)){setMsg('err','Hay partidos sin resultado en esta ronda.');return;}
+    var elegido=mpSel[p.id];
+    if(!elegido){setMsg('err','Elige el mejor perdedor que ocupa el cupo del doble W.O.');return;}
+    lista.push(elegido);mpIds[elegido]=true;
   }
-  var filas=[];
-  var pos=0;
-  for(var i=0;i<listaAvance.length;i+=2){
-    var esMP=(listaAvance[i]===mpSeleccion||listaAvance[i+1]===mpSeleccion);
-    filas.push({torneo_id:torneoAbierto.id,ronda:r+1,posicion:pos++,jugador1_id:listaAvance[i],jugador2_id:listaAvance[i+1],es_bye:false,es_mejor_perdedor:esMP});
+  if(lista.length%2!==0){
+    if(!mpSel._extra){setMsg('err','Cantidad impar de ganadores: selecciona abajo el "mejor perdedor" que avanza junto con ellos.');return;}
+    lista.push(mpSel._extra);mpIds[mpSel._extra]=true;
+  }
+  var vistos={};
+  for(var m=0;m<lista.length;m++){if(vistos[lista[m]]){setMsg('err','Un mismo jugador quedo dos veces en la siguiente ronda. Revisa los mejores perdedores elegidos.');return;}vistos[lista[m]]=true;}
+  var filas=[],pos=0;
+  for(var i2=0;i2<lista.length;i2+=2){
+    var esMP=!!(mpIds[lista[i2]]||mpIds[lista[i2+1]]);
+    filas.push({torneo_id:torneoAbierto.id,ronda:r+1,posicion:pos++,jugador1_id:lista[i2],jugador2_id:lista[i2+1],es_bye:false,es_mejor_perdedor:esMP});
   }
   guardando=true;render();
   var res=await window.supabaseClient.from('torneo_partidos').insert(filas);
   guardando=false;
   if(res.error){setMsg('err','No se pudo crear la siguiente ronda: '+res.error.message);return;}
-  mpSeleccion=null;
+  mpSel={};
   await cargarPartidos(torneoAbierto.id);
-  setMsg('ok','Ronda '+(r+1)+' creada.');
+  setMsg('ok','Ronda '+(r+1-(hayQualy()?1:0))+' creada.');
+}
+
+// Registra un doble W.O. (ninguno se presento): el partido queda sin ganador.
+// Update directo, igual que agregarJugadorABye; .select() detecta si no toco filas.
+async function registrarDobleWO(partidoId){
+  if(!confirm('¿Registrar doble W.O.? Ninguno de los dos jugadores avanza y el cupo lo ocupa un mejor perdedor.'))return;
+  guardando=true;render();
+  var res=await window.supabaseClient.from('torneo_partidos').update({
+    ganador_id:null,set1:null,set2:null,set3:null,tipo:'W.O.',estado_partido:'w_o'
+  }).eq('id',partidoId).eq('es_bye',false).select();
+  guardando=false;
+  if(res.error){setMsg('err','No se pudo registrar el doble W.O.: '+res.error.message);return;}
+  if(!res.data||!res.data.length){setMsg('err','No se pudo registrar el doble W.O. (el partido no se encontro o no tienes permiso). Refresca e intenta de nuevo.');return;}
+  await cargarPartidos(torneoAbierto.id);
+  setMsg('ok','Doble W.O. registrado.');
 }
 
 // ============================================================
@@ -983,15 +1025,27 @@ function renderBracketAdmin(){
   var rMax=rondaMaxima();
   for(var r=1;r<=rMax;r++){
     var esUltima=(r===rMax);
-    h+='<div class="ronda-tit">'+((esUltima&&rMax>1)?'Ultima ronda cargada':'Ronda '+r)+'</div>';
-    partidosDeRonda(r).forEach(function(p){
-      h+=renderMatchAdmin(p,esUltima&&partidosDeRonda(r).length===1);
-    });
+    var qualy=(r===1&&hayQualy());
+    h+='<div class="ronda-tit">'+etiquetaRonda(r)+(esUltima&&rMax>1?' <span class="sub" style="margin:0;text-transform:none;letter-spacing:0">(ronda en juego)</span>':'')+'</div>';
+    var ps=partidosDeRonda(r);
+    if(qualy){
+      // Los que entran directo al cuadro principal no juegan Qualy: van plegados.
+      var byes=ps.filter(function(p){return p.es_bye;});
+      var reales=ps.filter(function(p){return !p.es_bye;});
+      reales.forEach(function(p){h+=renderMatchAdmin(p,false);});
+      if(byes.length){
+        h+='<details style="margin:.6rem 0"><summary class="sub" style="cursor:pointer">'+byes.length+' jugadores entran directo al cuadro principal (sin Qualy)</summary>';
+        byes.forEach(function(p){h+=renderMatchAdmin(p,false);});
+        h+='</details>';
+      }
+    }else{
+      ps.forEach(function(p){h+=renderMatchAdmin(p,esUltima&&ps.length===1);});
+    }
   }
 
   if(rondaCompleta(rMax)){
     var ganadores=ganadoresDeRonda(rMax);
-    if(ganadores.length===1){
+    if(ganadores.length===1&&partidosDeRonda(rMax).length===1){
       h+='<div class="card" style="text-align:center;border-color:rgba(212,230,10,.5)"><b style="color:var(--am)">Campeon definido: '+esc(nombreDe(ganadores[0]))+'</b><p class="sub" style="margin-bottom:0">Ya deberia aparecer en el perfil del jugador y en el sitio publico.</p></div>';
     }else{
       h+=renderAvanzarRonda(rMax,ganadores);
@@ -1083,7 +1137,10 @@ function renderMatchAdmin(p,esFinal){
     }
   }
 
-  if(p.ganador_id){
+  if(esDobleWO(p)){
+    h+='<div class="jugado">Doble W.O. &middot; ninguno avanza, el cupo lo ocupa un mejor perdedor</div>';
+    h+='<div style="margin-top:.4rem"><button class="btn ro" onclick="deshacerResultado(\''+jsAttr(p.id)+'\')">Deshacer doble W.O.</button></div>';
+  }else if(p.ganador_id){
     var score=[p.set1,p.set2,p.set3].filter(Boolean).join(' ')||(p.tipo==='W.O.'?'W.O.':'');
     h+='<div class="jugado">Resultado: '+esc(score)+' &middot; gano '+esc(nombreDe(p.ganador_id))+'</div>';
     h+='<div style="margin-top:.4rem"><button class="btn ro" onclick="deshacerResultado(\''+jsAttr(p.id)+'\')">Deshacer resultado</button></div>';
@@ -1098,6 +1155,7 @@ function renderMatchAdmin(p,esFinal){
       +'<label style="font-size:.75rem;color:var(--gl)"><input type="checkbox" id="wo-'+p.id+'"> W.O.</label>'
       +'<label style="font-size:.75rem;color:var(--gl)"><input type="checkbox" id="ret-'+p.id+'"> Se retir\u00f3 el perdedor</label>'
       +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="guardarResultado(\''+jsAttr(p.id)+'\')">Guardar</button>'
+      +(p.ronda===rondaMaxima()?'<button class="btn ro" '+(guardando?'disabled':'')+' onclick="registrarDobleWO(\''+jsAttr(p.id)+'\')">Doble W.O.</button>':'')
       +'</div>';
     var estadoActual=p.estado_partido||'programado';
     h+='<div class="row" style="margin-top:.5rem;gap:.4rem">'
@@ -1114,23 +1172,40 @@ function renderMatchAdmin(p,esFinal){
 
 function renderAvanzarRonda(rMax,ganadores){
   var h='<div class="card">';
-  if(ganadores.length%2===0){
+  var ps=partidosDeRonda(rMax);
+  var vacantes=ps.filter(function(p){return !p.ganador_id;});
+  var impar=((ps.length)%2!==0);
+  var sigNum=rMax+1-(hayQualy()?1:0);
+  if(!vacantes.length&&!impar){
     h+='<p style="margin-top:0">Todos los partidos de esta ronda tienen resultado. Puedes generar la siguiente ronda.</p>'
-      +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+(rMax+1)+'</button>';
-  }else{
-    h+='<p style="margin-top:0"><b>Cantidad impar de ganadores ('+ganadores.length+')</b>: segun el reglamento, hay que sumar al <b>mejor perdedor</b> de esta ronda para poder emparejar la siguiente.</p>';
-    var perdedores=perdedoresRealesDeRonda(rMax);
-    if(!perdedores.length){
-      h+='<p class="sub">No hay perdedores disponibles en esta ronda (revisa si hay demasiados byes). Ajusta manualmente si es necesario.</p>';
-    }else{
-      h+='<div class="mp-picker">';
-      perdedores.forEach(function(pl){
-        h+='<label class="mp-opt"><input type="radio" name="mpsel" value="'+esc(pl.id)+'" '+(mpSeleccion===pl.id?'checked':'')+' onchange="mpSeleccion=\''+jsAttr(pl.id)+'\';render()"> '
-          +esc(nombreDe(pl.id))+' <span class="sub" style="margin:0">(perdio '+esc(pl.score)+' vs '+esc(nombreDe(pl.rivalGanador))+')</span></label>';
-      });
-      h+='</div><button class="btn v" style="margin-top:.6rem" '+(guardando||!mpSeleccion?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+(rMax+1)+' con mejor perdedor</button>';
-    }
+      +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+sigNum+'</button>';
+    h+='</div>';return h;
   }
+  var perdedores=perdedoresRealesDeRonda(rMax);
+  var elegidosTodos=true,usados={};
+  Object.keys(mpSel).forEach(function(k){usados[mpSel[k]]=k;});
+  function pickerHtml(clave,titulo){
+    var x='<p style="margin:.6rem 0 .3rem"><b>'+titulo+'</b></p>';
+    if(!perdedores.length){return x+'<p class="sub">No hay perdedores disponibles en esta ronda. Ajusta manualmente si es necesario.</p>';}
+    x+='<div class="mp-picker">';
+    perdedores.forEach(function(pl){
+      var tomadoPorOtro=usados[pl.id]&&usados[pl.id]!==clave;
+      x+='<label class="mp-opt"><input type="radio" name="mpsel-'+esc(clave)+'" value="'+esc(pl.id)+'" '+(mpSel[clave]===pl.id?'checked':'')+(tomadoPorOtro?' disabled':'')
+        +' onchange="mpSel[\''+jsAttr(clave)+'\']=\''+jsAttr(pl.id)+'\';render()"> '
+        +esc(nombreDe(pl.id))+' <span class="sub" style="margin:0">(perdio '+esc(pl.score)+' vs '+esc(nombreDe(pl.rivalGanador))+')</span></label>';
+    });
+    return x+'</div>';
+  }
+  vacantes.forEach(function(p){
+    if(!mpSel[p.id])elegidosTodos=false;
+    h+=pickerHtml(p.id,'Doble W.O. ('+esc(nombreDe(p.jugador1_id))+' vs '+esc(nombreDe(p.jugador2_id))+'): elige el mejor perdedor que ocupa ese cupo');
+  });
+  if(impar&&!vacantes.length){
+    if(!mpSel._extra)elegidosTodos=false;
+    h+='<p style="margin-top:0"><b>Cantidad impar de ganadores ('+ganadores.length+')</b>: segun el reglamento, hay que sumar al <b>mejor perdedor</b> de esta ronda para poder emparejar la siguiente.</p>'
+      +pickerHtml('_extra','Mejor perdedor que avanza');
+  }
+  h+='<button class="btn v" style="margin-top:.6rem" '+(guardando||!elegidosTodos?'disabled':'')+' onclick="avanzarRonda()">Generar Ronda '+sigNum+' con mejor perdedor</button>';
   h+='</div>';
   return h;
 }
