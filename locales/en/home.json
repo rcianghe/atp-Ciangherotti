@@ -16,22 +16,22 @@
       "ladders": {
         "title": "Ladders and tournaments",
         "description": "Compete within your club or nationwide.",
-        "modalBody": "Ladders let you compete inside your club, challenging players near your position to climb up. Tournaments are events with a fixed date and bracket, either within your club or open to the whole ChileTenis PRO community."
+        "modalBody": "Ladders let you compete inside your club: as you play, you earn points that set your position in the ranking. Tournaments are events run by each club, with dates and brackets defined by the club itself."
       },
       "challenges": {
         "title": "Challenges",
         "description": "Challenge matches and climb your ranking.",
-        "modalBody": "From any player's profile you can send a direct challenge to play a match. Once the result is logged, it's automatically reflected in your ranking, no spreadsheets involved."
+        "modalBody": "From any player's profile, a green button lets you send a direct challenge to arrange a match. To do so you must be registered and have your profile. If the other player accepts, a chat opens so you can agree on the day, time and place: a paid court or a free court in your area. Then enjoy a great match!"
       },
       "rankings": {
         "title": "Automatic rankings",
         "description": "Your progress, in real time.",
-        "modalBody": "Every match you play adds points to your ranking, both within your club and in the overall ChileTenis PRO ranking. The system calculates everything as soon as a result is logged, no manual updates needed."
+        "modalBody": "Every ladder match you play adds points to your ranking. Your club's administrator logs the result and the system calculates everything automatically, with no manual updates. Your ranking updates on the site as soon as the match is recorded, so you can enjoy your progress in this great sport."
       },
       "clubs": {
         "title": "Clubs",
         "description": "Each club with its own identity.",
-        "modalBody": "Each club has its own space within ChileTenis PRO, with its ladder, tournaments and player community. You can belong to more than one club and take part in all of them with the same profile."
+        "modalBody": "Each club has its own independent space within ChileTenis PRO, with its ladder, tournaments and player community."
       }
     },
     "sections": {
