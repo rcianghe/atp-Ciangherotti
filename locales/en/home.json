@@ -2,7 +2,7 @@
   "home": {
     "hero": {
       "eyebrow": "Welcome to",
-      "description": "The platform that connects clubs, players and the tennis community all across Chile.",
+      "description": "The platform that connects clubs, players and tennis lovers all across Chile.",
       "communityLabel": "Community",
       "taglineLine1": "More tennis,",
       "taglineLine2": "more community"
@@ -15,12 +15,12 @@
       },
       "ladders": {
         "title": "Ladders and tournaments",
-        "description": "Compete within your club or nationwide.",
+        "description": "Compete in your club or across the whole community.",
         "modalBody": "Ladders let you compete inside your club: as you play, you earn points that set your position in the ranking. Tournaments are events run by each club, with dates and brackets defined by the club itself."
       },
       "challenges": {
         "title": "Challenges",
-        "description": "Challenge matches and climb your ranking.",
+        "description": "Challenge other players and play matches.",
         "modalBody": "From any player's profile, a green button lets you send a direct challenge to arrange a match. To do so you must be registered and have your profile. If the other player accepts, a chat opens so you can agree on the day, time and place: a paid court or a free court in your area. Then enjoy a great match!"
       },
       "rankings": {
@@ -30,7 +30,7 @@
       },
       "clubs": {
         "title": "Clubs",
-        "description": "Each club with its own identity.",
+        "description": "Each club with its own ladder and tournaments.",
         "modalBody": "Each club has its own independent space within ChileTenis PRO, with its ladder, tournaments and player community."
       }
     },
@@ -70,7 +70,7 @@
     "challengeBanner": {
       "eyebrow": "Challenge · Compete · Improve",
       "title": "Find your next rival",
-      "description": "Play matches, climb your ranking and join the ChileTenis PRO community.",
+      "description": "Play matches, improve your ranking and be part of the ChileTenis Pro community.",
       "cta": "View players"
     },
     "ranking": {
@@ -81,7 +81,7 @@
     },
     "clubCta": {
       "title": "Have a club?",
-      "description": "Join ChileTenis PRO and digitize your ladder, tournaments, challenges and ranking in minutes.",
+      "description": "Take your ladder and tournaments to the next level with ChileTenis Pro.",
       "emailSubject": "I want to add my club to ChileTenis PRO",
       "emailBody": "Hi, I'd like more information about adding my club to ChileTenis PRO."
     }
