@@ -2,7 +2,7 @@
   "home": {
     "hero": {
       "eyebrow": "Bienvenido a",
-      "description": "La plataforma que conecta clubes, jugadores y comunidad de tenis en todo Chile.",
+      "description": "La plataforma que conecta clubes, jugadores y amantes del tenis en todo Chile.",
       "communityLabel": "Comunidad",
       "taglineLine1": "Más tenis,",
       "taglineLine2": "más comunidad"
@@ -10,17 +10,17 @@
     "features": {
       "profiles": {
         "title": "Perfiles de jugadores",
-        "description": "Creá tu perfil y encontrá rivales a tu nivel.",
+        "description": "Crea tu perfil y encuentra rivales de tu nivel.",
         "modalBody": "Tu perfil reúne tu nivel, tu historial de partidos y tus estadísticas en un solo lugar. Otros jugadores lo ven para proponerte desafíos a tu altura, y tú lo usas para elegir contra quién jugar."
       },
       "ladders": {
         "title": "Escalerillas y torneos",
-        "description": "Competí en tu club o a nivel nacional.",
+        "description": "Compite en tu club o en toda la comunidad.",
         "modalBody": "Las escalerillas te permiten competir dentro de tu club: a medida que juegas, ganas puntos que definen tu posición en el ranking. Los torneos son eventos de cada club, con fechas y cuadros definidos por ellos mismos."
       },
       "challenges": {
         "title": "Desafíos",
-        "description": "Retá partidos y mejorá tu ranking.",
+        "description": "Reta a otros jugadores y juega partidos.",
         "modalBody": "Desde el perfil de cualquier jugador aparece un botón verde para enviarle un desafío directo y coordinar un partido. Para hacerlo debes estar registrado y tener tu perfil. Si el otro jugador acepta, se abre un chat para acordar día, hora y lugar: una cancha de pago o alguna cancha gratuita de tu localidad. ¡Y a disfrutar un lindo partido!"
       },
       "rankings": {
@@ -30,7 +30,7 @@
       },
       "clubs": {
         "title": "Clubes",
-        "description": "Cada club con su propia identidad.",
+        "description": "Cada club con su propia escalerilla y torneos.",
         "modalBody": "Cada club tiene su propio espacio independiente dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores."
       }
     },
@@ -70,7 +70,7 @@
     "challengeBanner": {
       "eyebrow": "Desafía · Compite · Avanza",
       "title": "Encuentra tu próximo rival",
-      "description": "Jugá partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.",
+      "description": "Juega partidos, mejora tu ranking y sé parte de la comunidad ChileTenis Pro.",
       "cta": "Ver jugadores"
     },
     "ranking": {
@@ -81,7 +81,7 @@
     },
     "clubCta": {
       "title": "¿Tienes un club?",
-      "description": "Sumate a ChileTenis PRO y digitalizá tu escalerilla, torneos, desafíos y ranking en minutos.",
+      "description": "Lleva tu escalerilla y torneos al siguiente nivel con ChileTenis Pro.",
       "emailSubject": "Quiero sumar mi club a ChileTenis PRO",
       "emailBody": "Hola, quisiera más información para incorporar mi club a ChileTenis PRO."
     }
