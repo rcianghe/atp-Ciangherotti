@@ -11,27 +11,27 @@
       "profiles": {
         "title": "Perfiles de jugadores",
         "description": "Creá tu perfil y encontrá rivales a tu nivel.",
-        "modalBody": "Tu perfil reúne tu nivel, tu historial de partidos y tus estadísticas en un solo lugar. Otros jugadores lo ven para proponerte desafíos a tu altura, y vos lo usás para elegir contra quién jugar."
+        "modalBody": "Tu perfil reúne tu nivel, tu historial de partidos y tus estadísticas en un solo lugar. Otros jugadores lo ven para proponerte desafíos a tu altura, y tú lo usas para elegir contra quién jugar."
       },
       "ladders": {
         "title": "Escalerillas y torneos",
         "description": "Competí en tu club o a nivel nacional.",
-        "modalBody": "Las escalerillas te dejan competir dentro de tu club, retando a jugadores en posiciones cercanas a la tuya para subir de puesto. Los torneos son eventos con fecha y cuadro definidos, dentro de tu club o abiertos a toda la comunidad ChileTenis PRO."
+        "modalBody": "Las escalerillas te permiten competir dentro de tu club: a medida que juegas, ganas puntos que definen tu posición en el ranking. Los torneos son eventos de cada club, con fechas y cuadros definidos por ellos mismos."
       },
       "challenges": {
         "title": "Desafíos",
         "description": "Retá partidos y mejorá tu ranking.",
-        "modalBody": "Desde el perfil de cualquier jugador podés enviarle un desafío directo para jugar un partido. Al cargar el resultado, este se refleja automáticamente en tu ranking, sin planillas de por medio."
+        "modalBody": "Desde el perfil de cualquier jugador aparece un botón verde para enviarle un desafío directo y coordinar un partido. Para hacerlo debes estar registrado y tener tu perfil. Si el otro jugador acepta, se abre un chat para acordar día, hora y lugar: una cancha de pago o alguna cancha gratuita de tu localidad. ¡Y a disfrutar un lindo partido!"
       },
       "rankings": {
         "title": "Rankings automáticos",
         "description": "Tu progreso, en tiempo real.",
-        "modalBody": "Cada partido que jugás suma puntos a tu ranking, tanto en tu club como en el ranking general de ChileTenis PRO. El sistema calcula todo apenas se carga un resultado, sin actualizaciones manuales."
+        "modalBody": "Cada partido de tu escalerilla suma puntos a tu ranking. El encargado de tu club carga el resultado y el sistema calcula todo automáticamente, sin actualizaciones manuales. Así tu ranking se actualiza en la página apenas se registra el partido y puedes disfrutar tu avance en este lindo deporte."
       },
       "clubs": {
         "title": "Clubes",
         "description": "Cada club con su propia identidad.",
-        "modalBody": "Cada club tiene su propio espacio dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores. Podés pertenecer a más de un club y participar en todos con el mismo perfil."
+        "modalBody": "Cada club tiene su propio espacio independiente dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores."
       }
     },
     "sections": {
