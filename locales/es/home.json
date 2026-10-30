@@ -21,7 +21,7 @@
       "challenges": {
         "title": "Desafíos",
         "description": "Reta a otros jugadores y juega partidos.",
-        "modalBody": "Desde el perfil de cualquier jugador aparece un botón verde para enviarle un desafío directo y coordinar un partido. Para hacerlo debes estar registrado y tener tu perfil. Si el otro jugador acepta, se abre un chat para acordar día, hora y lugar: una cancha de pago o alguna cancha gratuita de tu localidad. ¡Y a disfrutar un lindo partido!"
+        "modalBody": "Desde el perfil de un jugador disponible con membresía activa aparece un botón verde para desafiarlo a un partido amistoso, ideal para conocer jugadores nuevos y ganar experiencia. Solo pueden desafiar y ser desafiados los perfiles con membresía pagada. Si el jugador acepta, se abre un chat privado para acordar día, hora y lugar: una cancha de pago o alguna cancha gratuita de tu localidad. ¡Y a disfrutar un lindo partido!"
       },
       "rankings": {
         "title": "Rankings automáticos",
