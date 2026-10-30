@@ -21,7 +21,7 @@
       "challenges": {
         "title": "Challenges",
         "description": "Challenge other players and play matches.",
-        "modalBody": "From any player's profile, a green button lets you send a direct challenge to arrange a match. To do so you must be registered and have your profile. If the other player accepts, a chat opens so you can agree on the day, time and place: a paid court or a free court in your area. Then enjoy a great match!"
+        "modalBody": "On the profile of an available player with an active membership, a green button lets you challenge them to a friendly match, a great way to meet new players and gain experience. Only profiles with a paid membership can challenge and be challenged. If the player accepts, a private chat opens so you can agree on the day, time and place: a paid court or a free court in your area. Then enjoy a great match!"
       },
       "rankings": {
         "title": "Automatic rankings",
