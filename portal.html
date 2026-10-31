@@ -589,6 +589,50 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
   nav.primary-nav a.active::after{left:.9rem;right:.9rem}
 }
 
+
+/* ===== RECLUTAMIENTO ESCALERILLA CHILETENIS PRO ===== */
+.recruit-card{background:var(--bg-1);border:1px solid var(--line-strong);border-radius:var(--radius);padding:16px;display:grid;gap:14px}
+.recruit-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sky);margin-bottom:6px}
+.recruit-title{font-family:var(--display);font-size:20px;line-height:1.15;margin:0 0 8px;color:var(--ink)}
+.recruit-desc{font-size:13px;line-height:1.5;color:var(--ink-dim,#b4bccb);margin:0}
+.recruit-stats{display:grid;gap:8px;margin-bottom:12px}
+.recruit-badge{display:inline-block;justify-self:start;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#0a1224;background:var(--lime);padding:5px 10px;border-radius:999px;font-weight:700}
+.recruit-count{display:flex;align-items:baseline;gap:8px;color:var(--ink)}
+.recruit-count b{font-family:var(--display);font-size:34px;line-height:1;color:var(--lime)}
+.recruit-count span{font-size:13px;color:var(--ink-dim,#b4bccb)}
+.recruit-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.recruit-bar i{display:block;height:100%;background:var(--lime);border-radius:999px;transition:width .5s ease}
+.recruit-status{font-size:12.5px;color:var(--ink-dim,#b4bccb)}
+.recruit-form{border-top:1px solid var(--line-strong);padding-top:14px;display:grid;gap:10px}
+.recruit-form[hidden]{display:none}
+.recruit-fields{display:grid;gap:8px}
+.recruit-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line-strong);border-radius:8px;color:var(--ink);padding:11px 12px;font:inherit;font-size:14px}
+.recruit-input:focus{outline:2px solid var(--sky);outline-offset:1px}
+.recruit-consent{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink-dim,#b4bccb);cursor:pointer}
+.recruit-consent input{margin-top:3px;accent-color:var(--lime)}
+.recruit-actions{display:flex;gap:10px;flex-wrap:wrap}
+.recruit-msg{margin:0;min-height:1.2em;font-size:13px}
+.recruit-msg.ok{color:#6BE58C}
+.recruit-msg.err{color:#ff8a80}
+@media(min-width:921px){
+  .recruit-card{background:var(--card);border:1px solid var(--card-line);border-radius:.8rem;padding:2.6rem 3rem;grid-template-columns:1.35fr 1fr;gap:2rem 4rem;align-items:center}
+  .recruit-eyebrow{font-size:.95rem;margin-bottom:.8rem}
+  .recruit-title{font-size:2.4rem;margin-bottom:1rem}
+  .recruit-desc{font-size:1.25rem;max-width:56rem}
+  .recruit-stats{gap:1rem;margin-bottom:1.6rem}
+  .recruit-badge{font-size:1.1rem;padding:.6rem 1.4rem}
+  .recruit-count b{font-size:5rem}
+  .recruit-count span{font-size:1.3rem}
+  .recruit-bar{height:1rem}
+  .recruit-status{font-size:1.2rem}
+  .recruit-cta{height:4.4rem;padding:0 3rem;border-radius:2.2rem;font-size:1.3rem}
+  .recruit-form{grid-column:1/-1;padding-top:2rem;gap:1.4rem}
+  .recruit-fields{grid-template-columns:repeat(3,1fr);gap:1.2rem}
+  .recruit-input{font-size:1.3rem;padding:1.2rem 1.4rem;border-radius:.8rem}
+  .recruit-consent{font-size:1.2rem}
+  .recruit-actions .btn{height:4rem;padding:0 2.6rem;border-radius:2rem;font-size:1.2rem}
+  .recruit-msg{font-size:1.2rem}
+}
 </style>
 </head>
 <body>
@@ -758,6 +802,43 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
         <p class="challenge-desc" data-i18n="home.challengeBanner.description">Juega partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.</p>
       </div>
       <a href="#ranking" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       RECLUTAMIENTO — Escalerilla ChileTenis Pro. Contador real de
+       interesados (funcion publica fn_interes_escalerilla_resumen) y
+       formulario con consentimiento (fn_registrar_interes_escalerilla).
+       Se oculta solo si organizaciones.configuracion.reclutamiento_escalerilla.activo = false.
+       ============================================================ -->
+  <section class="wrap" id="reclutamiento" hidden>
+    <div class="recruit-card">
+      <div class="recruit-main">
+        <div class="recruit-eyebrow" data-i18n="home.recruit.eyebrow">Comunidad ChileTenis Pro</div>
+        <h2 class="recruit-title" data-i18n="home.recruit.title">Estamos formando la comunidad de ChileTenis Pro</h2>
+        <p class="recruit-desc" data-i18n="home.recruit.description">La escalerilla de ChileTenis Pro necesita masa crítica. Cuando alcancemos la meta, se activa con un partido semanal, ranking, estadísticas y torneos. Déjanos tus datos y te avisamos.</p>
+      </div>
+      <div class="recruit-side">
+        <div id="recruitStats" class="recruit-stats" aria-live="polite"></div>
+        <button type="button" class="btn btn-primary recruit-cta" id="recruitOpen" aria-expanded="false" aria-controls="recruitForm" data-i18n="home.recruit.cta">Me interesa participar</button>
+      </div>
+      <form class="recruit-form" id="recruitForm" hidden novalidate>
+        <div class="recruit-fields">
+          <input class="recruit-input" id="recruitName" type="text" maxlength="80" autocomplete="name" data-i18n-placeholder="home.recruit.namePlaceholder" placeholder="Tu nombre">
+          <input class="recruit-input" id="recruitContact" type="text" maxlength="120" autocomplete="email" data-i18n-placeholder="home.recruit.contactPlaceholder" placeholder="WhatsApp o correo">
+          <input class="recruit-input" id="recruitComuna" type="text" maxlength="60" data-i18n-placeholder="home.recruit.comunaPlaceholder" placeholder="Comuna (opcional)">
+        </div>
+        <label class="recruit-consent">
+          <input type="checkbox" id="recruitConsent">
+          <span data-i18n="home.recruit.consent">Acepto que ChileTenis Pro use mis datos solo para contactarme sobre la escalerilla.</span>
+        </label>
+        <div class="recruit-actions">
+          <button type="submit" class="btn btn-primary" id="recruitSubmit" data-i18n="home.recruit.submit">Enviar</button>
+          <button type="button" class="btn btn-outline" id="recruitCancel" data-i18n="home.recruit.cancel">Cancelar</button>
+        </div>
+        <p class="recruit-msg" id="recruitMsg" role="status" aria-live="polite"></p>
+      </form>
     </div>
   </section>
 
@@ -960,6 +1041,9 @@ var I18N = (function(){
     root.querySelectorAll('[data-i18n-aria-label]').forEach(function(el){
       el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
     });
+    root.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
     // Copyright con el año calculado en tiempo real, no traducido a mano.
     var copyTxt=t('footer.copyright',{year:new Date().getFullYear()});
     var copy=document.getElementById('footCopy');
@@ -1049,7 +1133,7 @@ function formatFecha(iso){
   }catch(e){return iso;}
 }
 
-var HOME_DATA={club:null,escalerillas:[],torneos:[],ranking:[]};
+var HOME_DATA={club:null,escalerillas:[],torneos:[],ranking:[],reclutamiento:null};
 
 async function fetchClubDestacado(){
   if(!sbClient)return null;
@@ -1200,17 +1284,105 @@ function renderRankingChileTenisPro(list){
   el.innerHTML='<div class="ranking-grid">'+itemsHtml+'</div>';
 }
 
+async function fetchReclutamiento(){
+  if(!sbClient)return null;
+  try{
+    var res=await sbClient.rpc('fn_interes_escalerilla_resumen');
+    if(res.error||!res.data)return null;
+    return res.data;
+  }catch(err){console.warn('[portal] reclutamiento',err);return null;}
+}
+function renderReclutamiento(){
+  var sec=document.getElementById('reclutamiento');
+  if(!sec)return;
+  var d=HOME_DATA.reclutamiento;
+  if(!d||!d.activo){sec.hidden=true;return;}
+  sec.hidden=false;
+  var meta=Math.max(1,parseInt(d.meta,10)||30);
+  var n=Math.max(0,parseInt(d.interesados,10)||0);
+  var pct=Math.min(100,Math.round(n*100/meta));
+  var lograda=n>=meta;
+  var el=document.getElementById('recruitStats');
+  if(!el)return;
+  el.innerHTML=
+    (lograda?'<div class="recruit-badge">🎾 '+esc(d.nombre||'')+'</div>':'')
+    +'<div class="recruit-count"><b>'+n+'</b><span>'+esc(I18N.t('home.recruit.progressOf',{meta:meta}))+'</span></div>'
+    +'<div class="recruit-bar" role="progressbar" aria-valuemin="0" aria-valuemax="'+meta+'" aria-valuenow="'+n+'"><i style="width:'+pct+'%"></i></div>'
+    +'<div class="recruit-status">'+esc(I18N.t(lograda?'home.recruit.statusReached':'home.recruit.statusOpen'))+'</div>';
+}
 function renderHomeSections(){
+  renderReclutamiento();
   renderClubDestacado(HOME_DATA.club);
   renderEscalerillasActivas(HOME_DATA.escalerillas);
   renderProximosTorneos(HOME_DATA.torneos);
   renderRankingChileTenisPro(HOME_DATA.ranking);
 }
 async function loadHomeSections(){
-  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro()]);
-  HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];
+  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro(),fetchReclutamiento()]);
+  HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];HOME_DATA.reclutamiento=r[4];
   renderHomeSections();
 }
+
+
+// ============================================================
+// RECLUTAMIENTO — formulario "Me interesa participar".
+// Valida en el navegador y registra via fn_registrar_interes_escalerilla
+// (la tabla no es accesible directo). Los textos de error son claves i18n.
+// ============================================================
+(function(){
+  var form=document.getElementById('recruitForm');
+  var openBtn=document.getElementById('recruitOpen');
+  if(!form||!openBtn)return;
+  var msg=document.getElementById('recruitMsg');
+  var submit=document.getElementById('recruitSubmit');
+  var enviando=false;
+  function decir(key,ok){
+    msg.textContent=key?I18N.t(key):'';
+    msg.className='recruit-msg'+(key?(ok?' ok':' err'):'');
+  }
+  function abrir(abierto){
+    form.hidden=!abierto;
+    openBtn.setAttribute('aria-expanded',abierto?'true':'false');
+    if(abierto){var f=document.getElementById('recruitName');if(f)f.focus();}
+  }
+  // Al corregir cualquier campo se limpia el aviso de error anterior
+  form.addEventListener('input',function(){if(msg.classList.contains('err'))decir('');});
+  form.addEventListener('change',function(){if(msg.classList.contains('err'))decir('');});
+  openBtn.addEventListener('click',function(){abrir(form.hidden);});
+  document.getElementById('recruitCancel').addEventListener('click',function(){decir('');abrir(false);});
+  form.addEventListener('submit',async function(ev){
+    ev.preventDefault();
+    if(enviando)return;
+    var nombre=document.getElementById('recruitName').value.trim();
+    var contacto=document.getElementById('recruitContact').value.trim();
+    var comuna=document.getElementById('recruitComuna').value.trim();
+    var acepta=document.getElementById('recruitConsent').checked;
+    if(nombre.length<2){decir('home.recruit.errors.nombre');return;}
+    if(contacto.length<5){decir('home.recruit.errors.contacto');return;}
+    if(!acepta){decir('home.recruit.errors.consentimiento');return;}
+    if(!sbClient){decir('home.recruit.errors.generic');return;}
+    enviando=true;submit.disabled=true;
+    msg.textContent=I18N.t('home.recruit.sending');msg.className='recruit-msg';
+    try{
+      var res=await sbClient.rpc('fn_registrar_interes_escalerilla',{p_nombre:nombre,p_contacto:contacto,p_comuna:comuna||null,p_consentimiento:true});
+      var d=res.data;
+      if(res.error||!d){decir('home.recruit.errors.generic');}
+      else if(!d.ok){decir('home.recruit.errors.'+(d.error||'generic'));}
+      else{
+        decir(d.duplicado?'home.recruit.alreadyIn':'home.recruit.thanks',true);
+        form.reset();
+        var nuevo=await fetchReclutamiento();
+        if(nuevo){HOME_DATA.reclutamiento=nuevo;renderReclutamiento();}
+        setTimeout(function(){abrir(false);},2600);
+      }
+    }catch(err){
+      console.warn('[portal] registrar interes',err);
+      decir('home.recruit.errors.generic');
+    }finally{
+      enviando=false;submit.disabled=false;
+    }
+  });
+})();
 
 // ============================================================
 // Interacciones de shell (menu movil) + wiring del selector de
