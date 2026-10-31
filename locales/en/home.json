@@ -109,7 +109,8 @@
         "espera": "Many requests right now. Please try again in a few minutes.",
         "cerrado": "Registration is not available right now.",
         "generic": "Could not send. Please try again."
-      }
+      },
+      "price": "Once the ladder is live, taking part costs ${{precio}} CLP per month (basic membership + ladder). Payment is due within the first {{dia}} days of each month; otherwise the profile is deactivated until the payment is settled. We will send you reminders."
     }
   }
 }
