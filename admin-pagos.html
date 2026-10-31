@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Pagos y estado de perfiles · ChileTenis PRO</title>
+<style>
+:root{--v:#5BBF2A;--am:#D4E60A;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#9a9a9a;--bl:#f5f5f0;--ok:#6BE58C;--warn:#ffd166}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ng);color:var(--bl);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+h1{font-size:1.25rem;margin-bottom:4px}
+.sub{color:var(--gl);font-size:.85rem;margin-bottom:14px}
+.card{background:var(--gd);border:1px solid var(--gm);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,input[type=search]{width:100%;background:var(--g);border:1px solid var(--gm);color:var(--bl);border-radius:8px;padding:11px 12px;font:inherit;font-size:.95rem}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--gl);cursor:pointer}
+label.chk input{accent-color:var(--v);width:18px;height:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--gd);border:1px solid var(--gm);border-radius:10px;padding:10px 6px;text-align:center}
+.stat b{display:block;font-size:1.35rem;line-height:1.1}
+.stat span{font-size:.7rem;color:var(--gl)}
+.stat.ok b{color:var(--ok)}.stat.warn b{color:var(--warn)}.stat.bad b{color:#ff8a80}
+.note{font-size:.82rem;color:var(--gl);margin-bottom:12px}
+.note b{color:var(--bl)}
+.pl{background:var(--gd);border:1px solid var(--gm);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.pl.off{border-color:#8a2a2a;background:#201212}
+.pl-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pl-name{font-weight:700;font-size:1rem}
+.pl-serie{font-size:.75rem;color:var(--gl)}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
+.b{font-size:.72rem;padding:3px 9px;border-radius:999px;border:1px solid var(--gm);color:var(--gl)}
+.b.ok{color:var(--ok);border-color:#2f6b45;background:rgba(107,229,140,.08)}
+.b.warn{color:var(--warn);border-color:#8a6d12;background:rgba(255,209,102,.08)}
+.b.bad{color:#ff8a80;border-color:#8a2a2a;background:rgba(255,138,128,.08)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:8px;padding:10px 14px;font-size:.88rem;font-weight:600;border:1px solid var(--gm);background:var(--g);color:var(--bl)}
+button.pri{background:var(--v);border-color:var(--v);color:#0e0e0e}
+button.dng{border-color:#8a2a2a;color:#ff8a80}
+button:disabled{opacity:.5;cursor:wait}
+.msg{padding:14px;border-radius:10px;background:var(--gd);border:1px solid var(--gm);margin-bottom:12px}
+.msg.err{border-color:#8a2a2a;color:#ffb4ab}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#222;border:1px solid var(--gm);padding:10px 16px;border-radius:999px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+.toast.err{border-color:#8a2a2a;color:#ffb4ab}
+.empty{color:var(--gl);text-align:center;padding:24px 0}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.hdr a,.hdr button{font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>Pagos y estado de perfiles</h1>
+    <button type="button" id="btnSalir" hidden>Salir</button>
+  </div>
+  <p class="sub">Registra los pagos por transferencia y activa o desactiva perfiles.</p>
+  <div id="app"><div class="msg">Cargando…</div></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="lib/supabase.min.js/supabase.min.js"></script>
+<script>window.supabase||document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>');</script>
+<script>
+(function(){
+  var SUPABASE_URL='https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+  var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+  var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  var app=document.getElementById('app');
+  var btnSalir=document.getElementById('btnSalir');
+  var toastEl=document.getElementById('toast');
+  var estado={clubes:[],clubId:null,filas:[],solo:false,q:'',ocupado:{}};
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fmtFecha(f){if(!f)return '';var p=String(f).split('-');return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):f;}
+  function diaHoyChile(){
+    try{return parseInt(new Intl.DateTimeFormat('es-CL',{timeZone:'America/Santiago',day:'numeric'}).format(new Date()),10);}
+    catch(e){return new Date().getDate();}
+  }
+  function mesChile(){
+    try{return new Intl.DateTimeFormat('es-CL',{timeZone:'America/Santiago',month:'long',year:'numeric'}).format(new Date());}
+    catch(e){return '';}
+  }
+  var toastT;
+  function toast(t,err){toastEl.textContent=t;toastEl.className='toast on'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.className='toast'+(err?' err':'');},2800);}
+  function msg(html,err){app.innerHTML='<div class="msg'+(err?' err':'')+'">'+html+'</div>';}
+
+  function login(){
+    var redirect=window.location.origin+window.location.pathname;
+    sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:redirect}}).catch(function(){toast('No se pudo iniciar sesión.',true);});
+  }
+  window.__login=login;
+  btnSalir.addEventListener('click',function(){sb.auth.signOut().then(function(){location.reload();});});
+
+  async function cargarClubes(){
+    var res=await sb.from('clubes').select('id,nombre,slug,activo,requiere_pago_mensual').order('nombre');
+    if(res.error)throw res.error;
+    var lista=res.data||[];
+    // Solo los clubes donde esta sesion es administradora (el servidor lo decide)
+    var chequeos=await Promise.all(lista.map(function(c){
+      return sb.rpc('fn_admin_pagos_club',{p_club:c.id}).then(function(r){return r.error?null:{club:c,filas:r.data||[]};});
+    }));
+    return chequeos.filter(Boolean);
+  }
+
+  function filasVisibles(){
+    var q=estado.q.trim().toLowerCase();
+    return estado.filas.filter(function(f){
+      if(q&&String(f.nombre).toLowerCase().indexOf(q)<0)return false;
+      if(estado.solo&&(f.al_dia&&!f.pausado))return false;
+      return true;
+    });
+  }
+
+  function pintar(){
+    var club=estado.clubes.filter(function(c){return c.id===estado.clubId;})[0];
+    if(!club){msg('No tienes clubes para administrar con esta cuenta.',true);return;}
+    var cobra=!!club.requiere_pago_mensual;
+    var filas=estado.filas;
+    var alDia=filas.filter(function(f){return f.al_dia;}).length;
+    var pausados=filas.filter(function(f){return f.pausado;}).length;
+    var pend=cobra?filas.filter(function(f){return !f.al_dia&&!f.pausado;}).length:0;
+    var h='<div class="card"><div class="row"><div style="flex:1;min-width:200px"><select id="selClub" aria-label="Club">'
+      +estado.clubes.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===estado.clubId?' selected':'')+'>'+esc(c.nombre)+(c.requiere_pago_mensual?' · cobra mensualidad':'')+'</option>';}).join('')
+      +'</select></div></div></div>';
+    h+='<div class="stats">'
+      +'<div class="stat"><b>'+filas.length+'</b><span>Jugadores</span></div>'
+      +(cobra?'<div class="stat ok"><b>'+alDia+'</b><span>Al día</span></div><div class="stat warn"><b>'+pend+'</b><span>Pendientes</span></div>':'<div class="stat"><b>–</b><span>Sin cobro</span></div><div class="stat"><b>–</b><span>&nbsp;</span></div>')
+      +'<div class="stat bad"><b>'+pausados+'</b><span>Desactivados</span></div></div>';
+    if(cobra){
+      var dia=diaHoyChile();
+      h+='<p class="note">Mes en curso: <b>'+esc(mesChile())+'</b>. Hoy es el día <b>'+dia+'</b>. '
+        +(dia<=7?'El recordatorio de pago <b>está activo</b> para quienes no estén al día (días 1 al 7).':'El recordatorio de pago se muestra solo del día 1 al 7 de cada mes.')
+        +' Marca “al día” cuando recibas la transferencia: el aviso deja de salirle a ese jugador.</p>';
+    }else{
+      h+='<p class="note">Este club no cobra mensualidad: aquí solo puedes activar o desactivar perfiles.</p>';
+    }
+    h+='<div class="card"><input type="search" id="buscar" placeholder="Buscar jugador" value="'+esc(estado.q)+'" aria-label="Buscar jugador">'
+      +(cobra?'<label class="chk" style="margin-top:10px"><input type="checkbox" id="soloPend"'+(estado.solo?' checked':'')+'> Mostrar solo pendientes y desactivados</label>':'')+'</div>';
+    var vis=filasVisibles();
+    if(!vis.length)h+='<p class="empty">No hay jugadores para mostrar.</p>';
+    h+=vis.map(function(f){
+      var oc=!!estado.ocupado[f.jugador_id];
+      var b='';
+      if(cobra)b+=f.al_dia?'<span class="b ok">Pago al día'+(f.al_dia_hasta?' · hasta '+esc(fmtFecha(f.al_dia_hasta)):'')+'</span>':'<span class="b warn">Pago pendiente</span>';
+      b+=f.pausado?'<span class="b bad">Perfil desactivado'+(f.pausado_desde?' desde '+esc(fmtFecha(f.pausado_desde)):'')+'</span>':'<span class="b">Perfil activo</span>';
+      var a='';
+      if(cobra)a+='<button type="button" class="'+(f.al_dia?'':'pri')+'" data-acc="dia" data-id="'+esc(f.jugador_id)+'" data-val="'+(f.al_dia?'0':'1')+'"'+(oc?' disabled':'')+'>'+(f.al_dia?'Quitar “al día”':'Marcar al día')+'</button>';
+      a+='<button type="button" class="'+(f.pausado?'pri':'dng')+'" data-acc="pausa" data-id="'+esc(f.jugador_id)+'" data-val="'+(f.pausado?'0':'1')+'" data-nombre="'+esc(f.nombre)+'"'+(oc?' disabled':'')+'>'+(f.pausado?'Activar perfil':'Desactivar perfil')+'</button>';
+      return '<div class="pl'+(f.pausado?' off':'')+'"><div class="pl-top"><div><div class="pl-name">'+esc(f.nombre)+'</div><div class="pl-serie">Serie '+esc(f.serie||'-')+'</div></div></div>'
+        +'<div class="badges">'+b+'</div><div class="acts">'+a+'</div></div>';
+    }).join('');
+    app.innerHTML=h;
+    document.getElementById('selClub').addEventListener('change',function(e){seleccionar(e.target.value);});
+    document.getElementById('buscar').addEventListener('input',function(e){estado.q=e.target.value;pintarLista();});
+    var sp=document.getElementById('soloPend');
+    if(sp)sp.addEventListener('change',function(e){estado.solo=e.target.checked;pintarLista();});
+    app.querySelectorAll('button[data-acc]').forEach(function(btn){btn.addEventListener('click',onAccion);});
+  }
+  // Repinta conservando el foco del buscador
+  function pintarLista(){
+    var pos=document.activeElement&&document.activeElement.id==='buscar'?document.activeElement.selectionStart:null;
+    pintar();
+    if(pos!==null){var b=document.getElementById('buscar');if(b){b.focus();b.setSelectionRange(pos,pos);}}
+  }
+
+  async function seleccionar(id){
+    estado.clubId=id;
+    var c=estado.clubes.filter(function(x){return x.id===id;})[0];
+    estado.filas=c?c._filas:[];
+    await recargar();
+  }
+  async function recargar(){
+    var r=await sb.rpc('fn_admin_pagos_club',{p_club:estado.clubId});
+    if(r.error){toast('No se pudo actualizar la lista.',true);return;}
+    estado.filas=r.data||[];
+    pintar();
+  }
+
+  async function onAccion(e){
+    var btn=e.currentTarget,id=btn.getAttribute('data-id'),acc=btn.getAttribute('data-acc'),val=btn.getAttribute('data-val')==='1';
+    if(acc==='pausa'&&val&&!confirm('¿Desactivar el perfil de '+btn.getAttribute('data-nombre')+'? No podrá jugar la escalerilla ni desafiar hasta que lo actives.'))return;
+    estado.ocupado[id]=true;pintar();
+    try{
+      var r=acc==='dia'?await sb.rpc('fn_admin_marcar_al_dia',{p_jugador:id,p_al_dia:val}):await sb.rpc('fn_admin_pausar_jugador',{p_jugador:id,p_pausar:val});
+      if(r.error)throw r.error;
+      toast(acc==='dia'?(val?'Marcado al día.':'Se quitó “al día”.'):(val?'Perfil desactivado.':'Perfil activado y al día.'));
+    }catch(err){toast((err&&err.message)||'No se pudo guardar.',true);}
+    delete estado.ocupado[id];
+    await recargar();
+  }
+
+  async function iniciar(){
+    try{
+      var s=await sb.auth.getSession();
+      if(!s.data||!s.data.session){
+        app.innerHTML='<div class="msg">Inicia sesión con la cuenta de administrador.<div style="margin-top:12px"><button type="button" class="pri" id="btnLogin">Iniciar sesión con Google</button></div></div>';
+        document.getElementById('btnLogin').addEventListener('click',login);
+        return;
+      }
+      btnSalir.hidden=false;
+      var perm=await cargarClubes();
+      if(!perm.length){msg('Esta cuenta no tiene permisos de administrador.',true);return;}
+      estado.clubes=perm.map(function(p){var c=p.club;c._filas=p.filas;return c;});
+      var prefer=estado.clubes.filter(function(c){return c.requiere_pago_mensual;})[0]||estado.clubes[0];
+      estado.clubId=prefer.id;estado.filas=prefer._filas;
+      pintar();
+    }catch(err){
+      console.warn(err);
+      msg('No se pudo cargar la información. Revisa tu conexión e intenta de nuevo.',true);
+    }
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>
