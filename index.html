@@ -1213,6 +1213,14 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .dfpaytxt{font-size:.86rem;line-height:1.5;color:#d7d7d0;margin:.35rem 0 .7rem}
 .dfpaytxt b{color:#f5f5f0}
 .dfnota{font-size:.78rem;color:#9a9a92;margin:.45rem 0 .1rem}
+
+/* Aviso de pago mensual */
+.avisopago{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;font-size:.88rem;line-height:1.45;text-align:center}
+.avisopago[hidden]{display:none}
+.avisopago.ambar{background:#3a2e08;color:#ffe08a;border-bottom:1px solid #8a6d12}
+.avisopago.rojo{background:#3d1313;color:#ffb4ab;border-bottom:1px solid #8a2a2a}
+.avisopago b{color:#fff}
+.avisopago-x{background:none;border:none;color:inherit;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 4px}
 </style>
 </head>
 <body>
@@ -1239,6 +1247,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   </nav>
   <div class="authbox" id="authBox"></div>
 </header>
+<div id="avisoPago" class="avisopago" role="status" aria-live="polite" hidden></div>
 
 <section id="hero">
   <div class="hbg"></div><div class="hl"></div><div class="htex"></div><div class="hd"></div>
@@ -1773,11 +1782,50 @@ function logout(){
   window.supabaseClient.auth.signOut().catch(function(err){console.warn('No se pudo cerrar sesion.',err);});
 }
 
+// ============================================================
+// AVISO DE PAGO MENSUAL (solo clubes con requiere_pago_mensual)
+// ============================================================
+// Del dia 1 al dia limite de cada mes, los jugadores que aun no estan
+// marcados "al dia" ven un recordatorio. Si el administrador desactivo
+// su perfil, ven un aviso fijo. El servidor decide quien lo ve
+// (fn_mi_estado_pago); aqui solo se muestra.
+async function refrescarAvisoPago(){
+  var el=document.getElementById('avisoPago');
+  if(!el)return;
+  el.hidden=true;el.innerHTML='';
+  if(!usuarioActual||!jugadorVinculado||!window.supabaseClient)return;
+  try{
+    var res=await window.supabaseClient.rpc('fn_mi_estado_pago');
+    var d=res&&res.data;
+    if(res.error||!d||!d.aplica)return;
+    var limite=parseInt(d.dia_limite,10)||7;
+    if(d.pausado){
+      el.className='avisopago rojo';
+      el.innerHTML='<b>Tu perfil esta desactivado.</b> Regulariza el pago de tu membresia para volver a jugar la escalerilla. Cuando el administrador registre tu pago, tu perfil se activa de nuevo.';
+      el.hidden=false;return;
+    }
+    if(d.mostrar_recordatorio){
+      var clave='avisoPagoCerrado:'+new Date().toISOString().slice(0,10);
+      var cerrado=false;try{cerrado=sessionStorage.getItem(clave)==='1';}catch(e){}
+      if(cerrado)return;
+      el.className='avisopago ambar';
+      el.innerHTML='<span><b>Recordatorio de pago:</b> regulariza tu membresia mensual antes del dia '+limite+' para que tu perfil no se desactive y puedas seguir jugando la escalerilla.</span>'
+        +'<button type="button" class="avisopago-x" aria-label="Cerrar aviso" onclick="cerrarAvisoPago()">&times;</button>';
+      el.hidden=false;
+    }
+  }catch(err){console.warn('No se pudo consultar el estado de pago.',err);}
+}
+function cerrarAvisoPago(){
+  var el=document.getElementById('avisoPago');
+  if(el)el.hidden=true;
+  try{sessionStorage.setItem('avisoPagoCerrado:'+new Date().toISOString().slice(0,10),'1');}catch(e){}
+}
+
 // Busca si la sesion actual ya tiene un jugador vinculado (user_id =
 // uid). Si lo encuentra, listo. Si no, deja jugadorVinculado en null
 // para que se muestre el panel de "Reclama tu perfil".
 async function sincronizarJugadorVinculado(){
-  if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;rAuthBox();return;}
+  if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;rAuthBox();refrescarAvisoPago();return;}
   try{
     var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').eq('user_id',usuarioActual.uid).maybeSingle();
     jugadorVinculado=(!res.error&&res.data)?res.data:null;
@@ -1786,6 +1834,7 @@ async function sincronizarJugadorVinculado(){
     jugadorVinculado=null;
   }
   rAuthBox();
+  refrescarAvisoPago();
   // Sin esto, si entrabas a tu propio perfil ANTES de que el login
   // terminara de confirmarse, el boton de disponibilidad y "Editar
   // ficha" quedaban calculados con jugadorVinculado en null para
@@ -1877,6 +1926,7 @@ async function confirmarReclamo(){
     jugadorVinculado=res.data;
     reclamandoPerfil=false;
     rAuthBox();
+    refrescarAvisoPago();
     cargarJugadoresYResultadosSupabase(); // refresca por si el nombre/estado cambio
   }catch(err){
     console.warn('No se pudo reclamar el perfil.',err);
@@ -2598,7 +2648,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugRes=await window.supabaseClient
-      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url,pais,bandera_iso)')
+      .from('inscripciones').select('serie,jugadores!inner(id,nombre,estado,encargado,link_cancha,avatar_url,foto_cuerpo_url,pais,bandera_iso,pausado)')
       .eq('temporada_id',temporadaId);
     var resRes=await window.supabaseClient.from('resultados')
       .select('id,serie,jugador1_id,jugador2_id,ganador_id,set1,set2,set3,tipo,estado_partido,fecha,hora,cancha,foto_resultado_url,created_at')
@@ -2610,7 +2660,7 @@ async function cargarJugadoresYResultadosSupabase(){
       return;
     }
     var jugadoresRaw=jugRes.data.map(function(i){
-      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||'',avatarUrl:i.jugadores.avatar_url||'',fotoCuerpoUrl:i.jugadores.foto_cuerpo_url||'',pais:i.jugadores.pais||'',banderaIso:i.jugadores.bandera_iso||''};
+      return {id:i.jugadores.id,nombre:i.jugadores.nombre,serie:i.serie,estado:i.jugadores.estado||'Activo',encargado:i.jugadores.encargado||'',linkCancha:i.jugadores.link_cancha||'',avatarUrl:i.jugadores.avatar_url||'',fotoCuerpoUrl:i.jugadores.foto_cuerpo_url||'',pais:i.jugadores.pais||'',banderaIso:i.jugadores.bandera_iso||'',pausado:!!i.jugadores.pausado};
     });
     var idANombre={};
     jugadoresRaw.forEach(function(j){idANombre[j.id]=j.nombre;});
@@ -2655,7 +2705,7 @@ async function cargarJugadoresYResultadosSupabase(){
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl,pais:j.pais,banderaIso:j.banderaIso};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl,pais:j.pais,banderaIso:j.banderaIso,pausado:!!j.pausado};
     });
 
     // Objetos "match" normalizados para MatchResultCard (match-result-card.js).
@@ -5290,7 +5340,7 @@ async function _showProfileImpl(nombre,scroll,fondo){
       +"<span class=\"pdispsub\">"+(isDisp?"Listo para jugar":"Toca para activarte")+"</span></span></button>")
     :("<div class=\"dispToggle\" style=\"cursor:default\">"
       +"<span class=\"dot"+(isDisp?"":" off")+"\"></span>"
-      +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span>"+(esPropioPerfil&&sinMembresia?"<span class=\"pdispsub\">Activa tu membresia para desafiar y recibir desafios</span>":"")+"</span></div>");
+      +"<span class=\"pdisptxt\"><span class=\"lbl"+(isDisp?"":" off")+"\">"+(isDisp?"Disponible":"No disponible")+"</span>"+(esPropioPerfil&&sinMembresia?"<span class=\"pdispsub\">"+(p.pausado?"Perfil desactivado: regulariza tu pago para volver a jugar la escalerilla":"Activa tu membresia para desafiar y recibir desafios")+"</span>":"")+"</span></div>");
   var desafioPanelH=rDesafioFormPanel(p.nombre);
   var desafiosListaH=rDesafiosLista(p.nombre);
   var icBuilding="<svg viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M4 3.5A1.5 1.5 0 015.5 2h9A1.5 1.5 0 0116 3.5V17h1a1 1 0 110 2H3a1 1 0 110-2h1V3.5zM7 6h2v2H7V6zm6 0h-2v2h2V6zM7 9.5h2v2H7v-2zm6 0h-2v2h2v-2zM7 13h2v2H7v-2zm6 0h-2v2h2v-2z\" clip-rule=\"evenodd\"/></svg>";
