@@ -595,6 +595,8 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
 .recruit-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sky);margin-bottom:6px}
 .recruit-title{font-family:var(--display);font-size:20px;line-height:1.15;margin:0 0 8px;color:var(--ink)}
 .recruit-desc{font-size:13px;line-height:1.5;color:var(--ink-dim,#b4bccb);margin:0}
+.recruit-price{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--lime);background:rgba(212,230,10,.07);border-radius:0 8px 8px 0;font-size:12.5px;line-height:1.5;color:var(--ink)}
+.recruit-price:empty{display:none}
 .recruit-stats{display:grid;gap:8px;margin-bottom:12px}
 .recruit-badge{display:inline-block;justify-self:start;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#0a1224;background:var(--lime);padding:5px 10px;border-radius:999px;font-weight:700}
 .recruit-count{display:flex;align-items:baseline;gap:8px;color:var(--ink)}
@@ -619,6 +621,7 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
   .recruit-eyebrow{font-size:.95rem;margin-bottom:.8rem}
   .recruit-title{font-size:2.4rem;margin-bottom:1rem}
   .recruit-desc{font-size:1.25rem;max-width:56rem}
+  .recruit-price{margin-top:1.6rem;padding:1.2rem 1.6rem;font-size:1.2rem;max-width:56rem}
   .recruit-stats{gap:1rem;margin-bottom:1.6rem}
   .recruit-badge{font-size:1.1rem;padding:.6rem 1.4rem}
   .recruit-count b{font-size:5rem}
@@ -818,6 +821,7 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
         <div class="recruit-eyebrow" data-i18n="home.recruit.eyebrow">Comunidad ChileTenis Pro</div>
         <h2 class="recruit-title" data-i18n="home.recruit.title">Estamos formando la comunidad de ChileTenis Pro</h2>
         <p class="recruit-desc" data-i18n="home.recruit.description">La escalerilla de ChileTenis Pro necesita masa crítica. Cuando alcancemos la meta, se activa con un partido semanal, ranking, estadísticas y torneos. Déjanos tus datos y te avisamos.</p>
+        <p class="recruit-price" id="recruitPrice"></p>
       </div>
       <div class="recruit-side">
         <div id="recruitStats" class="recruit-stats" aria-live="polite"></div>
@@ -1302,6 +1306,11 @@ function renderReclutamiento(){
   var n=Math.max(0,parseInt(d.interesados,10)||0);
   var pct=Math.min(100,Math.round(n*100/meta));
   var lograda=n>=meta;
+  var precioEl=document.getElementById('recruitPrice');
+  if(precioEl){
+    var precio=parseInt(d.precio_mensual,10)||0, dia=parseInt(d.dia_limite_pago,10)||7;
+    precioEl.textContent=precio>0?I18N.t('home.recruit.price',{precio:precio.toLocaleString('es-CL'),dia:dia}):'';
+  }
   var el=document.getElementById('recruitStats');
   if(!el)return;
   el.innerHTML=
