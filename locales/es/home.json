@@ -109,7 +109,8 @@
         "espera": "Hay muchas solicitudes ahora. Inténtalo en unos minutos.",
         "cerrado": "El registro no está disponible por ahora.",
         "generic": "No se pudo enviar. Inténtalo de nuevo."
-      }
+      },
+      "price": "Al activarse la escalerilla, pertenecer a ella tiene un costo de ${{precio}} mensuales (membresía básica + escalerilla). El pago debe hacerse dentro de los primeros {{dia}} días de cada mes; si no, el perfil se desactiva hasta regularizar el pago. Te enviaremos recordatorios."
     }
   }
 }
