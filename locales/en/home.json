@@ -84,6 +84,32 @@
       "description": "Take your ladder and tournaments to the next level with ChileTenis Pro.",
       "emailSubject": "I want to add my club to ChileTenis PRO",
       "emailBody": "Hi, I'd like more information about adding my club to ChileTenis PRO."
+    },
+    "recruit": {
+      "eyebrow": "ChileTenis Pro community",
+      "title": "We are building the ChileTenis Pro community",
+      "description": "The ChileTenis Pro ladder needs critical mass. Once we reach the goal, it goes live with one weekly match, rankings, stats and tournaments. Leave your details and we will let you know.",
+      "progressOf": "of {{meta}} interested players",
+      "statusOpen": "The ladder is not open yet.",
+      "statusReached": "We reached the goal! Registration opens soon.",
+      "cta": "I'm interested",
+      "namePlaceholder": "Your name",
+      "contactPlaceholder": "WhatsApp or email",
+      "comunaPlaceholder": "City or area (optional)",
+      "consent": "I agree that ChileTenis Pro uses my details only to contact me about the ladder.",
+      "submit": "Send",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "thanks": "Thanks! You are on the interest list.",
+      "alreadyIn": "You were already on the list. Thanks for your interest!",
+      "errors": {
+        "nombre": "Please enter your name.",
+        "contacto": "Please enter a valid WhatsApp number or email.",
+        "consentimiento": "You must accept the use of your details to continue.",
+        "espera": "Many requests right now. Please try again in a few minutes.",
+        "cerrado": "Registration is not available right now.",
+        "generic": "Could not send. Please try again."
+      }
     }
   }
 }
