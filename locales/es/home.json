@@ -84,6 +84,32 @@
       "description": "Lleva tu escalerilla y torneos al siguiente nivel con ChileTenis Pro.",
       "emailSubject": "Quiero sumar mi club a ChileTenis PRO",
       "emailBody": "Hola, quisiera más información para incorporar mi club a ChileTenis PRO."
+    },
+    "recruit": {
+      "eyebrow": "Comunidad ChileTenis Pro",
+      "title": "Estamos formando la comunidad de ChileTenis Pro",
+      "description": "La escalerilla de ChileTenis Pro necesita masa crítica. Cuando alcancemos la meta, se activa con un partido semanal, ranking, estadísticas y torneos. Déjanos tus datos y te avisamos.",
+      "progressOf": "de {{meta}} jugadores interesados",
+      "statusOpen": "Todavía no se abre la escalerilla.",
+      "statusReached": "¡Alcanzamos la meta! Pronto abriremos las inscripciones.",
+      "cta": "Me interesa participar",
+      "namePlaceholder": "Tu nombre",
+      "contactPlaceholder": "WhatsApp o correo",
+      "comunaPlaceholder": "Comuna (opcional)",
+      "consent": "Acepto que ChileTenis Pro use mis datos solo para contactarme sobre la escalerilla.",
+      "submit": "Enviar",
+      "cancel": "Cancelar",
+      "sending": "Enviando…",
+      "thanks": "¡Gracias! Quedaste en la lista de interesados.",
+      "alreadyIn": "Ya estabas en la lista. ¡Gracias por tu interés!",
+      "errors": {
+        "nombre": "Escribe tu nombre.",
+        "contacto": "Escribe un WhatsApp o correo válido.",
+        "consentimiento": "Debes aceptar el uso de tus datos para continuar.",
+        "espera": "Hay muchas solicitudes ahora. Inténtalo en unos minutos.",
+        "cerrado": "El registro no está disponible por ahora.",
+        "generic": "No se pudo enviar. Inténtalo de nuevo."
+      }
     }
   }
 }
