@@ -55,14 +55,14 @@ self.addEventListener('notificationclick', function (event) {
 
 /* ---------------------------- OFFLINE ---------------------------- */
 // Subir la version invalida todo el cache anterior en el siguiente "activate".
-const VERSION = 'ctq-v1';
+const VERSION = 'ctq-v2';
 const CACHE_SHELL = VERSION + '-shell';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const MAX_RUNTIME = 80;
 
 // Archivos que se guardan al instalar. Si alguno no existe no se rompe la instalacion.
 const SHELL = [
-  './', 'index.html', 'manifest.json', 'match-result-card.js',
+  './', 'index.html', 'manifest.json', 'match-result-card.js', 'rivales-puntos.js',
   'icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png', 'logo-club-tenis-estadio-quilicura.jpg',
   'lib/supabase.min.js/supabase.min.js'
 ];
