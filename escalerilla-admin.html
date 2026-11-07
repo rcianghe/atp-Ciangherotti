@@ -1827,8 +1827,9 @@ async function showDashboard(tab){
     await renderBonosDisponibilidad();
     return;
   }
-  content.innerHTML = dashTabsHtml() + '<div class="panel" id="panelAfichePortada"></div><div class="stat-grid" id="statGrid"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
+  content.innerHTML = dashTabsHtml() + '<div class="panel" id="panelAfichePortada"></div><div class="stat-grid" id="statGrid"></div><div class="panel" id="panelDisponibilidad"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
   renderPanelAfichePortada();
+  renderPanelDisponibilidad();
 
   const clubIdsDash = selectedClubId ? await getClubJugadorIds(selectedClubId) : null;
   let memQueryDash = sb.from('membresias').select('id,estado',{count:'exact'});
@@ -2042,7 +2043,8 @@ async function toggleBonoSerie(serie){
   if(error){ toast('No se pudo guardar: '+error.message, true); return; }
   d.activo = valor;
   toast(`Bonos de disponibilidad ${nuevoEstado?'activados':'desactivados'} en la Serie ${serie}.`);
-  paintBonosDisponibilidad();
+  if(document.getElementById('dashTabBody')) paintBonosDisponibilidad();
+  paintPanelDisponibilidad();
 }
 
 async function registrarBonoDisponibilidad(){
@@ -2058,7 +2060,7 @@ async function registrarBonoDisponibilidad(){
   btn.disabled = false; btn.textContent = 'Registrar';
   if(error){ toast('No se pudo registrar: '+error.message, true); return; }
   toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la Serie ${serie}.`);
-  await renderBonosDisponibilidad();
+  await refrescarBonosUI();
 }
 
 async function editarBonoDisponibilidad(id){
@@ -2073,7 +2075,7 @@ async function editarBonoDisponibilidad(id){
   const { error } = await sb.from('bonos_disponibilidad').update({ puntos, nota: nStr.trim()||null }).eq('id', id);
   if(error){ toast('No se pudo guardar: '+error.message, true); return; }
   toast('Bono actualizado.');
-  await renderBonosDisponibilidad();
+  await refrescarBonosUI();
 }
 
 async function eliminarBonoDisponibilidad(id){
@@ -2083,7 +2085,105 @@ async function eliminarBonoDisponibilidad(id){
   const { error } = await sb.from('bonos_disponibilidad').delete().eq('id', id);
   if(error){ toast('No se pudo eliminar: '+error.message, true); return; }
   toast('Bono eliminado.');
-  await renderBonosDisponibilidad();
+  await refrescarBonosUI();
+}
+
+/* =========================================================================
+   CAJA "DISPONIBILIDAD" EN EL RESUMEN (3 series)
+   =========================================================================
+   Atajo del Resumen para cargar a mano los bonos de disponibilidad sin
+   salir de la portada del panel. Usa EXACTAMENTE los mismos datos y reglas
+   que la pestaña "Bonos de disponibilidad" (estado bonosDisp):
+   - tabla bonos_disponibilidad (club_id, jugador_id, serie, puntos, nota)
+   - interruptor por serie en configuracion_sitio 'bono_disponibilidad_activo'
+   index.html lee esas mismas dos fuentes, asi que el ranking, el perfil y
+   el resto de la web se actualizan solos (Realtime / refresco periodico).
+   Una serie desactivada conserva sus bonos guardados pero no suma. */
+async function renderPanelDisponibilidad(){
+  const el = document.getElementById('panelDisponibilidad');
+  if(!el) return;
+  const clubId = clubBonosId();
+  if(!clubId){
+    el.innerHTML = `<div class="panel-head"><h3>⭐ Disponibilidad</h3></div>
+      <div class="panel-body" style="padding:16px 18px"><p class="hint" style="margin:0">Elige un club en el selector de la izquierda para registrar bonos de disponibilidad.</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="panel-head"><h3>⭐ Disponibilidad</h3></div><div class="empty-state">Cargando…</div>`;
+  const [cfg, jug, bon] = await Promise.all([
+    sb.from('configuracion_sitio').select('valor').eq('club_id', clubId).eq('clave','bono_disponibilidad_activo').maybeSingle(),
+    sb.from('jugadores').select('id,nombre,serie,estado').eq('club_id', clubId).order('nombre'),
+    sb.from('bonos_disponibilidad').select('id,serie,puntos,nota,created_at,jugador_id,jugadores(nombre)').eq('club_id', clubId).order('created_at',{ascending:false}),
+  ]);
+  const err = cfg.error || jug.error || bon.error;
+  if(err){
+    el.innerHTML = `<div class="panel-head"><h3>⭐ Disponibilidad</h3></div><div class="advisory" style="margin:14px 18px">No se pudieron cargar los bonos: ${bdEsc(err.message)}</div>`;
+    return;
+  }
+  const v = (cfg.data && cfg.data.valor && typeof cfg.data.valor==='object') ? cfg.data.valor : {};
+  bonosDisp.clubId = clubId;
+  bonosDisp.activo = { A:!!v.A, B:!!v.B, C:!!v.C };
+  bonosDisp.jugadores = jug.data || [];
+  bonosDisp.bonos = bon.data || [];
+  paintPanelDisponibilidad();
+}
+
+function paintPanelDisponibilidad(){
+  const el = document.getElementById('panelDisponibilidad');
+  if(!el || !bonosDisp.clubId) return;
+  const d = bonosDisp;
+  const cols = BONOS_SERIES.map(s=>{
+    const on = d.activo[s];
+    const filas = d.bonos.filter(b=>b.serie===s);
+    const pts = filas.reduce((a,b)=>a+(b.puntos||0),0);
+    const jugs = d.jugadores.filter(j=>j.serie===s && j.estado!=='Retirado -50%');
+    const opts = jugs.map(j=>`<option value="${j.id}">${bdEsc(j.nombre)}${j.estado!=='Activo'?' ('+bdEsc(j.estado)+')':''}</option>`).join('') || '<option value="">(sin jugadores)</option>';
+    const lista = filas.slice(0,6).map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px">
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${bdEsc(b.jugadores?.nombre||'?')}</b>${b.nota?` <span class="hint">· ${bdEsc(b.nota)}</span>`:''}</span>
+        <span style="font-family:var(--mono);font-weight:600">+${bdEsc(b.puntos)}</span>
+        <button class="icon-btn" title="Editar" onclick="editarBonoDisponibilidad('${b.id}')">✎</button>
+        <button class="icon-btn danger" title="Eliminar" onclick="eliminarBonoDisponibilidad('${b.id}')">🗑</button>
+      </div>`).join('') || '<div class="hint" style="padding:6px 0">Sin bonos registrados.</div>';
+    const mas = filas.length>6 ? `<div class="hint" style="margin-top:6px">+${filas.length-6} más en la pestaña «Bonos de disponibilidad».</div>` : '';
+    return `<div style="padding:16px 18px;border-right:1px solid var(--line);min-width:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <button type="button" class="toggle ${on?'on':''}" title="${on?'Desactivar':'Activar'} Serie ${s}" onclick="toggleBonoSerie('${s}')"></button>
+        <b style="font-family:var(--display);font-size:15px">Serie ${s}</b>
+        ${on?'<span class="badge badge-green">Suma</span>':'<span class="badge badge-gray">No suma</span>'}
+      </div>
+      <div class="hint" style="margin-bottom:10px">${filas.length} bono(s) · <b>${pts}</b> pts en total</div>
+      <div class="field" style="margin-bottom:8px"><select id="pdJug_${s}">${opts}</select></div>
+      <div style="display:grid;grid-template-columns:90px 1fr;gap:8px;margin-bottom:8px">
+        <input id="pdPts_${s}" type="number" min="1" step="1" placeholder="Puntos" style="padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;background:#FBFAF6;width:100%">
+        <input id="pdNota_${s}" type="text" placeholder="Nota (opcional)" style="padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;background:#FBFAF6;width:100%">
+      </div>
+      <button class="btn btn-primary btn-block btn-sm" id="pdBtn_${s}" onclick="agregarBonoDesdeResumen('${s}')">+ Agregar bono</button>
+      <div style="margin-top:12px">${lista}${mas}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="panel-head"><h3>⭐ Disponibilidad</h3><button class="subtle-link" onclick="showDashboard('bonos_disp')">Ver detalle →</button></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${cols}</div>
+    <div class="hint" style="padding:10px 18px 14px">Los bonos de una serie activada se suman al ranking y se reflejan solos en la web. Con la serie desactivada quedan guardados pero no suman.</div>`;
+}
+
+async function agregarBonoDesdeResumen(serie){
+  const jugadorId = document.getElementById('pdJug_'+serie).value;
+  const puntos = parseInt(document.getElementById('pdPts_'+serie).value, 10);
+  const nota = document.getElementById('pdNota_'+serie).value.trim() || null;
+  if(!jugadorId){ toast('Elige un jugador.', true); return; }
+  if(!Number.isInteger(puntos) || puntos<=0){ toast('Los puntos deben ser un número entero mayor que 0.', true); return; }
+  const btn = document.getElementById('pdBtn_'+serie);
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const { error } = await sb.from('bonos_disponibilidad').insert({ club_id: bonosDisp.clubId, jugador_id: jugadorId, serie, puntos, nota });
+  if(error){ btn.disabled = false; btn.textContent = '+ Agregar bono'; toast('No se pudo registrar: '+error.message, true); return; }
+  toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la Serie ${serie}.`);
+  await refrescarBonosUI();
+}
+
+// Despues de crear/editar/eliminar un bono se refresca lo que haya en pantalla:
+// la pestaña completa o la caja del Resumen.
+async function refrescarBonosUI(){
+  if(document.getElementById('dashTabBody')) await renderBonosDisponibilidad();
+  if(document.getElementById('panelDisponibilidad')) await renderPanelDisponibilidad();
 }
 
 /* =========================================================================
