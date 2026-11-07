@@ -1488,6 +1488,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
      Fuente unica de verdad -- ver match-result-card.js. -->
 <script src="match-result-card.js?v=20261023"></script>
+<script src="rivales-puntos.js?v=1"></script>
 <script>
   var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
@@ -2983,6 +2984,12 @@ async function cargarFixtureSizeSupabase(){
   }catch(err){
     console.warn('Sin conexion al cargar el tamaño de fixture.',err);
   }
+  // Bases de puntuacion propias del club (opcional): configuracion_sitio
+  // clave 'bases_puntos' = {"gana2sets":300,...}. Si no existe, rige PUNTOS.
+  try{
+    var bp=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','bases_puntos').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
+    window.BASES_PUNTOS_CLUB=(bp&&bp.data&&bp.data.valor&&typeof bp.data.valor==='object')?bp.data.valor:null;
+  }catch(e){window.BASES_PUNTOS_CLUB=null;}
   // Los bonos de disponibilidad se cargan en el mismo paso, asi todos los
   // lugares que ya refrescan el fixture tambien refrescan estos bonos
   // antes de recalcular el ranking.
@@ -5378,6 +5385,7 @@ async function _showProfileImpl(nombre,scroll,fondo){
     +"<div class=\"rvg\"><div class=\"rvc fav\"><div class=\"rvl\">Rival favorito</div>"+favH+"</div>"
     +"<div class=\"rvc dif\"><div class=\"rvl\">Rival mas dificil</div>"+difH+"</div></div>"
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div>"
+    +(typeof rRivalesPuntosTodo==='function'?rRivalesPuntosTodo(nombre):"")
     +"<div class=\"dispnote\">Disponibilidad semanal en linea, desafios entre jugadores y fichas tecnicas ya sincronizan solas con la planilla.</div></div>"
     +"<div class=\"ppcbadge\"><img src=\""+CLUB_LOGO_URL+"\" alt=\"\"></div>"
     +"</div>";
