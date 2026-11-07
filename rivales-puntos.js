@@ -44,6 +44,10 @@ function rpEnsureStyles() {
     + '.rpsum{margin-top:.6rem;padding-top:.6rem;border-top:1px dashed rgba(255,255,255,.15);display:flex;flex-direction:column;gap:.3rem}'
     + '.rpsumrow{display:flex;justify-content:space-between;font-size:.8rem;color:var(--gl)}'
     + '.rpsumrow.total{font-weight:800;color:var(--bl);font-size:.9rem}'
+    + '.mpmain{display:flex;align-items:center;gap:.8rem;margin:.2rem 0 .5rem}'
+    + '.mpbig{font-family:"Bebas Neue",sans-serif;font-size:2rem;line-height:1;color:var(--am);min-width:48px;text-align:center}'
+    + '.mpchips{display:flex;flex-wrap:wrap;gap:.4rem}'
+    + '.mpchip{font-size:.72rem;color:var(--gl);background:rgba(255,255,255,.06);border-radius:12px;padding:.15rem .55rem}.mpchip b{color:var(--bl)}.mpchip i{font-style:normal;opacity:.7}'
     + '.rpsumrow.total b{color:var(--am);font-family:"Bebas Neue",sans-serif;font-size:1.2rem;letter-spacing:.5px}';
   var st = document.createElement('style');
   st.setAttribute('data-rp-styles', '1');
@@ -217,6 +221,81 @@ function rRivalesPuntosTodo(nombre) {
   return rRivalesPuntos(nombre) + rRivalesPuntosTorneo(nombre);
 }
 
+/* ==========================================================================
+   MEJOR POSICION HISTORICA (perfil del jugador)
+   Serie A > B > C; dentro de la misma serie manda el puesto mas alto (1 es
+   el mejor). Fuentes: tabla posiciones_historicas (carga manual desde el
+   admin: temporadas pasadas), titulos (campeon = 1er lugar de esa serie) y
+   la posicion actual en el ranking de su serie.
+   ========================================================================== */
+var MP_SERIE_ORDEN = { A: 0, B: 1, C: 2 };
+var MP_CACHE = {};
+
+async function mpCargarPosiciones(nombre) {
+  try {
+    if (!window.supabaseClient || typeof CLUB_ACTUAL_ID === 'undefined') return [];
+    var j = null;
+    (DATA.players || []).forEach(function (x) { if (x.nombre === nombre) j = x; });
+    if (!j || !j.id) return [];
+    var c = MP_CACHE[j.id];
+    if (c && Date.now() - c.ts < 180000) return c.rows;
+    var res = await window.supabaseClient.from('posiciones_historicas')
+      .select('serie,temporada,periodo,posicion,nota').eq('jugador_id', j.id).eq('club_id', CLUB_ACTUAL_ID);
+    var rows = (res.error || !res.data) ? [] : res.data;
+    MP_CACHE[j.id] = { ts: Date.now(), rows: rows };
+    return rows;
+  } catch (e) { return []; }
+}
+
+function mpCandidatos(tits, posiciones, serieActual, posActual, jugadorActivo) {
+  var c = [];
+  (posiciones || []).forEach(function (r) {
+    c.push({ serie: r.serie, pos: r.posicion, anio: r.temporada, periodo: r.periodo || '', origen: 'historico' });
+  });
+  (tits || []).forEach(function (t) {
+    c.push({ serie: t.serie, pos: 1, anio: t.temporada, periodo: t.periodo || '', origen: 'titulo' });
+  });
+  if (jugadorActivo && serieActual && posActual) {
+    c.push({ serie: serieActual, pos: posActual, anio: new Date().getFullYear(), periodo: '', origen: 'actual' });
+  }
+  return c;
+}
+
+function mpOrdenar(a, b) {
+  var sa = MP_SERIE_ORDEN[a.serie], sb = MP_SERIE_ORDEN[b.serie];
+  if (sa !== sb) return sa - sb;
+  if (a.pos !== b.pos) return a.pos - b.pos;
+  return b.anio - a.anio;
+}
+
+function mpEtiqueta(m) {
+  var puesto = m.pos === 1 ? 'Campeón' : m.pos + '° lugar';
+  return puesto + ' · Serie ' + m.serie;
+}
+
+/** HTML del bloque. '' si no hay ningun dato. */
+function rMejorPosicion(nombre, tits, posiciones, serieActual, posActual, jugadorActivo) {
+  rpEnsureStyles();
+  var c = mpCandidatos(tits, posiciones, serieActual, posActual, jugadorActivo).filter(function (x) { return MP_SERIE_ORDEN[x.serie] !== undefined && x.pos > 0; });
+  if (!c.length) return '';
+  c.sort(mpOrdenar);
+  var mejor = c[0];
+  var cuando = mejor.origen === 'actual' ? 'Temporada actual' : ((mejor.periodo ? mejor.periodo + ' ' : '') + mejor.anio);
+  // mejor puesto por serie
+  var porSerie = {};
+  c.forEach(function (x) { if (!porSerie[x.serie] || mpOrdenar(x, porSerie[x.serie]) < 0) porSerie[x.serie] = x; });
+  var chips = ['A', 'B', 'C'].filter(function (s) { return porSerie[s]; }).map(function (s) {
+    var x = porSerie[s];
+    return '<span class="mpchip"><b>Serie ' + s + '</b> ' + (x.pos === 1 ? '🏆 1°' : x.pos + '°') + ' <i>' + esc(x.origen === 'actual' ? 'hoy' : x.anio) + '</i></span>';
+  }).join('');
+  var actual = (jugadorActivo && serieActual && posActual)
+    ? '<div class="rpdet" style="margin-top:.35rem">Posición actual: ' + posActual + '° en Serie ' + esc(serieActual) + '</div>' : '';
+  return '<div class="rpblk mpblk"><div class="rmt">Mejor posición histórica</div>'
+    + '<div class="mpmain"><span class="mpbig">' + (mejor.pos === 1 ? '🏆' : '#' + mejor.pos) + '</span>'
+    + '<div><div class="rpopp" style="white-space:normal">' + esc(mpEtiqueta(mejor)) + '</div><div class="rpdet">' + esc(cuando) + '</div></div></div>'
+    + (chips ? '<div class="mpchips">' + chips + '</div>' : '') + actual + '</div>';
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { rpBases: rpBases, rpPartidosTorneo: rpPartidosTorneo, rRivalesPuntosTorneo: rRivalesPuntosTorneo, rpPuntosDePartido: rpPuntosDePartido, rpPartidosConPuntos: rpPartidosConPuntos, rRivalesPuntos: rRivalesPuntos };
+  module.exports = { rMejorPosicion: rMejorPosicion, mpCandidatos: mpCandidatos, rpBases: rpBases, rpPartidosTorneo: rpPartidosTorneo, rRivalesPuntosTorneo: rRivalesPuntosTorneo, rpPuntosDePartido: rpPuntosDePartido, rpPartidosConPuntos: rpPartidosConPuntos, rRivalesPuntos: rRivalesPuntos };
 }
