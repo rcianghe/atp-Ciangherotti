@@ -1488,7 +1488,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
      Fuente unica de verdad -- ver match-result-card.js. -->
 <script src="match-result-card.js?v=20261023"></script>
-<script src="rivales-puntos.js?v=1"></script>
+<script src="rivales-puntos.js?v=2"></script>
 <script>
   var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
@@ -5274,6 +5274,14 @@ async function _showProfileImpl(nombre,scroll,fondo){
   var difH=rv.dif?("<div class=\"rvn\">"+esc(rv.dif.name)+"</div><div class=\"rvs2\">"+rv.dif.w+"V - "+rv.dif.l+"D</div>"):"<div class=\"rvn empty\">Aun sin datos</div>";
   var tits=await getTitulos(nombre); // consulta la tabla "titulos" en Supabase filtrando por jugador (con cache)
   if(miVersion!==perfilRenderVersion)return;
+  var mpH="";
+  try{
+    if(typeof rMejorPosicion==='function'){
+      var posHist=await mpCargarPosiciones(nombre);
+      if(miVersion!==perfilRenderVersion)return;
+      mpH=rMejorPosicion(nombre,tits,posHist,p.serie,sp,p.pj>0&&!p.retirado);
+    }
+  }catch(eMp){mpH="";}
   var ftH=renderFichaTecnica(nombre);
   // Rachas y tendencias
   var tend=tendenciasJugador(nombre);
@@ -5382,6 +5390,7 @@ async function _showProfileImpl(nombre,scroll,fondo){
     +heroFigH
     +"</div>"
     +insH
+    +mpH
     +"<div class=\"rvg\"><div class=\"rvc fav\"><div class=\"rvl\">Rival favorito</div>"+favH+"</div>"
     +"<div class=\"rvc dif\"><div class=\"rvl\">Rival mas dificil</div>"+difH+"</div></div>"
     +"<div class=\"rm\"><div class=\"rmt\">Ultimos resultados</div>"+rH+"</div>"
