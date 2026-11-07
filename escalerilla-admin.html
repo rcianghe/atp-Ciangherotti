@@ -814,6 +814,27 @@ const ENTITIES = {
       {key:'es_mejor_perdedor',label:'Es mejor perdedor',type:'bool'},
     ]},
 
+  posiciones_historicas:{ label:'Posiciones históricas', group:'Competición', table:'posiciones_historicas', pk:'id', clubFilter:'direct',
+    select:'id,serie,temporada,periodo,posicion,nota,jugador_id,club_id,jugadores(nombre)',
+    order:{col:'temporada',asc:false}, searchCols:[], filterField:'serie', filterOptions:['A','B','C'],
+    columns:[
+      {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
+      {key:'temporada',label:'Año'},
+      {key:'periodo',label:'Periodo',render:v=>v||'<span class="hint">Anual</span>'},
+      {key:'posicion',label:'Posición',render:v=>`<b>${v}°</b>`},
+      {key:'nota',label:'Nota'},
+    ],
+    fields:[
+      {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
+      {key:'club_id',label:'Club',type:'fk',lookup:'clubes',required:true},
+      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'temporada',label:'Año',type:'number',required:true},
+      {key:'periodo',label:'Periodo (vacío = ranking anual)',type:'select',options:['','Apertura','Clausura']},
+      {key:'posicion',label:'Posición final (1 = primero)',type:'number',required:true},
+      {key:'nota',label:'Nota (opcional)',type:'text'},
+    ]},
+
   titulos:{ label:'Títulos', group:'Competición', table:'titulos', pk:'id', clubFilter:'direct',
     select:'id,serie,temporada,periodo,jugador_id,torneo_partido_id,jugadores(nombre)',
     order:{col:'temporada',asc:false}, searchCols:[],
