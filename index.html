@@ -1488,7 +1488,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <!-- MatchResultCard: componente unico de tarjeta de resultado (Multi-Club).
      Fuente unica de verdad -- ver match-result-card.js. -->
 <script src="match-result-card.js?v=20261023"></script>
-<script src="rivales-puntos.js?v=2"></script>
+<script src="rivales-puntos.js?v=4"></script>
 <script>
   var SUPABASE_URL = 'https://hjqzpxsqdbjcidmlvgkv.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
@@ -2338,7 +2338,7 @@ function scorePerspectiva(score,jugador1,nombre){
 // ordenadas por puntaje acumulado como siempre, sin cambios.
 var MIN_PARTIDOS_GENERAL=4;
 function ordenarRankingGeneral(pl){
-  pl.forEach(function(p){p._prom=p.pj>0?p.pts/p.pj:0;});
+  pl.forEach(function(p){p._prom=p.pj>0?p.pts/(p.pj+(p.interPj||0)):0;});
   pl.sort(function(a,b){
     var aCalifica=a.pj>=MIN_PARTIDOS_GENERAL,bCalifica=b.pj>=MIN_PARTIDOS_GENERAL;
     if(aCalifica!==bCalifica)return aCalifica?-1:1; // sin el minimo de partidos, al final
@@ -2706,8 +2706,10 @@ async function cargarJugadoresYResultadosSupabase(){
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
-      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl,pais:j.pais,banderaIso:j.banderaIso,pausado:!!j.pausado};
+      return {id:j.id,nombre:j.nombre,serie:j.serie,pts:f.total,ptsEsc:f.total,pj:f.pj,pg:f.pg,pp:f.pp,trend:0,retirado:!!f.retirado,encargado:j.encargado,linkCancha:j.linkCancha,avatarUrl:j.avatarUrl,fotoCuerpoUrl:j.fotoCuerpoUrl,pais:j.pais,banderaIso:j.banderaIso,pausado:!!j.pausado};
     });
+
+    if(typeof rpAplicarPuntosTorneo==='function')rpAplicarPuntosTorneo(); // suma los puntos del Torneo (INTER) de los torneos visibles
 
     // Objetos "match" normalizados para MatchResultCard (match-result-card.js).
     // Se arman aca, una sola vez por carga, reusando normalizarMatchDesdeResultado()
@@ -2717,6 +2719,7 @@ async function cargarJugadoresYResultadosSupabase(){
       var m=normalizarMatchDesdeResultado(r,jugadoresPorId,{});
       m.fecha=fechaDDMMYYYY(r.fecha);
       m.hora=r.hora?r.hora.substring(0,5):'';
+      m._ts=new Date(r.created_at).getTime()||0;
       return m;
     });
     DATA.matchesParaTarjeta=pendientesRaw.map(function(r){
@@ -2966,6 +2969,7 @@ async function cargarVisibilidadTorneo(tipo){
       return;
     }
     torneoVisiblePorTipo[tipo]=res.data?(res.data.valor!==false):true;
+    if(typeof rpAplicarPuntosTorneo==='function'){rpAplicarPuntosTorneo();programarRAll();}
     conScrollPreservado(function(){aplicarVisibilidadTorneo(tipo);});
   }catch(err){
     console.warn('Sin conexion al cargar la visibilidad de '+tipo+'.',err);
@@ -3545,6 +3549,7 @@ async function cargarTorneosInternos(){
       nuevoPorTipo[tipoKey][key]={id:t.id,tipo:tipoKey,serie:t.serie,periodo:t.periodo,temporada:t.temporada,estado:estadoMostrado,campeon:campeon,rondas:rondas,nombre:t.nombre||null};
     });
     TORNEOS_POR_TIPO=nuevoPorTipo;
+    if(typeof rpAplicarPuntosTorneo==='function'){rpAplicarPuntosTorneo();programarRAll();}
     conScrollPreservado(function(){
       rTorneoSeccion('interno');
       rTorneoSeccion('abierto');
@@ -3895,7 +3900,7 @@ function rRanking(){
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+banderaMini+esc(p.nombre)+ret+"</span></div></td>";
     h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
-    h+="<td class=\"pb\">"+p.pts+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
+    h+="<td class=\"pb\">"+p.pts+(p.inter>0?"<span style=\"display:block;font-size:.58rem;font-weight:400;color:var(--gl);letter-spacing:0\">incl. torneo +"+p.inter+"</span>":"")+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
     h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+formaH+"</div></td>";
     h+="<td>"+trH+"</td></tr>";
 
@@ -3908,7 +3913,7 @@ function rRanking(){
       +fotoCardH
       +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+banderaMini+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
       +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span><span>"+trH+"</span></div></div>"
-      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div><div class=\"rcard-win\">"+wr+"% win</div>"+formaH+"</div>"
+      +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div>"+(p.inter>0?"<div class=\"rcard-win\">incl. torneo +"+p.inter+"</div>":"")+"<div class=\"rcard-win\">"+wr+"% win</div>"+formaH+"</div>"
       +"</div>";
   }
   body.innerHTML=h;
@@ -4428,6 +4433,10 @@ function rResults(){
   // que se recorren tal cual, sin invertir: el ultimo partido ingresado
   // queda arriba de todo.
   var datos=DATA.resultadosParaTarjeta||[];
+  var datosTorneo=DATA.resultadosTorneoParaTarjeta||[];
+  if(datosTorneo.length){ // resultados del Torneo (visible) mezclados con los de la escalerilla, el ultimo ingresado arriba
+    datos=datos.concat(datosTorneo).sort(function(a,b){return (b._ts||0)-(a._ts||0);});
+  }
   var h="";
   for(var i=0;i<datos.length;i++){
     if(typeof renderMatchResultCard==='function'){
@@ -5251,7 +5260,8 @@ async function _showProfileImpl(nombre,scroll,fondo){
     var rItem=DATA.results[i];
     if(rItem.ganador===nombre||rItem.perdedor===nombre||(rItem.dobleWO&&(rItem.jugador1===nombre||rItem.jugador2===nombre)))rec.push(rItem);
   }
-  rec.sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
+  (DATA.resultsTorneo||[]).forEach(function(rt){if(rt.ganador===nombre||rt.perdedor===nombre)rec.push(rt);});
+  rec.sort(function(a,b){return (parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha))||((b._ts||0)-(a._ts||0));});
   rec=rec.slice(0,5);
   var rH="";
   for(var i=0;i<rec.length;i++){
@@ -5266,7 +5276,7 @@ async function _showProfileImpl(nombre,scroll,fondo){
     // cargar DATA.results). Antes se volvia a pasar por scorePerspectiva
     // comparando contra el Jugador1 crudo original, lo que la invertia
     // de nuevo cada vez que el ganador no era Jugador1 en la carga.
-    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+"</span><span class=\"rmsc\">"+esc(r.score)+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
+    rH+="<div class=\"rmr\"><span class=\"rmres "+(won?"W":"L")+"\">"+( won?"W":"L")+"</span><span class=\"rmopp\">"+esc(opp)+(r.torneo?" <span style=\"font-size:.58rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ng);background:var(--am);border-radius:10px;padding:.05rem .4rem;margin-left:.3rem\">Torneo</span>":"")+"</span><span class=\"rmsc\">"+esc(r.score)+"</span><span class=\"rmdt\">"+esc(r.fecha)+"</span></div>";
   }
   if(!rH)rH="<p style=\"color:var(--gl);font-size:.8rem;padding:.38rem 0\">Sin partidos registrados</p>";
   var rv=getRivalStats(nombre);
