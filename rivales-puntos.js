@@ -143,11 +143,12 @@ function rRivalesPuntos(nombre) {
   });
 
   var resumen = '<div class="rpsum"><div class="rpsumrow"><span>Puntos por partidos</span><span>' + suma + '</span></div>';
-  var bonos = jugador ? (jugador.pts - suma) : 0;
+  var ptsEsc = jugador ? (jugador.ptsEsc != null ? jugador.ptsEsc : jugador.pts) : 0;
+  var bonos = jugador ? (ptsEsc - suma) : 0;
   if (bonos > 0) {
     resumen += '<div class="rpsumrow"><span>Bonos de la serie (todos ganados / jugados / disponibilidad)</span><span>+' + bonos + '</span></div>';
   }
-  resumen += '<div class="rpsumrow total"><span>Total en la Escalerilla</span><b>' + (jugador ? jugador.pts : suma) + ' pts</b></div></div>';
+  resumen += '<div class="rpsumrow total"><span>Total en la Escalerilla</span><b>' + (jugador ? ptsEsc : suma) + ' pts</b></div></div>';
 
   return '<div class="rpblk"><div class="rmt">Rivales y puntos obtenidos en la Escalerilla</div>' + h + resumen + '</div>';
 }
@@ -212,8 +213,14 @@ function rRivalesPuntosTorneo(nombre) {
       + '<div class="rpdet">' + esc(m.det) + ' · ' + esc(m.torneo) + ' · R' + m.ronda + '</div></div>'
       + '<span class="rppts ' + cls + '">+' + m.pts + '</span></div>';
   });
-  return '<div class="rpblk"><div class="rmt">Rivales y puntos obtenidos en el Torneo</div>' + h
-    + '<div class="rpsum"><div class="rpsumrow total"><span>Total en el Torneo</span><b>' + suma + ' pts</b></div></div></div>';
+  var jug = null;
+  (DATA.players || []).forEach(function (x) { if (x.nombre === nombre) jug = x; });
+  var resumen = '<div class="rpsum"><div class="rpsumrow total"><span>Total en el Torneo</span><b>' + suma + ' pts</b></div>';
+  if (jug && jug.ptsEsc != null) {
+    resumen += '<div class="rpsumrow"><span>Escalerilla ' + jug.ptsEsc + ' + Torneo ' + suma + '</span><span>= ' + (jug.ptsEsc + suma) + ' pts en el ranking</span></div>';
+  }
+  resumen += '</div>';
+  return '<div class="rpblk"><div class="rmt">Rivales y puntos obtenidos en el Torneo</div>' + h + resumen + '</div>';
 }
 
 /** Ambos bloques, en el orden en que van bajo "Ultimos resultados". */
@@ -296,6 +303,76 @@ function rMejorPosicion(nombre, tits, posiciones, serieActual, posActual, jugado
     + (chips ? '<div class="mpchips">' + chips + '</div>' : '') + actual + '</div>';
 }
 
+/**
+ * Suma los puntos del Torneo (INTER) al total del ranking de cada jugador,
+ * en SU serie. Solo cuentan los torneos visibles en la web (ver
+ * rpPartidosTorneo). Deja ptsEsc = puntos de la escalerilla (sin torneo),
+ * inter = puntos del torneo, interPj = partidos de torneo jugados y
+ * pts = ptsEsc + inter (lo que ordena el ranking y decide ascensos).
+ * Es idempotente: se puede llamar cada vez que cambian jugadores, torneos
+ * o la visibilidad. PJ/PG/PP siguen siendo solo de la escalerilla.
+ */
+function rpAplicarPuntosTorneo() {
+  (DATA.players || []).forEach(function (p) {
+    if (p.ptsEsc == null) p.ptsEsc = p.pts;
+    var lista = p.retirado && p.pj === 0 ? [] : rpPartidosTorneo(p.nombre);
+    var inter = 0;
+    lista.forEach(function (m) { inter += m.pts; });
+    p.inter = inter;
+    p.interPj = lista.length;
+    p.pts = p.ptsEsc + inter;
+  });
+  rpConstruirResultadosTorneo();
+}
+
+/**
+ * Resultados del Torneo (visible) para mostrarlos en la web junto a los de
+ * la escalerilla. No se mezclan con DATA.results (que alimenta H2H, rachas y
+ * el calculo de la escalerilla); van en arreglos aparte:
+ *   DATA.resultadosTorneoParaTarjeta -> para la lista "Resultados" (MatchResultCard)
+ *   DATA.resultsTorneo               -> para "Ultimos resultados" del perfil
+ * Se omiten byes, partidos sin ganador y dobles W.O.
+ */
+function rpConstruirResultadosTorneo() {
+  var tarjetas = [], filas = [];
+  var porTipo = (typeof TORNEOS_POR_TIPO !== 'undefined') ? TORNEOS_POR_TIPO : {};
+  var vis = (typeof torneoVisiblePorTipo !== 'undefined') ? torneoVisiblePorTipo : null;
+  var jugadoresById = (typeof normalizarJugadoresById === 'function') ? normalizarJugadoresById(DATA.players || []) : {};
+  function ddmmyyyy(f) { var p = String(f || '').split('-'); return p.length === 3 && p[0].length === 4 ? (p[2] + '-' + p[1] + '-' + p[0]) : (f || ''); }
+  Object.keys(porTipo).forEach(function (tipo) {
+    if (vis && vis[tipo] === false) return;
+    Object.keys(porTipo[tipo] || {}).forEach(function (key) {
+      var t = porTipo[tipo][key];
+      var nombreTorneo = (t.nombre || (t.serie ? 'Torneo Serie ' + t.serie : (tipo === 'abierto' ? 'Torneo Abierto' : 'Torneo Interno'))) + ' ' + t.temporada;
+      (t.rondas || []).forEach(function (ronda) {
+        ronda.forEach(function (m) {
+          var p = m.raw || {};
+          if (m.bye || p.es_bye || !m.j1Nombre || !m.j2Nombre || !p.ganador_id) return;
+          var ts = Date.parse(p.updated_at || p.created_at || '') || 0;
+          if (typeof normalizarMatchDesdeTorneoPartido === 'function') {
+            var card = normalizarMatchDesdeTorneoPartido(p, jugadoresById, { torneoNombre: nombreTorneo });
+            card.fecha = ddmmyyyy(p.fecha);
+            card.estado = card.estado === 'programado' ? 'finalizado' : card.estado;
+            card._ts = ts;
+            tarjetas.push(card);
+          }
+          var j1gana = p.ganador_id === p.jugador1_id;
+          var wo = p.tipo === 'W.O.' || p.estado_partido === 'w_o';
+          var sets = [p.set1, p.set2, p.set3].filter(Boolean).map(function (x) {
+            var a = String(x).split('-'); return (j1gana || a.length !== 2) ? x : (a[1] + '-' + a[0]);
+          });
+          filas.push({
+            fecha: ddmmyyyy(p.fecha), ganador: j1gana ? m.j1Nombre : m.j2Nombre, perdedor: j1gana ? m.j2Nombre : m.j1Nombre,
+            score: wo ? 'W.O.' : sets.join(' '), torneo: true, torneoNombre: nombreTorneo, _ts: ts
+          });
+        });
+      });
+    });
+  });
+  DATA.resultadosTorneoParaTarjeta = tarjetas;
+  DATA.resultsTorneo = filas;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { rMejorPosicion: rMejorPosicion, mpCandidatos: mpCandidatos, rpBases: rpBases, rpPartidosTorneo: rpPartidosTorneo, rRivalesPuntosTorneo: rRivalesPuntosTorneo, rpPuntosDePartido: rpPuntosDePartido, rpPartidosConPuntos: rpPartidosConPuntos, rRivalesPuntos: rRivalesPuntos };
+  module.exports = { rpConstruirResultadosTorneo: rpConstruirResultadosTorneo, rpAplicarPuntosTorneo: rpAplicarPuntosTorneo, rMejorPosicion: rMejorPosicion, mpCandidatos: mpCandidatos, rpBases: rpBases, rpPartidosTorneo: rpPartidosTorneo, rRivalesPuntosTorneo: rRivalesPuntosTorneo, rpPuntosDePartido: rpPuntosDePartido, rpPartidosConPuntos: rpPartidosConPuntos, rRivalesPuntos: rRivalesPuntos };
 }
