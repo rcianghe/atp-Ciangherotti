@@ -3009,7 +3009,10 @@ async function cargarBonosDisponibilidadSupabase(){
       return;
     }
     var activo=(cfg.data&&cfg.data.valor&&typeof cfg.data.valor==='object')?cfg.data.valor:{};
-    var bon=await window.supabaseClient.from('bonos_disponibilidad').select('jugador_id,serie,puntos').eq('club_id',CLUB_ACTUAL_ID);
+    var tidB=await obtenerTemporadaActivaId();
+    var qBon=window.supabaseClient.from('bonos_disponibilidad').select('jugador_id,serie,puntos').eq('club_id',CLUB_ACTUAL_ID);
+    if(tidB)qBon=qBon.eq('temporada_id',tidB);
+    var bon=await qBon;
     if(bon.error){
       console.warn('No se pudieron cargar los bonos de disponibilidad, se mantienen los anteriores.',bon.error);
       return;
