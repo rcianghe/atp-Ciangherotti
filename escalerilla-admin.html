@@ -2236,6 +2236,7 @@ async function refrescarBonosUI(){
    ========================================================================= */
 const CIERRE_PUNTOS_DEF = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0,bonoTodosGanados:500,bonoTodosJugados:150,bonoBagelBagel:100};
 let cierre = null;
+let cierreMov = {}; // jugador_id -> serie destino elegida a mano (solo si cambia)
 
 function cEsc(v){ return bdEsc(v); }
 function cNumSets(r){ return [r.set1,r.set2,r.set3].filter(Boolean).length; }
@@ -2385,27 +2386,22 @@ async function renderCierre(){
   if(d.error){ body.innerHTML = `<div class="advisory">${cEsc(d.error)}</div>`; return; }
   const prev = cierre && cierre.cfg;
   cierre = { d, rank: calcularCierre(d), rev: revisionCierre(d),
-    cfg: prev || { modo:'2026', subenB:4, subenC:4, bajanA:2, bajanB:2, repechaje:0, periodo:'' } };
+    cfg: prev || { periodo:'' } };
   paintCierre();
 }
 
 function cierreSetCfg(){
-  const g = id => document.getElementById(id);
-  const n = (id,def) => { const v = parseInt(g(id).value,10); return Number.isInteger(v)&&v>=0 ? v : def; };
-  const modo = g('ciModo').value;
-  const c = cierre.cfg;
-  if(modo!==c.modo){
-    c.modo = modo;
-    if(modo==='2027'){ c.subenB=2; c.subenC=2; c.bajanA=2; c.bajanB=2; c.repechaje=2; }
-    else { c.subenB=4; c.subenC=4; c.bajanA=2; c.bajanB=2; c.repechaje=0; }
-  } else {
-    c.subenB=n('ciSubB',c.subenB); c.subenC=n('ciSubC',c.subenC);
-    c.bajanA=n('ciBajA',c.bajanA); c.bajanB=n('ciBajB',c.bajanB);
-    c.repechaje=n('ciRep',c.repechaje);
-  }
-  c.periodo = g('ciPeriodo') ? g('ciPeriodo').value : c.periodo;
+  const g = document.getElementById('ciPeriodo');
+  cierre.cfg.periodo = g ? g.value : cierre.cfg.periodo;
   paintCierre();
 }
+function cierreMover(id, serie){
+  const f = ['A','B','C'].flatMap(x=>cierre.rank[x]).find(x=>x.id===id);
+  if(!f) return;
+  if(serie===f.serie) delete cierreMov[id]; else cierreMov[id]=serie;
+  paintCierre();
+}
+function cierreLimpiarMov(){ cierreMov = {}; paintCierre(); }
 
 function cierreFilas(f, tipo){
   return `<tr><td>${f.ranking}</td><td>${cEsc(f.nombre)}${f.retirado?` <span class="hint">(${cEsc(f.estado)})</span>`:''}</td><td>${f.total}</td></tr>`;
@@ -2415,7 +2411,6 @@ function paintCierre(){
   const body = document.getElementById('dashTabBody');
   if(!body || !cierre) return;
   const { d, rank, rev, cfg } = cierre;
-  const sug = sugerenciasCierre(rank, cfg);
   const yaArchivado = d.historicas.filter(h=>(h.periodo||'')===(cfg.periodo||''));
   const chk = (ok,txt) => `<li>${ok?'✅':'⚠️'} ${txt}</li>`;
   const checklist = `<ul style="list-style:none;padding:0;margin:0;line-height:1.9">
@@ -2424,41 +2419,32 @@ function paintCierre(){
     ${chk(!rev.compAbiertas.length, rev.compAbiertas.length?`Torneo aún "${cEsc(rev.compAbiertas[0].estado)}" (márcalo como finalizado en Competiciones)`:'Torneos finalizados')}
     ${chk(!yaArchivado.length, yaArchivado.length?`Ya existen ${yaArchivado.length} posiciones archivadas para ${d.anio}${cfg.periodo?' · '+cEsc(cfg.periodo):''}`:'Aún no se ha archivado este periodo')}
   </ul>`;
-  const numIn = (id,v) => `<input id="${id}" type="number" min="0" value="${v}" style="width:64px" onchange="cierreSetCfg()">`;
-  const reglas = `<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
-    <label>Bases <select id="ciModo" onchange="cierreSetCfg()"><option value="2026" ${cfg.modo==='2026'?'selected':''}>2026 (suben 4 · bajan 2)</option><option value="2027" ${cfg.modo==='2027'?'selected':''}>2027 (2 directos + repechaje)</option></select></label>
-    <label>Suben de B ${numIn('ciSubB',cfg.subenB)}</label><label>Suben de C ${numIn('ciSubC',cfg.subenC)}</label>
-    <label>Bajan de A ${numIn('ciBajA',cfg.bajanA)}</label><label>Bajan de B ${numIn('ciBajB',cfg.bajanB)}</label>
-    <label>Repechaje ${numIn('ciRep',cfg.repechaje)}</label>
-    <label>Periodo <select id="ciPeriodo" onchange="cierreSetCfg()"><option value="" ${!cfg.periodo?'selected':''}>Anual</option><option ${cfg.periodo==='Apertura'?'selected':''}>Apertura</option><option ${cfg.periodo==='Clausura'?'selected':''}>Clausura</option></select></label>
-  </div>`;
-  const lista = (arr, fn) => arr.length ? arr.map(fn).join('') : '<span class="hint">—</span>';
-  const chip = f => `<div>${f.ranking}º ${cEsc(f.nombre)} <span class="hint">${f.total} pts</span></div>`;
-  const movs = ['A','B','C'].map(s=>{
-    const suben = sug.suben[s], bajan = sug.bajan[s], rep = sug.repechaje[s];
-    if(!suben.length && !bajan.length && !rep.length) return '';
-    const destinoSube = s==='B'?'A':'B', destinoBaja = s==='A'?'B':'C';
-    return `<div style="margin:8px 0"><b>Serie ${s}</b>
-      ${suben.length?`<div>⬆️ Suben a ${destinoSube}: ${lista(suben,chip)}</div>`:''}
-      ${rep.length?`<div>🔁 Repechaje: ${lista(rep,chip)}</div>`:''}
-      ${bajan.length?`<div>⬇️ Bajan a ${destinoBaja}: ${lista(bajan,chip)}</div>`:''}</div>`;
+  const nMov = Object.keys(cierreMov).length;
+  const resumenMov = ['A','B','C'].map(s2=>{
+    const quedan = rank[s2].filter(f=>!cierreMov[f.id]).length + Object.entries(cierreMov).filter(([id,dest])=>dest===s2).length;
+    const salen = rank[s2].filter(f=>cierreMov[f.id]);
+    const entran = ['A','B','C'].flatMap(x=>rank[x]).filter(f=>cierreMov[f.id]===s2);
+    return `<div style="margin:6px 0"><b>Serie ${s2}</b> <span class="hint">(quedará con ${quedan} jugadores)</span>
+      ${entran.length?`<div>⬆️⬇️ Entran: ${entran.map(f=>`${cEsc(f.nombre)} <span class="hint">(desde ${f.serie}, ${f.ranking}º${f.retirado?', '+cEsc(f.estado):''})</span>`).join(' · ')}</div>`:''}
+      ${salen.length?`<div>➡️ Salen: ${salen.map(f=>cEsc(f.nombre)).join(' · ')}</div>`:''}</div>`;
   }).join('');
   const tablas = ['A','B','C'].map(s=>`<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Serie ${s} — ranking final</h3></div>
-    <div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>PG</th><th>Escalerilla</th><th>Bonos</th><th>INTER</th><th>Total</th></tr></thead><tbody>
-    ${rank[s].map(f=>`<tr><td>${f.ranking}</td><td>${cEsc(f.nombre)}${f.retirado?` <span class="hint">(${cEsc(f.estado)})</span>`:''}</td><td>${f.pj}</td><td>${f.pg}</td><td>${f.esc}</td><td>${f.bonos}</td><td>${f.inter}</td><td><b>${f.total}</b></td></tr>`).join('')||'<tr><td colspan="8" class="hint">Sin jugadores inscritos</td></tr>'}
+    <div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>PG</th><th>Escalerilla</th><th>Bonos</th><th>INTER</th><th>Total</th><th>Pasa a</th></tr></thead><tbody>
+    ${rank[s].map(f=>`<tr><td>${f.ranking}</td><td>${cEsc(f.nombre)}${f.retirado?` <span class="hint">(${cEsc(f.estado)})</span>`:''}</td><td>${f.pj}</td><td>${f.pg}</td><td>${f.esc}</td><td>${f.bonos}</td><td>${f.inter}</td><td><b>${f.total}</b></td><td><select onchange="cierreMover('${f.id}',this.value)" style="${cierreMov[f.id]?'font-weight:700':''}">${['A','B','C'].map(x=>`<option value="${x}" ${(cierreMov[f.id]||f.serie)===x?'selected':''}>${x}${x===f.serie?' (se queda)':''}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="9" class="hint">Sin jugadores inscritos</td></tr>'}
     </tbody></table></div></div>`).join('');
   body.innerHTML = `
     <div class="panel"><div class="panel-head"><h3>🏁 Cierre de temporada — ${cEsc(d.temporada.nombre)}</h3></div>
       <div class="panel-body" style="padding:14px 18px">
-        <p class="hint" style="margin-top:0">Ranking final = escalerilla + torneo (INTER) + bonos. Este panel solo <b>sugiere</b> los movimientos: tú aplicas los cambios de serie a mano. Nada se borra; todo queda archivado.</p>
+        <p class="hint" style="margin-top:0">Ranking final = escalerilla + torneo (INTER) + bonos. Tú decides quién sube o baja (incluidos los retirados): en cada tabla elige la serie de destino en "Pasa a". No hay reglas fijas ni cupos automáticos. Nada se borra; todo queda archivado.</p>
         <h4 style="margin:10px 0 4px">1 · Revisión</h4>${checklist}
-        <h4 style="margin:14px 0 6px">2 · Reglas de movimiento</h4>${reglas}
-        <h4 style="margin:14px 0 4px">3 · Movimientos sugeridos</h4>${movs||'<span class="hint">Sin sugerencias.</span>'}
-        <h4 style="margin:14px 0 6px">4 · Archivar</h4>
+        <h4 style="margin:14px 0 6px">2 · Movimientos de serie (elegidos por ti)</h4>
+        <p class="hint" style="margin-top:0">Usa la columna "Pasa a" de las tablas de abajo. ${nMov?`Llevas <b>${nMov}</b> movimiento(s). <a href="#" onclick="cierreLimpiarMov();return false">Limpiar</a>`:'Aún no has elegido ninguno.'}</p>${resumenMov}
+        <h4 style="margin:14px 0 6px">3 · Archivar</h4>
+        <label>Periodo <select id="ciPeriodo" onchange="cierreSetCfg()"><option value="" ${!cfg.periodo?'selected':''}>Anual</option><option ${cfg.periodo==='Apertura'?'selected':''}>Apertura</option><option ${cfg.periodo==='Clausura'?'selected':''}>Clausura</option></select></label>
         <p class="hint" style="margin-top:0">Guarda la posición final de cada jugador en el historial (alimenta "Mejor posición histórica" del perfil).</p>
         <button class="btn btn-primary" id="ciArchivar" onclick="archivarCierre()">📦 Archivar posiciones finales</button>
-        <h4 style="margin:18px 0 6px">5 · Abrir la nueva temporada</h4>
-        <p class="hint" style="margin-top:0">Crea la temporada siguiente, copia las inscripciones (mismas series) y la deja activa; la actual queda archivada. Luego aplica los ascensos/descensos editando la serie en <b>Inscripciones</b> de la nueva temporada. Los bonos de disponibilidad y los resultados parten de cero.</p>
+        <h4 style="margin:18px 0 6px">4 · Abrir la nueva temporada</h4>
+        <p class="hint" style="margin-top:0">Crea la temporada siguiente, copia las inscripciones con la serie que elegiste en "Pasa a" y la deja activa; la actual queda archivada. Después puedes seguir ajustando series en <b>Inscripciones</b>. Los bonos de disponibilidad y los resultados parten de cero.</p>
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
           <input id="ciNuevoNombre" value="${cEsc(sugerirNombreNueva(d))}" style="min-width:200px">
           <label>Inicio <input id="ciNuevoIni" type="date" value="${d.anio+1}-03-01"></label>
@@ -2482,13 +2468,8 @@ async function archivarCierre(){
     toast(`Ya hay posiciones archivadas para ${d.anio}${periodo?' · '+periodo:''}. No se duplican ni se borran.`, true); return;
   }
   if(!rev.listo && !confirm('Aún hay partidos sin registrar. ¿Archivar de todos modos?')) return;
-  const sug = sugerenciasCierre(rank, cfg);
   const marca = {};
-  ['A','B','C'].forEach(s=>{
-    sug.suben[s].forEach(f=>{ marca[f.id] = `Sugerido: asciende a ${s==='B'?'A':'B'}`; });
-    sug.repechaje[s].forEach(f=>{ marca[f.id] = 'Sugerido: repechaje'; });
-    sug.bajan[s].forEach(f=>{ marca[f.id] = `Sugerido: desciende a ${s==='A'?'B':'C'}`; });
-  });
+  Object.keys(cierreMov).forEach(id=>{ marca[id]='Pasa a serie '+cierreMov[id]; });
   const filas = [];
   ['A','B','C'].forEach(s=>rank[s].forEach(f=>{
     if(f.anulado) return;
@@ -2518,7 +2499,7 @@ async function abrirNuevaTemporada(){
   //    para que la web nunca se quede sin temporada activa.
   const nueva = await sb.from('temporadas').insert({ nombre, tipo:d.temporada.tipo||'escalerilla', fecha_inicio:ini, fecha_fin:fin, activa:false, club_id:d.clubId }).select('id').single();
   if(nueva.error){ btn.disabled=false; toast('No se pudo crear la temporada: '+nueva.error.message, true); return; }
-  const copias = d.insc.map(i=>({ jugador_id:i.jugador_id, temporada_id:nueva.data.id, serie:i.serie, frecuencia_semanal:i.frecuencia_semanal, fixture_size:i.fixture_size }));
+  const copias = d.insc.map(i=>({ jugador_id:i.jugador_id, temporada_id:nueva.data.id, serie:(cierreMov[i.jugador_id]||i.serie), frecuencia_semanal:i.frecuencia_semanal, fixture_size:i.fixture_size }));
   if(copias.length){
     const ins = await sb.from('inscripciones').insert(copias);
     if(ins.error){ btn.disabled=false; toast('No se pudieron copiar las inscripciones (la temporada nueva quedó inactiva): '+ins.error.message, true); return; }
@@ -2527,7 +2508,8 @@ async function abrirNuevaTemporada(){
   if(on.error){ btn.disabled=false; toast('No se pudo activar la nueva temporada: '+on.error.message, true); return; }
   const off = await sb.from('temporadas').update({ activa:false }).eq('id', d.temporada.id);
   if(off.error){ btn.disabled=false; toast('La nueva está activa pero no se pudo archivar la anterior: '+off.error.message, true); return; }
-  toast('Nueva temporada abierta. Aplica ahora los ascensos/descensos en Inscripciones.');
+  cierreMov = {};
+  toast('Nueva temporada abierta con las series elegidas.');
   await loadLookups();
   await renderCierre();
 }
