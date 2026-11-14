@@ -298,6 +298,7 @@ tbody tr:last-child td{border-bottom:none;}
         <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
       </div>
       <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Ingresar</button>
+      <button type="button" class="btn btn-block" id="loginGoogleBtn" onclick="loginConGoogle()" style="margin-top:10px;border:1.5px solid var(--line);background:#fff">Continuar con Google</button>
       <p style="text-align:center;margin:14px 0 0;">
         <button type="button" class="subtle-link" onclick="showForgotForm()">¿Olvidaste tu contraseña?</button>
       </p>
@@ -632,7 +633,7 @@ const ENTITIES = {
     columns:[
       {key:'avatar_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:'<span class="hint">—</span>'},
       {key:'nombre',label:'Nombre',render:(v,r)=>r.es_invitado?`${v} <span class="badge badge-warn">Invitado</span>`:v},
-      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">Serie ${v||'—'}</span>`},
+      {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${serieTxtAdm(v||'—')}</span>`},
       {key:'estado',label:'Estado',render:v=>badgeEstadoJugador(v)},
       {key:'clubes',label:'Club',render:v=>v?.nombre||'<span class="hint">—</span>'},
       {key:'pais',label:'País',render:(v,r)=>v?`${r.bandera_iso?banderaEmoji(r.bandera_iso)+' ':''}${v}`:'<span class="hint">—</span>'},
@@ -644,7 +645,7 @@ const ENTITIES = {
       {key:'avatar_url',label:'Foto de perfil (avatar)',type:'fileurl',bucket:'jugadores'},
       {key:'email',label:'Correo',type:'email'},
       {key:'telefono',label:'Teléfono',type:'text'},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C']},
+      {key:'serie',label:'Serie',type:'select',get options(){return serieIdsAdm();}},
       {key:'estado',label:'Estado',type:'select',options:['Activo','Retirado +50%','Retirado -50%']},
       {key:'club_id',label:'Club',type:'fk',lookup:'clubes'},
       {key:'encargado',label:'Encargado de serie',type:'text'},
@@ -706,7 +707,7 @@ const ENTITIES = {
 
   resultados:{ label:'Resultados', group:'Competición', table:'resultados', pk:'id', clubFilter:'direct',
     select:'id,fecha,hora,cancha,serie,set1,set2,set3,tipo,estado_partido,foto_resultado_url,club_id,j1:jugador1_id(nombre,avatar_url,bandera_iso),j2:jugador2_id(nombre,avatar_url,bandera_iso),g:ganador_id(nombre),jugador1_id,jugador2_id,ganador_id,temporada_id,desafio_id,torneo_partido_id',
-    order:{col:'fecha',asc:false}, searchCols:[], filterField:'serie', filterOptions:['A','B','C'],
+    order:{col:'fecha',asc:false}, searchCols:[], filterField:'serie', get filterOptions(){return serieIdsAdm();},
     columns:[
       {key:'fecha',label:'Fecha'},
       {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
@@ -719,7 +720,7 @@ const ENTITIES = {
     ],
     fields:[
       {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas'},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'serie',label:'Serie',type:'select',get options(){return serieIdsAdm();},required:true},
       {key:'jugador1_id',label:'Jugador 1',type:'fk',lookup:'jugadores',required:true},
       {key:'jugador2_id',label:'Jugador 2',type:'fk',lookup:'jugadores',required:true},
       {key:'set1',label:'Set 1 (ej. 6-4)',type:'text'},
@@ -740,7 +741,7 @@ const ENTITIES = {
     select:'id,nombre,serie,temporada,periodo,estado,fecha_inicio,tipo,seeding_tipo,club_id,temporada_id,clubes(nombre)',
     order:{col:'fecha_inicio',asc:false}, searchCols:['nombre'],
     columns:[
-      {key:'nombre',label:'Nombre',render:(v,r)=>v?`<b>${v}</b>`:`<span class="hint">Serie ${r.serie||'—'}</span>`},
+      {key:'nombre',label:'Nombre',render:(v,r)=>v?`<b>${v}</b>`:`<span class="hint">${serieTxtAdm(r.serie||'—')}</span>`},
       {key:'tipo',label:'Tipo',render:v=>`<span class="badge badge-gray">${v}</span>`},
       {key:'serie',label:'Serie',render:v=>v||'<span class="hint">— (multi-serie)</span>'},
       {key:'seeding_tipo',label:'Siembra',render:v=>`<span class="badge badge-gray">${v}</span>`},
@@ -753,7 +754,7 @@ const ENTITIES = {
     fields:[
       {key:'nombre',label:'Nombre del torneo (opcional)',type:'text'},
       {key:'tipo',label:'Tipo',type:'select',options:['escalerilla','interno','interclub','abierto'],required:true},
-      {key:'serie',label:'Serie (vacío = multi-serie)',type:'select',options:['','A','B','C']},
+      {key:'serie',label:'Serie (vacío = multi-serie)',type:'select',get options(){return ['',...serieIdsAdm()];}},
       {key:'seeding_tipo',label:'Tipo de siembra',type:'select',options:['serie','atp','manual'],default:'serie'},
       {key:'temporada',label:'Año',type:'number',required:true},
       {key:'periodo',label:'Periodo',type:'select',options:['','Apertura','Clausura']},
@@ -767,7 +768,7 @@ const ENTITIES = {
     select:'id,torneo_id,jugador_id,semilla,club_origen,club_id,jugadores(nombre,serie),competiciones(nombre,serie,temporada)',
     order:{col:'semilla'}, searchCols:[], filterField:'torneo_id', filterLookup:'competiciones',
     columns:[
-      {key:'competiciones',label:'Torneo',render:v=>v?(v.nombre||`Serie ${v.serie||'—'} · ${v.temporada}`):'—'},
+      {key:'competiciones',label:'Torneo',render:v=>v?(v.nombre||`${serieTxtAdm(v.serie||'—')} · ${v.temporada}`):'—'},
       {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
       {key:'semilla',label:'Semilla/orden'},
       {key:'club_origen',label:'Club de origen (invitados)'},
@@ -816,7 +817,7 @@ const ENTITIES = {
 
   posiciones_historicas:{ label:'Posiciones históricas', group:'Competición', table:'posiciones_historicas', pk:'id', clubFilter:'direct',
     select:'id,serie,temporada,periodo,posicion,nota,jugador_id,club_id,jugadores(nombre)',
-    order:{col:'temporada',asc:false}, searchCols:[], filterField:'serie', filterOptions:['A','B','C'],
+    order:{col:'temporada',asc:false}, searchCols:[], filterField:'serie', get filterOptions(){return serieIdsAdm();},
     columns:[
       {key:'jugadores',label:'Jugador',render:v=>v?.nombre||'—'},
       {key:'serie',label:'Serie',render:v=>`<span class="badge badge-green">${v}</span>`},
@@ -828,7 +829,7 @@ const ENTITIES = {
     fields:[
       {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
       {key:'club_id',label:'Club',type:'fk',lookup:'clubes',required:true},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'serie',label:'Serie',type:'select',get options(){return serieIdsAdm();},required:true},
       {key:'temporada',label:'Año',type:'number',required:true},
       {key:'periodo',label:'Periodo (vacío = ranking anual)',type:'select',options:['','Apertura','Clausura']},
       {key:'posicion',label:'Posición final (1 = primero)',type:'number',required:true},
@@ -846,7 +847,7 @@ const ENTITIES = {
     ],
     fields:[
       {key:'jugador_id',label:'Jugador campeón',type:'fk',lookup:'jugadores',required:true},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'serie',label:'Serie',type:'select',get options(){return serieIdsAdm();},required:true},
       {key:'temporada',label:'Año',type:'number',required:true},
       {key:'periodo',label:'Periodo',type:'select',options:['Apertura','Clausura','Anual']},
       {key:'torneo_partido_id',label:'ID partido de torneo (opcional)',type:'text'},
@@ -885,7 +886,7 @@ const ENTITIES = {
     fields:[
       {key:'jugador_id',label:'Jugador',type:'fk',lookup:'jugadores',required:true},
       {key:'temporada_id',label:'Temporada',type:'fk',lookup:'temporadas',required:true},
-      {key:'serie',label:'Serie',type:'select',options:['A','B','C'],required:true},
+      {key:'serie',label:'Serie',type:'select',get options(){return serieIdsAdm();},required:true},
       {key:'frecuencia_semanal',label:'Frecuencia semanal',type:'select',options:['1','2','3']},
       {key:'fixture_size',label:'Tamaño de fixture',type:'number',default:9},
     ]},
@@ -1573,7 +1574,7 @@ function fxRenderStep2(omitidasDuplicado){
       <td><input type="text" value="${escAttr(f.cancha||'')}" style="max-width:60px" onchange="fxRows[${i}].cancha=this.value"></td>
       <td><select onchange="fxRows[${i}].serie=this.value||null">
         <option value="">?</option>
-        ${['A','B','C'].map(function(s){return `<option value="${s}" ${f.serie===s?'selected':''}>${s}</option>`;}).join('')}
+        ${serieIdsAdm().map(function(s){return `<option value="${s}" ${f.serie===s?'selected':''}>${serieCortoAdm(s)}</option>`;}).join('')}
       </select></td>
       <td><select onchange="fxRows[${i}].j1Id=this.value||null">${fxOpcionesJugador(f.j1Id)}</select>${(f.j1Texto&&!f.j1Id)?`<div class="hint">texto leído: "${escAttr(f.j1Texto)}"</div>`:''}</td>
       <td><select onchange="fxRows[${i}].j2Id=this.value||null">${fxOpcionesJugador(f.j2Id)}</select>${(f.j2Texto&&!f.j2Id)?`<div class="hint">texto leído: "${escAttr(f.j2Texto)}"</div>`:''}</td>
@@ -1735,7 +1736,8 @@ async function doLogin(){
     errBox.textContent = error.message==='Invalid login credentials' ? 'Correo o contraseña incorrectos.' : error.message;
     errBox.style.display='block'; btn.textContent='Ingresar'; btn.disabled=false; return;
   }
-  const { data: adminRow, error: adminErr } = await sb.from('admins').select('*').eq('user_id', data.user.id).maybeSingle();
+  const adminRow = await buscarAdminRow(data.user.id);
+  const adminErr = null;
   if(adminErr || !adminRow){
     errBox.textContent = 'Esta cuenta no tiene permisos de administrador.';
     errBox.style.display='block'; btn.textContent='Ingresar'; btn.disabled=false;
@@ -1757,8 +1759,14 @@ async function doLogout(){
 async function checkExistingSession(){
   const { data } = await sb.auth.getSession();
   if(data.session){
-    const { data: adminRow } = await sb.from('admins').select('*').eq('user_id', data.session.user.id).maybeSingle();
-    if(adminRow){ currentUser = { ...data.session.user, adminName: adminRow.nombre }; adminClubIdActual = adminRow.club_id || null; enterApp(); return; }
+    const adminRow = await buscarAdminRow(data.session.user.id);
+    if(adminRow){ currentUser = { ...data.session.user, adminName: adminRow.nombre || data.session.user.email }; adminClubIdActual = adminRow.club_id || null; enterApp(); return; }
+    // Sesion valida pero sin permisos (ej: una cuenta de Google que no fue invitada).
+    await sb.auth.signOut();
+    document.getElementById('loginScreen').style.display='flex';
+    const eb = document.getElementById('loginError');
+    eb.textContent = 'Esta cuenta no tiene permisos de administrador. Pide que te inviten con ese correo.'; eb.style.display='block';
+    return;
   }
   document.getElementById('loginScreen').style.display='flex';
 }
@@ -1778,6 +1786,7 @@ async function enterApp(){
    LOOKUPS (para selects tipo FK)
    ========================================================================= */
 async function loadLookups(){
+  await cargarSeriesClub();
   const [j,c,t,comp,mem,org] = await Promise.all([
     (selectedClubId
       ? sb.from('jugadores').select('id,nombre,serie').eq('club_id', selectedClubId).order('nombre')
@@ -1788,11 +1797,11 @@ async function loadLookups(){
     sb.from('membresias').select('id,tipo,estado,jugador_id,jugadores(nombre)'),
     sb.from('organizaciones').select('id,nombre').order('nombre'),
   ]);
-  lookups.jugadores = (j.data||[]).map(x=>({id:x.id,label:`${x.nombre} (Serie ${x.serie||'—'})`}));
+  lookups.jugadores = (j.data||[]).map(x=>({id:x.id,label:`${x.nombre} (${serieTxtAdm(x.serie||'—')})`}));
   lookups.clubes = (c.data||[]).map(x=>({id:x.id,label:x.nombre}));
   lookups.clubesFull = c.data||[]; // objetos completos, usados por renderMatchResultCard para la identidad visual
   lookups.temporadas = (t.data||[]).map(x=>({id:x.id,label:x.nombre}));
-  lookups.competiciones = (comp.data||[]).map(x=>({id:x.id,label:`${x.tipo} · Serie ${x.serie} · ${x.temporada}${x.periodo?' · '+x.periodo:''}`}));
+  lookups.competiciones = (comp.data||[]).map(x=>({id:x.id,label:`${x.tipo} · ${serieTxtAdm(x.serie)} · ${x.temporada}${x.periodo?' · '+x.periodo:''}`}));
   lookups.membresias = (mem.data||[]).map(x=>({id:x.id,label:`${x.jugadores?.nombre||'?'} · ${x.tipo} · ${x.estado}`}));
   lookups.organizaciones = (org.data||[]).map(x=>({id:x.id,label:x.nombre}));
 }
@@ -1829,7 +1838,8 @@ function toggleSidebar(force){
    ========================================================================= */
 let dashTab = 'resumen';
 function dashTabsHtml(){
-  const tabs = [['resumen','📊 Resumen'],['bonos_disp','⭐ Bonos de disponibilidad'],['cierre','🏁 Cierre de temporada']];
+  const tabs = [['resumen','📊 Resumen'],['bonos_disp','⭐ Bonos de disponibilidad'],['cierre','🏁 Cierre de temporada'],['config','⚙️ Series y puntos']];
+  if(!adminClubIdActual) tabs.push(['nuevoclub','🆕 Crear club']);
   return `<div class="dash-tabs">${tabs.map(([k,l])=>`<button class="dash-tab ${dashTab===k?'active':''}" onclick="showDashboard('${k}')">${l}</button>`).join('')}</div>`;
 }
 async function showDashboard(tab){
@@ -1846,6 +1856,18 @@ async function showDashboard(tab){
     document.getElementById('viewSubtitle').textContent = clubNombreDash ? `Bonos de disponibilidad — ${clubNombreDash}` : 'Bonos de disponibilidad';
     content.innerHTML = dashTabsHtml() + '<div id="dashTabBody"></div>';
     await renderBonosDisponibilidad();
+    return;
+  }
+  if(dashTab==='nuevoclub'){
+    document.getElementById('viewSubtitle').textContent = 'Crear un club nuevo';
+    content.innerHTML = dashTabsHtml() + '<div id="dashTabBody"></div>';
+    await renderNuevoClub();
+    return;
+  }
+  if(dashTab==='config'){
+    document.getElementById('viewSubtitle').textContent = clubNombreDash ? `Series y puntos — ${clubNombreDash}` : 'Series y puntos';
+    content.innerHTML = dashTabsHtml() + '<div id="dashTabBody"></div>';
+    await renderConfigClub();
     return;
   }
   if(dashTab==='cierre'){
@@ -1934,7 +1956,6 @@ async function showDashboard(tab){
      configuracion_sitio, clave 'bono_disponibilidad_activo' = {"A":true,"B":false,"C":false}.
    - fn_ranking_club suma los puntos al ranking SOLO de las series activadas;
      con la serie desactivada los bonos quedan guardados pero no suman. */
-const BONOS_SERIES = ['A','B','C'];
 let bonosDisp = { temporadaId:null, clubId:'', activo:{A:false,B:false,C:false}, jugadores:[], bonos:[], filtroSerie:'' };
 
 function bdEsc(v){
@@ -1986,12 +2007,12 @@ function paintBonosDisponibilidad(){
     return { n: filas.length, pts: filas.reduce((a,b)=>a+(b.puntos||0),0) };
   };
 
-  const seriesHtml = BONOS_SERIES.map(s=>{
+  const seriesHtml = serieIdsAdm().map(s=>{
     const r = resumenSerie(s);
     const on = d.activo[s];
     return `<div class="serie-row">
-      <button type="button" class="toggle ${on?'on':''}" title="${on?'Desactivar':'Activar'} Serie ${s}" onclick="toggleBonoSerie('${s}')"></button>
-      <div class="serie-info"><b>Serie ${s}</b> · ${on?'<span class="badge badge-green">Activado — suma al ranking</span>':'<span class="badge badge-gray">Desactivado — no suma</span>'}
+      <button type="button" class="toggle ${on?'on':''}" title="${on?'Desactivar':'Activar'} ${serieTxtAdm(s)}" onclick="toggleBonoSerie('${s}')"></button>
+      <div class="serie-info"><b>${serieTxtAdm(s)}</b> · ${on?'<span class="badge badge-green">Activado — suma al ranking</span>':'<span class="badge badge-gray">Desactivado — no suma</span>'}
         <div class="hint">${r.n} bono(s) registrado(s) · ${r.pts} puntos en total</div></div>
     </div>`;
   }).join('');
@@ -2028,7 +2049,7 @@ function paintBonosDisponibilidad(){
       <div class="panel-head"><h3>Registrar bono de disponibilidad</h3></div>
       <div class="bono-form">
         <div class="field"><label>Serie *</label>
-          <select id="bdSerie" onchange="onBonoSerieChange()">${BONOS_SERIES.map(s=>`<option value="${s}" ${s===formSerie?'selected':''}>Serie ${s}</option>`).join('')}</select></div>
+          <select id="bdSerie" onchange="onBonoSerieChange()">${serieIdsAdm().map(s=>`<option value="${s}" ${s===formSerie?'selected':''}>${serieTxtAdm(s)}</option>`).join('')}</select></div>
         <div class="field"><label>Jugador *</label>
           <select id="bdJugador">${jugadoresSerie(formSerie).map(j=>`<option value="${j.id}">${bdEsc(j.nombre)}${j.estado!=='Activo'?' ('+bdEsc(j.estado)+')':''}</option>`).join('')||'<option value="">(sin jugadores en esta serie)</option>'}</select></div>
         <div class="field"><label>Puntos *</label><input id="bdPuntos" type="number" min="1" step="1" placeholder="Ej. 100"></div>
@@ -2043,7 +2064,7 @@ function paintBonosDisponibilidad(){
         <div class="table-toolbar" style="margin:0;">
           <select onchange="bonosDisp.filtroSerie=this.value;paintBonosDisponibilidad();">
             <option value="">Todas las series</option>
-            ${BONOS_SERIES.map(s=>`<option value="${s}" ${d.filtroSerie===s?'selected':''}>Serie ${s}</option>`).join('')}
+            ${serieIdsAdm().map(s=>`<option value="${s}" ${d.filtroSerie===s?'selected':''}>${serieTxtAdm(s)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -2067,8 +2088,8 @@ async function toggleBonoSerie(serie){
   const r = d.bonos.filter(b=>b.serie===serie);
   const pts = r.reduce((a,b)=>a+(b.puntos||0),0);
   const msg = nuevoEstado
-    ? `¿Activar los bonos de disponibilidad en la Serie ${serie}?\n\nSe sumarán al ranking ${pts} punto(s) de ${r.length} bono(s) registrado(s).`
-    : `¿Desactivar los bonos de disponibilidad en la Serie ${serie}?\n\nDejarán de sumar al ranking ${pts} punto(s) (los bonos quedan guardados).`;
+    ? `¿Activar los bonos de disponibilidad en la ${serieTxtAdm(serie)}?\n\nSe sumarán al ranking ${pts} punto(s) de ${r.length} bono(s) registrado(s).`
+    : `¿Desactivar los bonos de disponibilidad en la ${serieTxtAdm(serie)}?\n\nDejarán de sumar al ranking ${pts} punto(s) (los bonos quedan guardados).`;
   if(!confirm(msg)) return;
   const valor = { ...d.activo, [serie]: nuevoEstado };
   const { error } = await sb.from('configuracion_sitio').upsert(
@@ -2077,7 +2098,7 @@ async function toggleBonoSerie(serie){
   );
   if(error){ toast('No se pudo guardar: '+error.message, true); return; }
   d.activo = valor;
-  toast(`Bonos de disponibilidad ${nuevoEstado?'activados':'desactivados'} en la Serie ${serie}.`);
+  toast(`Bonos de disponibilidad ${nuevoEstado?'activados':'desactivados'} en la ${serieTxtAdm(serie)}.`);
   if(document.getElementById('dashTabBody')) paintBonosDisponibilidad();
   paintPanelDisponibilidad();
 }
@@ -2094,14 +2115,14 @@ async function registrarBonoDisponibilidad(){
   const { error } = await sb.from('bonos_disponibilidad').insert({ club_id: bonosDisp.clubId, temporada_id: bonosDisp.temporadaId, jugador_id: jugadorId, serie, puntos, nota });
   btn.disabled = false; btn.textContent = 'Registrar';
   if(error){ toast('No se pudo registrar: '+error.message, true); return; }
-  toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la Serie ${serie}.`);
+  toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la ${serieTxtAdm(serie)}.`);
   await refrescarBonosUI();
 }
 
 async function editarBonoDisponibilidad(id){
   const b = bonosDisp.bonos.find(x=>x.id===id);
   if(!b) return;
-  const pStr = prompt(`Puntos del bono de ${b.jugadores?.nombre||'jugador'} (Serie ${b.serie}):`, b.puntos);
+  const pStr = prompt(`Puntos del bono de ${b.jugadores?.nombre||'jugador'} (${serieTxtAdm(b.serie)}):`, b.puntos);
   if(pStr===null) return;
   const puntos = parseInt(pStr, 10);
   if(!Number.isInteger(puntos) || puntos<=0){ toast('Los puntos deben ser un número entero mayor que 0.', true); return; }
@@ -2116,7 +2137,7 @@ async function editarBonoDisponibilidad(id){
 async function eliminarBonoDisponibilidad(id){
   const b = bonosDisp.bonos.find(x=>x.id===id);
   if(!b) return;
-  if(!confirm(`¿Eliminar el bono de ${b.puntos} punto(s) de ${b.jugadores?.nombre||'este jugador'} (Serie ${b.serie})?`)) return;
+  if(!confirm(`¿Eliminar el bono de ${b.puntos} punto(s) de ${b.jugadores?.nombre||'este jugador'} (${serieTxtAdm(b.serie)})?`)) return;
   const { error } = await sb.from('bonos_disponibilidad').delete().eq('id', id);
   if(error){ toast('No se pudo eliminar: '+error.message, true); return; }
   toast('Bono eliminado.');
@@ -2168,7 +2189,7 @@ function paintPanelDisponibilidad(){
   const el = document.getElementById('panelDisponibilidad');
   if(!el || !bonosDisp.clubId) return;
   const d = bonosDisp;
-  const cols = BONOS_SERIES.map(s=>{
+  const cols = serieIdsAdm().map(s=>{
     const on = d.activo[s];
     const filas = d.bonos.filter(b=>b.serie===s);
     const pts = filas.reduce((a,b)=>a+(b.puntos||0),0);
@@ -2183,8 +2204,8 @@ function paintPanelDisponibilidad(){
     const mas = filas.length>6 ? `<div class="hint" style="margin-top:6px">+${filas.length-6} más en la pestaña «Bonos de disponibilidad».</div>` : '';
     return `<div style="padding:16px 18px;border-right:1px solid var(--line);min-width:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <button type="button" class="toggle ${on?'on':''}" title="${on?'Desactivar':'Activar'} Serie ${s}" onclick="toggleBonoSerie('${s}')"></button>
-        <b style="font-family:var(--display);font-size:15px">Serie ${s}</b>
+        <button type="button" class="toggle ${on?'on':''}" title="${on?'Desactivar':'Activar'} ${serieTxtAdm(s)}" onclick="toggleBonoSerie('${s}')"></button>
+        <b style="font-family:var(--display);font-size:15px">${serieTxtAdm(s)}</b>
         ${on?'<span class="badge badge-green">Suma</span>':'<span class="badge badge-gray">No suma</span>'}
       </div>
       <div class="hint" style="margin-bottom:10px">${filas.length} bono(s) · <b>${pts}</b> pts en total</div>
@@ -2212,7 +2233,7 @@ async function agregarBonoDesdeResumen(serie){
   btn.disabled = true; btn.textContent = 'Guardando…';
   const { error } = await sb.from('bonos_disponibilidad').insert({ club_id: bonosDisp.clubId, temporada_id: bonosDisp.temporadaId, jugador_id: jugadorId, serie, puntos, nota });
   if(error){ btn.disabled = false; btn.textContent = '+ Agregar bono'; toast('No se pudo registrar: '+error.message, true); return; }
-  toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la Serie ${serie}.`);
+  toast(bonosDisp.activo[serie] ? 'Bono registrado y sumado al ranking.' : `Bono registrado. No suma hasta activar la ${serieTxtAdm(serie)}.`);
   await refrescarBonosUI();
 }
 
@@ -2221,6 +2242,390 @@ async function agregarBonoDesdeResumen(serie){
 async function refrescarBonosUI(){
   if(document.getElementById('dashTabBody')) await renderBonosDisponibilidad();
   if(document.getElementById('panelDisponibilidad')) await renderPanelDisponibilidad();
+}
+
+/* =========================================================================
+   SERIES / CATEGORIAS Y PUNTOS POR CLUB
+   Cada club define (hasta 10) sus series de la mas alta a la mas baja,
+   el rotulo ("Serie" / "Categoria"), su sistema de puntos y el tamaño de
+   fixture por serie. Se guarda en configuracion_sitio (series, serie_rotulo,
+   bases_puntos, fixture_size) y lo leen la web, el torneo y este admin.
+   ========================================================================= */
+const SERIES_DEFAULT = [
+  {id:'A',corto:'A',nombre:'Serie A',color:'#e05a4a'},
+  {id:'B',corto:'B',nombre:'Serie B',color:'#5a9ee0'},
+  {id:'C',corto:'C',nombre:'Serie C',color:'#7ed44a'}
+];
+const SERIES_PALETA_ADM = ['#e05a4a','#5a9ee0','#7ed44a','#e0a53a','#a572e0','#3ac7c0','#e06aa8','#9aa0a6','#d4e60a','#ff8a4a'];
+let SERIES_CLUB = SERIES_DEFAULT.map(x=>({...x}));
+let SERIE_ROTULO_ADM = 'Serie';
+function serieIdsAdm(){ return SERIES_CLUB.map(s=>s.id); }
+function serieCortoAdm(id){ const s = SERIES_CLUB.find(x=>x.id===id); return s ? s.corto : id; }
+function serieTxtAdm(id){ return SERIE_ROTULO_ADM+' '+serieCortoAdm(id); }
+
+const PUNTOS_CAMPOS = [
+  ['gana2sets','Gana en 2 sets'],['gana3sets','Gana en 3 sets'],
+  ['pierde2sets','Pierde en 2 sets'],['pierde3sets','Pierde en 3 sets'],
+  ['ganaWO','Gana por W.O.'],['pierdeWO','Pierde por W.O.'],
+  ['bonoBagelBagel','Bono 6-0 6-0'],['bonoTodosGanados','Bono gana todos los partidos del fixture'],
+  ['bonoTodosJugados','Bono juega todos los partidos del fixture (TPJ)']
+];
+const PUNTOS_DEFAULT_ADM = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0,bonoTodosGanados:500,bonoTodosJugados:150,bonoBagelBagel:100};
+
+function normalizarSeriesAdm(v){
+  if(!Array.isArray(v) || !v.length) return null;
+  const out = [];
+  v.slice(0,10).forEach((x,i)=>{
+    if(!x || x.id==null) return;
+    const id = String(x.id);
+    out.push({ id, corto:String(x.corto||id), nombre:x.nombre||('Serie '+(x.corto||id)), color:x.color||SERIES_PALETA_ADM[i%SERIES_PALETA_ADM.length] });
+  });
+  return out.length ? out : null;
+}
+
+// Carga las series del club elegido (o las de Quilicura por defecto A/B/C).
+async function cargarSeriesClub(){
+  const clubId = clubBonosId();
+  SERIES_CLUB = SERIES_DEFAULT.map(x=>({...x})); SERIE_ROTULO_ADM = 'Serie';
+  if(!clubId) return;
+  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo']);
+  if(r.error || !r.data) return;
+  r.data.forEach(row=>{
+    if(row.clave==='series'){ const n = normalizarSeriesAdm(row.valor); if(n) SERIES_CLUB = n; }
+    if(row.clave==='serie_rotulo' && typeof row.valor==='string' && row.valor.trim()) SERIE_ROTULO_ADM = row.valor.trim();
+  });
+}
+
+let cfgClub = null;
+async function renderConfigClub(){
+  const body = document.getElementById('dashTabBody');
+  if(!body) return;
+  const clubId = clubBonosId();
+  if(!clubId){ body.innerHTML = '<div class="advisory">Elige un club en el selector de la izquierda para configurar sus series y puntos.</div>'; return; }
+  body.innerHTML = '<div class="panel"><div class="empty-state">Cargando…</div></div>';
+  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo','bases_puntos','fixture_size']);
+  if(r.error){ body.innerHTML = `<div class="advisory">No se pudo cargar: ${bdEsc(r.error.message)}</div>`; return; }
+  const c = {}; (r.data||[]).forEach(x=>{ c[x.clave]=x.valor; });
+  const series = normalizarSeriesAdm(c.series) || SERIES_DEFAULT.map(x=>({...x}));
+  cfgClub = {
+    clubId, guardado: !!c.series,
+    series: series.map(s=>({...s, existente:true})),
+    rotulo: typeof c.serie_rotulo==='string' && c.serie_rotulo ? c.serie_rotulo : 'Serie',
+    puntos: Object.assign({}, PUNTOS_DEFAULT_ADM, (c.bases_puntos && typeof c.bases_puntos==='object') ? c.bases_puntos : {}),
+    fixture: (c.fixture_size && typeof c.fixture_size==='object') ? c.fixture_size : {}
+  };
+  paintConfigClub();
+}
+
+function cfgLeerForm(){
+  if(!cfgClub) return;
+  const g = id => document.getElementById(id);
+  cfgClub.series.forEach((s,i)=>{
+    if(g('cfgCorto'+i)) s.corto = g('cfgCorto'+i).value.trim() || s.id;
+    if(g('cfgNombre'+i)) s.nombre = g('cfgNombre'+i).value.trim() || (cfgClub.rotulo+' '+s.corto);
+    if(g('cfgColor'+i)) s.color = g('cfgColor'+i).value;
+    if(g('cfgFix'+i)) cfgClub.fixture[s.id] = g('cfgFix'+i).value;
+    if(g('cfgId'+i) && !s.existente) s.id = g('cfgId'+i).value.trim();
+  });
+  if(g('cfgRotulo')) cfgClub.rotulo = g('cfgRotulo').value;
+  PUNTOS_CAMPOS.forEach(([k])=>{ if(g('cfgP_'+k)) cfgClub.puntos[k] = g('cfgP_'+k).value; });
+}
+function cfgAgregarSerie(){
+  cfgLeerForm();
+  if(cfgClub.series.length>=10){ toast('El máximo es 10 series.', true); return; }
+  const n = cfgClub.series.length+1;
+  let id = String(n); while(cfgClub.series.some(s=>s.id===id)) id = String(parseInt(id,10)+1);
+  cfgClub.series.push({ id, corto:id+'ª', nombre:cfgClub.rotulo+' '+id+'ª', color:SERIES_PALETA_ADM[cfgClub.series.length%10], existente:false });
+  paintConfigClub();
+}
+function cfgMover(i, d){
+  cfgLeerForm();
+  const j = i+d; if(j<0 || j>=cfgClub.series.length) return;
+  const t = cfgClub.series[i]; cfgClub.series[i] = cfgClub.series[j]; cfgClub.series[j] = t;
+  paintConfigClub();
+}
+async function cfgQuitar(i){
+  cfgLeerForm();
+  const s = cfgClub.series[i];
+  if(s.existente){
+    const [a,b] = await Promise.all([
+      sb.from('inscripciones').select('id',{count:'exact',head:true}).eq('serie', s.id).in('jugador_id', (await getClubJugadorIds(cfgClub.clubId))||[]),
+      sb.from('jugadores').select('id',{count:'exact',head:true}).eq('club_id', cfgClub.clubId).eq('serie', s.id)
+    ]);
+    if((a.count||0)>0 || (b.count||0)>0){ toast(`No se puede quitar: hay jugadores en "${s.corto}". Muévelos primero.`, true); return; }
+  }
+  cfgClub.series.splice(i,1);
+  paintConfigClub();
+}
+
+function paintConfigClub(){
+  const body = document.getElementById('dashTabBody');
+  if(!body || !cfgClub) return;
+  const c = cfgClub;
+  const filas = c.series.map((s,i)=>`<tr>
+    <td style="width:34px">${i+1}º</td>
+    <td><input id="cfgId${i}" value="${bdEsc(s.id)}" ${s.existente?'readonly title="El identificador no se cambia: es lo que está guardado en los datos"':''} style="width:70px"></td>
+    <td><input id="cfgCorto${i}" value="${bdEsc(s.corto)}" style="width:70px" maxlength="6"></td>
+    <td><input id="cfgNombre${i}" value="${bdEsc(s.nombre)}" style="min-width:150px"></td>
+    <td><input id="cfgColor${i}" type="color" value="${bdEsc(s.color)}"></td>
+    <td><input id="cfgFix${i}" type="number" min="0" value="${bdEsc(c.fixture[s.id]==null?'':c.fixture[s.id])}" style="width:70px"></td>
+    <td style="white-space:nowrap"><button class="btn" onclick="cfgMover(${i},-1)">↑</button> <button class="btn" onclick="cfgMover(${i},1)">↓</button> <button class="btn" onclick="cfgQuitar(${i})">✕</button></td></tr>`).join('');
+  const pts = PUNTOS_CAMPOS.map(([k,l])=>`<label style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:4px 0">${l}<input id="cfgP_${k}" type="number" value="${bdEsc(c.puntos[k])}" style="width:90px"></label>`).join('');
+  body.innerHTML = `
+    <div class="panel"><div class="panel-head"><h3>⚙️ Series y puntos del club</h3></div>
+    <div class="panel-body" style="padding:14px 18px">
+      ${c.guardado?'':'<div class="advisory" style="margin-bottom:10px">Este club aún no tiene series guardadas: se muestran A/B/C de ejemplo. Edítalas y guarda.</div>'}
+      <h4 style="margin:0 0 6px">Series o categorías (de la más alta a la más baja, máx. 10)</h4>
+      <p class="hint" style="margin-top:0">El orden define quién es "más avanzada" (mejor posición histórica y subidas/bajadas). El identificador es lo que se guarda en los datos (por ejemplo A, B, C o 1, 2, 3…); lo que ven los jugadores es la abreviatura (1ª, 2ª…).</p>
+      <div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>#</th><th>Identificador</th><th>Abrev.</th><th>Nombre</th><th>Color</th><th>Fixture</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>
+      <div style="margin:10px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" onclick="cfgAgregarSerie()">+ Agregar serie</button>
+        <label>Se llaman <select id="cfgRotulo" onchange="cfgLeerForm()"><option ${c.rotulo==='Serie'?'selected':''}>Serie</option><option ${c.rotulo==='Categoría'?'selected':''}>Categoría</option></select></label>
+      </div>
+      <h4 style="margin:16px 0 6px">Sistema de puntos</h4>
+      <p class="hint" style="margin-top:0">Un bono en 0 queda desactivado. Los bonos "gana todos" y "juega todos" usan el tamaño de fixture de cada serie (columna Fixture).</p>
+      <div style="max-width:460px">${pts}</div>
+      <div style="margin-top:16px"><button class="btn btn-primary" id="cfgGuardar" onclick="guardarConfigClub()">💾 Guardar configuración</button></div>
+    </div></div>`;
+}
+
+async function guardarConfigClub(){
+  cfgLeerForm();
+  const c = cfgClub;
+  const ids = c.series.map(s=>s.id);
+  if(!c.series.length){ toast('Debe haber al menos una serie.', true); return; }
+  if(ids.some(id=>!/^[A-Za-z0-9]{1,3}$/.test(id))){ toast('Los identificadores usan 1 a 3 letras o números (sin espacios ni símbolos).', true); return; }
+  if(new Set(ids).size!==ids.length){ toast('Hay identificadores repetidos.', true); return; }
+  const puntos = {};
+  for(const [k] of PUNTOS_CAMPOS){
+    const v = Number(c.puntos[k]);
+    if(!isFinite(v) || v<0){ toast('Los puntos deben ser números de 0 o más.', true); return; }
+    puntos[k] = v;
+  }
+  const fixture = {};
+  c.series.forEach(s=>{ const v = parseInt(c.fixture[s.id],10); fixture[s.id] = Number.isInteger(v)&&v>=0 ? v : 0; });
+  const series = c.series.map(s=>({ id:s.id, corto:s.corto, nombre:s.nombre, color:s.color }));
+  const ahora = new Date().toISOString();
+  const filas = [
+    { club_id:c.clubId, clave:'series', valor:series, actualizado_en:ahora },
+    { club_id:c.clubId, clave:'serie_rotulo', valor:c.rotulo, actualizado_en:ahora },
+    { club_id:c.clubId, clave:'bases_puntos', valor:puntos, actualizado_en:ahora },
+    { club_id:c.clubId, clave:'fixture_size', valor:fixture, actualizado_en:ahora }
+  ];
+  const btn = document.getElementById('cfgGuardar'); btn.disabled = true; btn.textContent = 'Guardando…';
+  const { error } = await sb.from('configuracion_sitio').upsert(filas, { onConflict:'club_id,clave' });
+  btn.disabled = false; btn.textContent = '💾 Guardar configuración';
+  if(error){ toast('No se pudo guardar: '+error.message, true); return; }
+  toast('Configuración guardada. La web la toma en el próximo refresco.');
+  await cargarSeriesClub();
+  await renderConfigClub();
+}
+
+/* =========================================================================
+   CREAR CLUB (solo administrador universal)
+   Un formulario crea el club completo en una sola operacion (RPC
+   crear_club_completo: todo o nada): club + temporada activa + series +
+   puntos + fixture + invitacion al administrador. El administrador del club
+   entra con su cuenta de Google y queda enlazado solo a su club.
+   ========================================================================= */
+let nuevoClub = null;
+let ultimoClubCreado = null;
+
+function ncSlugDe(txt){
+  return String(txt||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/^club de tenis\s+/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+}
+function ncAjustarColor(hex, f){ // f>0 aclara, f<0 oscurece
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex||''); if(!m) return hex;
+  const n = parseInt(m[1],16); let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  const k = v => Math.max(0, Math.min(255, Math.round(f>0 ? v+(255-v)*f : v*(1+f))));
+  return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function ncNuevo(){
+  const y = new Date().getFullYear()+ (new Date().getMonth()>=9 ? 1 : 0);
+  return {
+    nombre:'', corto:'', slug:'', slugManual:false, comuna:'', color:'#5BBF2A', logo:'', whatsapp:'', tagline:'',
+    series: SERIES_DEFAULT.map(s=>({id:s.id,corto:s.corto,nombre:s.nombre,color:s.color,fixture:''})),
+    rotulo:'Serie',
+    puntos: Object.assign({}, PUNTOS_DEFAULT_ADM),
+    tempNombre:'Escalerilla '+y, ini:y+'-03-01', fin:y+'-11-30',
+    adminNombre:'', adminEmail:''
+  };
+}
+
+async function renderNuevoClub(){
+  const body = document.getElementById('dashTabBody');
+  if(!body) return;
+  if(adminClubIdActual){ body.innerHTML = '<div class="advisory">Solo un administrador universal puede crear clubes.</div>'; return; }
+  if(!nuevoClub) nuevoClub = ncNuevo();
+  paintNuevoClub();
+  cargarInvitaciones();
+}
+
+function ncLeer(){
+  const n = nuevoClub; if(!n) return;
+  const g = id => document.getElementById(id);
+  if(!g('ncNombre')) return;
+  n.nombre = g('ncNombre').value; n.corto = g('ncCorto').value; n.comuna = g('ncComuna').value;
+  n.slug = g('ncSlug').value; n.color = g('ncColor').value; n.logo = g('ncLogo').value;
+  n.whatsapp = g('ncWa').value; n.tagline = g('ncTag').value; n.rotulo = g('ncRotulo').value;
+  n.tempNombre = g('ncTempNombre').value; n.ini = g('ncIni').value; n.fin = g('ncFin').value;
+  n.adminNombre = g('ncAdminNombre').value; n.adminEmail = g('ncAdminEmail').value;
+  n.series.forEach((s,i)=>{
+    s.id = g('ncSId'+i).value.trim(); s.corto = g('ncSCorto'+i).value.trim();
+    s.nombre = g('ncSNombre'+i).value.trim(); s.color = g('ncSColor'+i).value; s.fixture = g('ncSFix'+i).value;
+  });
+  PUNTOS_CAMPOS.forEach(([k])=>{ if(g('ncP_'+k)) n.puntos[k] = g('ncP_'+k).value; });
+}
+function ncAlEscribirNombre(){
+  ncLeer();
+  const n = nuevoClub;
+  if(!n.slugManual){ n.slug = ncSlugDe(n.nombre); const el = document.getElementById('ncSlug'); if(el) el.value = n.slug; }
+}
+function ncSlugManual(){ ncLeer(); nuevoClub.slugManual = true; }
+function ncAgregarSerie(){
+  ncLeer();
+  if(nuevoClub.series.length>=10){ toast('El máximo es 10 series.', true); return; }
+  let k = nuevoClub.series.length+1; while(nuevoClub.series.some(s=>s.id===String(k))) k++;
+  nuevoClub.series.push({id:String(k),corto:k+'ª',nombre:nuevoClub.rotulo+' '+k+'ª',color:SERIES_PALETA_ADM[nuevoClub.series.length%10],fixture:''});
+  paintNuevoClub();
+}
+function ncQuitarSerie(i){ ncLeer(); if(nuevoClub.series.length<=1){ toast('Debe haber al menos una serie.', true); return; } nuevoClub.series.splice(i,1); paintNuevoClub(); }
+function ncMoverSerie(i,d){ ncLeer(); const j=i+d; if(j<0||j>=nuevoClub.series.length) return; const t=nuevoClub.series[i]; nuevoClub.series[i]=nuevoClub.series[j]; nuevoClub.series[j]=t; paintNuevoClub(); }
+function ncPlantillaNumerada(){
+  ncLeer();
+  const k = parseInt(prompt('¿Cuántas categorías numeradas (1ª, 2ª, 3ª…)? Máximo 10.', '4'),10);
+  if(!Number.isInteger(k) || k<1 || k>10) return;
+  nuevoClub.rotulo = 'Categoría';
+  nuevoClub.series = Array.from({length:k},(_,i)=>({id:String(i+1),corto:(i+1)+'ª',nombre:'Categoría '+(i+1)+'ª',color:SERIES_PALETA_ADM[i%10],fixture:''}));
+  paintNuevoClub();
+}
+
+function paintNuevoClub(){
+  const body = document.getElementById('dashTabBody');
+  if(!body || !nuevoClub) return;
+  const n = nuevoClub, e = bdEsc;
+  const inp = (id,label,val,extra) => `<div class="field"><label>${label}</label><input id="${id}" value="${e(val)}" ${extra||''}></div>`;
+  const filas = n.series.map((s,i)=>`<tr>
+    <td>${i+1}º</td>
+    <td><input id="ncSId${i}" value="${e(s.id)}" style="width:64px" maxlength="3"></td>
+    <td><input id="ncSCorto${i}" value="${e(s.corto)}" style="width:64px" maxlength="6"></td>
+    <td><input id="ncSNombre${i}" value="${e(s.nombre)}" style="min-width:140px"></td>
+    <td><input id="ncSColor${i}" type="color" value="${e(s.color)}"></td>
+    <td><input id="ncSFix${i}" type="number" min="0" value="${e(s.fixture)}" style="width:64px"></td>
+    <td style="white-space:nowrap"><button class="btn" onclick="ncMoverSerie(${i},-1)">↑</button> <button class="btn" onclick="ncMoverSerie(${i},1)">↓</button> <button class="btn" onclick="ncQuitarSerie(${i})">✕</button></td></tr>`).join('');
+  const pts = PUNTOS_CAMPOS.map(([k,l])=>`<label style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:4px 0">${l}<input id="ncP_${k}" type="number" value="${e(n.puntos[k])}" style="width:90px"></label>`).join('');
+  const creado = ultimoClubCreado ? `
+    <div class="panel" style="border:2px solid #3d8a1a;margin-bottom:16px"><div class="panel-body" style="padding:14px 18px">
+      <h3 style="margin:0 0 6px">✅ Club creado: ${e(ultimoClubCreado.nombre)}</h3>
+      <p style="margin:4px 0">Enlace de la web: <b>${e(ultimoClubCreado.url)}</b> <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${e(ultimoClubCreado.url)}');toast('Enlace copiado.')">Copiar</button></p>
+      ${ultimoClubCreado.admin?`<p style="margin:4px 0">Administrador invitado: <b>${e(ultimoClubCreado.admin)}</b>. Debe entrar a este panel con <b>Continuar con Google</b> usando ese mismo correo; queda enlazado solo a su club.</p>`:'<p style="margin:4px 0">No invitaste a ningún administrador todavía.</p>'}
+      <p class="hint" style="margin:4px 0">Siguientes pasos: cargar jugadores e inscripciones del club, subir su logo y revisar su configuración en "Series y puntos".</p>
+    </div></div>` : '';
+  body.innerHTML = `${creado}
+    <div class="panel"><div class="panel-head"><h3>🆕 Crear club</h3></div><div class="panel-body" style="padding:14px 18px">
+      <p class="hint" style="margin-top:0">Crea el club completo de una vez: datos, temporada activa, series, puntos y administrador. Si algo falla no queda nada a medias.</p>
+      <h4 style="margin:6px 0">1 · Datos del club</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 14px">
+        ${inp('ncNombre','Nombre completo *',n.nombre,'oninput="ncAlEscribirNombre()" placeholder="Club de Tenis Maipú"')}
+        ${inp('ncCorto','Nombre corto',n.corto,'placeholder="Maipú"')}
+        ${inp('ncSlug','Slug (enlace) *',n.slug,'oninput="ncSlugManual()" placeholder="tenis-maipu"')}
+        ${inp('ncComuna','Comuna',n.comuna)}
+        <div class="field"><label>Color principal</label><input id="ncColor" type="color" value="${e(n.color)}"></div>
+        ${inp('ncLogo','Logo (URL)',n.logo,'placeholder="https://…"')}
+        ${inp('ncWa','WhatsApp (con código, ej: 56912345678)',n.whatsapp)}
+        ${inp('ncTag','Frase del inicio',n.tagline)}
+      </div>
+      <h4 style="margin:14px 0 6px">2 · Series o categorías (de la más alta a la más baja, máx. 10)</h4>
+      <div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>#</th><th>Id</th><th>Abrev.</th><th>Nombre</th><th>Color</th><th>Fixture</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>
+      <div style="margin:10px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" onclick="ncAgregarSerie()">+ Agregar serie</button>
+        <button class="btn" onclick="ncPlantillaNumerada()">Usar categorías 1ª, 2ª, 3ª…</button>
+        <label>Se llaman <select id="ncRotulo"><option ${n.rotulo==='Serie'?'selected':''}>Serie</option><option ${n.rotulo==='Categoría'?'selected':''}>Categoría</option></select></label>
+      </div>
+      <h4 style="margin:14px 0 6px">3 · Sistema de puntos</h4>
+      <p class="hint" style="margin-top:0">Un bono en 0 queda desactivado. "Fixture" es la cantidad de partidos de cada jugador en la temporada; déjalo vacío para no dar bonos de fixture.</p>
+      <div style="max-width:460px">${pts}</div>
+      <h4 style="margin:14px 0 6px">4 · Temporada</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px">
+        ${inp('ncTempNombre','Nombre',n.tempNombre)}
+        <div class="field"><label>Inicio</label><input id="ncIni" type="date" value="${e(n.ini)}"></div>
+        <div class="field"><label>Fin</label><input id="ncFin" type="date" value="${e(n.fin)}"></div>
+      </div>
+      <h4 style="margin:14px 0 6px">5 · Administrador del club (entra con Google)</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 14px">
+        ${inp('ncAdminNombre','Nombre',n.adminNombre)}
+        ${inp('ncAdminEmail','Correo de Google',n.adminEmail,'type="email" placeholder="admin@gmail.com"')}
+      </div>
+      <p class="hint" style="margin-top:0">Opcional. Cuando esa persona entre con Google usando ese correo, queda como administradora solo de este club.</p>
+      <div style="margin-top:16px"><button class="btn btn-primary" id="ncCrear" onclick="crearClubNuevo()">🆕 Crear club</button></div>
+    </div></div>
+    <div class="panel" style="margin-top:16px"><div class="panel-head"><h3>Invitaciones pendientes</h3></div><div class="panel-body" id="ncInvitaciones" style="padding:10px 18px"><span class="hint">Cargando…</span></div></div>`;
+}
+
+async function cargarInvitaciones(){
+  const box = document.getElementById('ncInvitaciones'); if(!box) return;
+  const r = await sb.from('admins_pendientes').select('email,nombre,club_id,created_at,clubes(nombre)').order('created_at',{ascending:false});
+  if(r.error){ box.innerHTML = `<span class="hint">No se pudieron cargar: ${bdEsc(r.error.message)}</span>`; return; }
+  if(!r.data.length){ box.innerHTML = '<span class="hint">No hay invitaciones pendientes.</span>'; return; }
+  box.innerHTML = r.data.map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
+    <span><b>${bdEsc(x.email)}</b> ${x.nombre?'('+bdEsc(x.nombre)+')':''} → ${bdEsc((x.clubes&&x.clubes.nombre)||'club')}</span>
+    <button class="btn" onclick="quitarInvitacion('${bdEsc(x.email)}','${x.club_id}')">Quitar</button></div>`).join('');
+}
+async function quitarInvitacion(email, clubId){
+  if(!confirm('¿Quitar la invitación de '+email+'?')) return;
+  const { error } = await sb.from('admins_pendientes').delete().eq('email', email).eq('club_id', clubId);
+  if(error){ toast('No se pudo quitar: '+error.message, true); return; }
+  toast('Invitación quitada.'); cargarInvitaciones();
+}
+
+async function crearClubNuevo(){
+  ncLeer();
+  const n = nuevoClub;
+  if(!n.nombre.trim()){ toast('Falta el nombre del club.', true); return; }
+  if(!n.slug.trim()){ toast('Falta el slug del club.', true); return; }
+  const ids = n.series.map(s=>s.id);
+  if(ids.some(id=>!/^[A-Za-z0-9]{1,3}$/.test(id))){ toast('Los identificadores de serie usan 1 a 3 letras o números.', true); return; }
+  if(new Set(ids).size!==ids.length){ toast('Hay identificadores de serie repetidos.', true); return; }
+  if(!n.ini || !n.fin || n.fin<=n.ini){ toast('Revisa las fechas de la temporada.', true); return; }
+  const puntos = {};
+  for(const [k] of PUNTOS_CAMPOS){ const v = Number(n.puntos[k]); if(!isFinite(v)||v<0){ toast('Los puntos deben ser números de 0 o más.', true); return; } puntos[k]=v; }
+  const fixture = {}; n.series.forEach(s=>{ const v=parseInt(s.fixture,10); fixture[s.id]=Number.isInteger(v)&&v>=0?v:0; });
+  const series = n.series.map(s=>({id:s.id,corto:s.corto||s.id,nombre:s.nombre||(n.rotulo+' '+(s.corto||s.id)),color:s.color}));
+  const tema = { primario:n.color, primario_claro:ncAjustarColor(n.color,0.25), primario_oscuro:ncAjustarColor(n.color,-0.3), acento:'#D4E60A' };
+  const btn = document.getElementById('ncCrear'); btn.disabled = true; btn.textContent = 'Creando…';
+  const { data, error } = await sb.rpc('crear_club_completo', {
+    p_nombre:n.nombre, p_slug:n.slug, p_nombre_corto:n.corto, p_comuna:n.comuna, p_color:n.color, p_tema:tema,
+    p_logo_url:n.logo, p_whatsapp:n.whatsapp, p_hero_tagline:n.tagline,
+    p_admin_email:n.adminEmail, p_admin_nombre:n.adminNombre,
+    p_series:series, p_rotulo:n.rotulo, p_bases:puntos, p_fixture:fixture,
+    p_temporada_nombre:n.tempNombre, p_inicio:n.ini, p_fin:n.fin
+  });
+  btn.disabled = false; btn.textContent = '🆕 Crear club';
+  if(error){ toast('No se pudo crear el club: '+error.message, true); return; }
+  const url = new URL('index.html?club='+encodeURIComponent(data.slug), location.href).href;
+  ultimoClubCreado = { nombre:n.nombre, url, admin:n.adminEmail.trim() };
+  nuevoClub = ncNuevo();
+  toast('Club creado.');
+  await loadLookups(); populateClubFilterSelect();
+  paintNuevoClub(); cargarInvitaciones();
+}
+
+/* Google: el administrador de un club entra con su cuenta de Google. Si su
+   correo tiene una invitacion pendiente, se enlaza a su club automaticamente. */
+async function loginConGoogle(){
+  const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin + location.pathname } });
+  if(error){ const b = document.getElementById('loginError'); b.textContent = 'No se pudo iniciar con Google: '+error.message; b.style.display='block'; }
+}
+async function buscarAdminRow(userId){
+  let r = await sb.from('admins').select('*').eq('user_id', userId).maybeSingle();
+  if(r.data) return r.data;
+  const claim = await sb.rpc('reclamar_admin_pendiente');
+  if(claim.data){
+    r = await sb.from('admins').select('*').eq('user_id', userId).maybeSingle();
+    if(r.data) return r.data;
+  }
+  return null;
 }
 
 /* =========================================================================
@@ -2293,10 +2698,10 @@ function calcularCierre(d){
   const serieDe = {}; d.insc.forEach(i=>{ serieDe[i.jugador_id]=i.serie; });
   const dispo = {}; d.bonos.forEach(b=>{ if(dispoAct[b.serie]===true) dispo[b.jugador_id]=(dispo[b.jugador_id]||0)+(b.puntos||0); });
   const anulados = {}; d.jug.forEach(j=>{ if(j.estado==='Retirado -50%') anulados[j.id]=true; });
-  const porSerie = {A:[],B:[],C:[]};
+  const porSerie = {}; serieIdsAdm().forEach(x=>{ porSerie[x]=[]; });
   d.insc.forEach(i=>{ const j=jugById[i.jugador_id]; if(j && porSerie[i.serie]) porSerie[i.serie].push(j); });
   const salida = {};
-  ['A','B','C'].forEach(serie=>{
+  serieIdsAdm().forEach(serie=>{
     const total = fixture[serie]||0;
     const partidosSerie = d.res.filter(r=>r.serie===serie && (r.ganador_id||r.tipo==='Doble W.O.') && (r.set1||r.tipo==='W.O.'||r.tipo==='Doble W.O.'));
     const filas = porSerie[serie].map(j=>{
@@ -2360,24 +2765,6 @@ function revisionCierre(d){
   return { pendRes, pendTor, compAbiertas, listo: !pendRes.length && !pendTor.length };
 }
 
-// Sugerencias (solo lectura). Los retirados no suben ni bajan.
-function sugerenciasCierre(rank, cfg){
-  const elegibles = s => (rank[s]||[]).filter(f=>!f.retirado);
-  const sug = { suben:{A:[],B:[],C:[]}, bajan:{A:[],B:[],C:[]}, repechaje:{A:[],B:[],C:[]} };
-  // Suben desde B y C
-  [['B',cfg.subenB],['C',cfg.subenC]].forEach(([s,n])=>{
-    const lista = elegibles(s);
-    sug.suben[s] = lista.slice(0,n);
-    sug.repechaje[s] = lista.slice(n, n+cfg.repechaje);
-  });
-  // Bajan desde A y B (los ultimos)
-  [['A',cfg.bajanA],['B',cfg.bajanB]].forEach(([s,n])=>{
-    const lista = elegibles(s);
-    sug.bajan[s] = n>0 ? lista.slice(-n).reverse() : [];
-  });
-  return sug;
-}
-
 async function renderCierre(){
   const body = document.getElementById('dashTabBody');
   if(!body) return;
@@ -2396,7 +2783,7 @@ function cierreSetCfg(){
   paintCierre();
 }
 function cierreMover(id, serie){
-  const f = ['A','B','C'].flatMap(x=>cierre.rank[x]).find(x=>x.id===id);
+  const f = serieIdsAdm().flatMap(x=>cierre.rank[x]).find(x=>x.id===id);
   if(!f) return;
   if(serie===f.serie) delete cierreMov[id]; else cierreMov[id]=serie;
   paintCierre();
@@ -2420,17 +2807,17 @@ function paintCierre(){
     ${chk(!yaArchivado.length, yaArchivado.length?`Ya existen ${yaArchivado.length} posiciones archivadas para ${d.anio}${cfg.periodo?' · '+cEsc(cfg.periodo):''}`:'Aún no se ha archivado este periodo')}
   </ul>`;
   const nMov = Object.keys(cierreMov).length;
-  const resumenMov = ['A','B','C'].map(s2=>{
+  const resumenMov = serieIdsAdm().map(s2=>{
     const quedan = rank[s2].filter(f=>!cierreMov[f.id]).length + Object.entries(cierreMov).filter(([id,dest])=>dest===s2).length;
     const salen = rank[s2].filter(f=>cierreMov[f.id]);
-    const entran = ['A','B','C'].flatMap(x=>rank[x]).filter(f=>cierreMov[f.id]===s2);
-    return `<div style="margin:6px 0"><b>Serie ${s2}</b> <span class="hint">(quedará con ${quedan} jugadores)</span>
-      ${entran.length?`<div>⬆️⬇️ Entran: ${entran.map(f=>`${cEsc(f.nombre)} <span class="hint">(desde ${f.serie}, ${f.ranking}º${f.retirado?', '+cEsc(f.estado):''})</span>`).join(' · ')}</div>`:''}
+    const entran = serieIdsAdm().flatMap(x=>rank[x]).filter(f=>cierreMov[f.id]===s2);
+    return `<div style="margin:6px 0"><b>${serieTxtAdm(s2)}</b> <span class="hint">(quedará con ${quedan} jugadores)</span>
+      ${entran.length?`<div>⬆️⬇️ Entran: ${entran.map(f=>`${cEsc(f.nombre)} <span class="hint">(desde ${serieCortoAdm(f.serie)}, ${f.ranking}º${f.retirado?', '+cEsc(f.estado):''})</span>`).join(' · ')}</div>`:''}
       ${salen.length?`<div>➡️ Salen: ${salen.map(f=>cEsc(f.nombre)).join(' · ')}</div>`:''}</div>`;
   }).join('');
-  const tablas = ['A','B','C'].map(s=>`<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Serie ${s} — ranking final</h3></div>
+  const tablas = serieIdsAdm().map(s=>`<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>${serieTxtAdm(s)} — ranking final</h3></div>
     <div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>PG</th><th>Escalerilla</th><th>Bonos</th><th>INTER</th><th>Total</th><th>Pasa a</th></tr></thead><tbody>
-    ${rank[s].map(f=>`<tr><td>${f.ranking}</td><td>${cEsc(f.nombre)}${f.retirado?` <span class="hint">(${cEsc(f.estado)})</span>`:''}</td><td>${f.pj}</td><td>${f.pg}</td><td>${f.esc}</td><td>${f.bonos}</td><td>${f.inter}</td><td><b>${f.total}</b></td><td><select onchange="cierreMover('${f.id}',this.value)" style="${cierreMov[f.id]?'font-weight:700':''}">${['A','B','C'].map(x=>`<option value="${x}" ${(cierreMov[f.id]||f.serie)===x?'selected':''}>${x}${x===f.serie?' (se queda)':''}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="9" class="hint">Sin jugadores inscritos</td></tr>'}
+    ${rank[s].map(f=>`<tr><td>${f.ranking}</td><td>${cEsc(f.nombre)}${f.retirado?` <span class="hint">(${cEsc(f.estado)})</span>`:''}</td><td>${f.pj}</td><td>${f.pg}</td><td>${f.esc}</td><td>${f.bonos}</td><td>${f.inter}</td><td><b>${f.total}</b></td><td><select onchange="cierreMover('${f.id}',this.value)" style="${cierreMov[f.id]?'font-weight:700':''}">${serieIdsAdm().map(x=>`<option value="${x}" ${(cierreMov[f.id]||f.serie)===x?'selected':''}>${serieCortoAdm(x)}${x===f.serie?' (se queda)':''}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="9" class="hint">Sin jugadores inscritos</td></tr>'}
     </tbody></table></div></div>`).join('');
   body.innerHTML = `
     <div class="panel"><div class="panel-head"><h3>🏁 Cierre de temporada — ${cEsc(d.temporada.nombre)}</h3></div>
@@ -2471,7 +2858,7 @@ async function archivarCierre(){
   const marca = {};
   Object.keys(cierreMov).forEach(id=>{ marca[id]='Pasa a serie '+cierreMov[id]; });
   const filas = [];
-  ['A','B','C'].forEach(s=>rank[s].forEach(f=>{
+  serieIdsAdm().forEach(s=>rank[s].forEach(f=>{
     if(f.anulado) return;
     filas.push({ club_id:d.clubId, jugador_id:f.id, serie:s, temporada:d.anio, periodo,
       posicion:f.ranking, nota:`Cierre de temporada · ${f.total} pts (esc ${f.esc} + bonos ${f.bonos} + INTER ${f.inter})${marca[f.id]?' · '+marca[f.id]:''}` });
