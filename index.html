@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎾</text></svg>">
 <title>Club de Tenis Estadio Quilicura 2026</title>
-<meta name="description" content="Ranking en vivo de la Escalerilla por Series 2026 del Club de Tenis Estadio Quilicura. Jugadores, resultados, partidos pendientes y estadisticas de las Series A, B y C.">
+<meta name="description" content="Ranking en vivo de la Escalerilla por Series 2026 del Club de Tenis Estadio Quilicura. Jugadores, resultados, partidos pendientes y estadisticas.">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Club de Tenis Estadio Quilicura">
 <meta property="og:title" content="Club de Tenis Estadio Quilicura - Escalerilla 2026">
-<meta property="og:description" content="Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.">
+<meta property="og:description" content="Ranking en vivo, resultados y estadisticas de la Escalerilla 2026.">
 <meta property="og:image" content="https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg">
 <meta property="og:url" content="https://rcianghe.github.io/atp-Ciangherotti/">
 <meta name="twitter:card" content="summary">
@@ -1222,6 +1222,24 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .avisopago b{color:#fff}
 .avisopago-x{background:none;border:none;color:inherit;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 4px}
 </style>
+<style>
+/* Club distinto al de la plantilla base: se oculta lo que aun dice "Quilicura"
+   hasta que llega la configuracion real del club (evita el parpadeo). */
+html.club-otro:not(.club-listo) .splash-logo,html.club-otro:not(.club-listo) .lc-wrap,html.club-otro:not(.club-listo) .lt,html.club-otro:not(.club-listo) #heroTagline{visibility:hidden}
+html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
+</style>
+<script>
+(function(){
+  try{
+    var s=(new URLSearchParams(location.search).get('club')||'quilicura').trim().toLowerCase();
+    window.CLUB_SLUG_INICIAL=s;
+    if(s!=='quilicura'){
+      document.documentElement.classList.add('club-otro');
+      setTimeout(function(){document.documentElement.classList.add('club-listo');},6000);
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div id="splash" class="splash">
@@ -1322,9 +1340,11 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
     <div class="rankerr" id="rankErr">No se pudo actualizar el ranking en vivo. Mostrando el último dato disponible.</div>
     <div class="tabs" role="tablist" aria-label="Filtrar ranking por serie">
       <button class="tb active" role="tab" aria-selected="true" onclick="showTab('ranking','all',this)">General</button>
+      <span id="serieTabsDyn" style="display:contents">
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','A',this)">Serie A</button>
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','B',this)">Serie B</button>
       <button class="tb" role="tab" aria-selected="false" onclick="showTab('ranking','C',this)">Serie C</button>
+      </span>
     </div>
     <div id="rankCriterioGeneral" style="display:none;text-align:center;font-size:.78rem;color:var(--gl);max-width:620px;margin:0 auto 1rem;line-height:1.5;padding:0 .8rem;"></div>
     <div style="text-align:center;margin-bottom:1rem">
@@ -1419,7 +1439,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
     <div class="galb">
-      <a class="galbtn" id="galLinkAfiches" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album CTQ Afiches</a>
+      <a class="galbtn" id="galLinkAfiches" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album Afiches</a>
       <a class="galbtn" id="galLinkVintage" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
       <a class="galbtn" id="galLinkCompeticion" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
     </div>
@@ -1513,6 +1533,18 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
   var CLUB_TROFEO_URL = 'trofeo-torneo-interno-quilicura.PNG';
   var CLUB_HERO_TAGLINE = 'QUILICURA';
   var CLUB_OG_IMAGE_URL = 'https://rcianghe.github.io/atp-Ciangherotti/logo-club-tenis-estadio-quilicura.jpg';
+  // Plantilla estandar: si la URL pide otro club (?club=otro-slug), NADA de
+  // Quilicura debe verse como valor por defecto mientras llega su configuracion.
+  if(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura'){
+    CLUB_ACTUAL_ID = '';
+    CLUB_NOMBRE = 'Club de Tenis';
+    CLUB_NOMBRE_CORTO = 'Club';
+    CLUB_LOGO_URL = 'icon-192.png';
+    CLUB_MASCOTA_URL = '';
+    CLUB_TROFEO_URL = '';
+    CLUB_HERO_TAGLINE = '';
+    CLUB_OG_IMAGE_URL = '';
+  }
 </script>
 
 <script>
@@ -1679,8 +1711,8 @@ function programarRAll(){
     conScrollPreservado(function(){rAll();});
   },150);
 }
-var WA="56974723654";
-var METRO=["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
+var WA=(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura')?"":"56974723654";
+var METRO=(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura')?["Otra (a convenir)"]:["Quilicura","Pau Brasil","Barrancas","Neptuno","Plaza de Armas","Baquedano","Manuel Montt","Tobalaba","Escuela Militar","Otra (a convenir)"];
 
 /* ============================================================
    CHAT PRIVADO ENTRE CONTRINCANTES (Firebase / Cloud Firestore)
@@ -1865,7 +1897,7 @@ async function toggleReclamarPanel(){
     var sel=document.getElementById('reclamarSelect');
     if(!sel)return; // el usuario cerro el panel antes de que la lista terminara de cargar
     var opts='<option value="">Selecciona tu nombre...</option>';
-    for(var i=0;i<lista.length;i++)opts+='<option value="'+esc(lista[i].id)+'">'+esc(lista[i].nombre)+' (Serie '+esc(lista[i].serie)+')</option>';
+    for(var i=0;i<lista.length;i++)opts+='<option value="'+esc(lista[i].id)+'">'+esc(lista[i].nombre)+' ('+esc(serieTxt(lista[i].serie))+')</option>';
     sel.innerHTML=opts;
   }
 }
@@ -2298,13 +2330,92 @@ var PUNTOS = {gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:3
 // Se actualiza desde configuracion_sitio (clave "fixture_size") via
 // cargarFixtureSizeSupabase(), y se reutiliza cuando se recalcula el
 // ranking con datos de Supabase.
-var FIXTURE_SIZE_ACTUAL={A:9,B:9,C:22};
+var FIXTURE_SIZE_ACTUAL=(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura')?{}:{A:9,B:9,C:22};
 // Bonos de disponibilidad (registrados a mano en el admin, tabla
 // bonos_disponibilidad). Solo suman las series activadas en
 // configuracion_sitio ("bono_disponibilidad_activo": {"A":true,...}).
 // Mapa jugador_id -> puntos, ya filtrado por series activas; se llena en
 // cargarBonosDisponibilidadSupabase() y lo consume calcularRanking().
 var BONOS_DISP_PTS={};
+
+// ============================================================
+// SERIES / CATEGORIAS CONFIGURABLES POR CLUB (hasta 10)
+// ============================================================
+// Cada club define su lista ordenada (de la mas alta a la mas baja) en
+// configuracion_sitio clave 'series': [{id,nombre,corto,color}, ...]
+// y opcionalmente 'serie_rotulo' ("Serie" o "Categoria"). Sin config se
+// usan A/B/C (Quilicura). El id es lo que se guarda en la base de datos;
+// "corto" es lo que se ve en los chips (ej. "1ª").
+var SERIES_DEF=[
+  {id:'A',nombre:'Serie A',corto:'A',color:'#e05a4a'},
+  {id:'B',nombre:'Serie B',corto:'B',color:'#5a9ee0'},
+  {id:'C',nombre:'Serie C',corto:'C',color:'#7ed44a'}
+];
+var SERIE_ROTULO='Serie';
+var SERIES_PALETA=['#e05a4a','#5a9ee0','#7ed44a','#e0a53a','#a572e0','#3ac7c0','#e06aa8','#9aa0a6','#d4e60a','#ff8a4a'];
+function serieIds(){return SERIES_DEF.map(function(x){return x.id;});}
+function serieIdx(id){for(var i=0;i<SERIES_DEF.length;i++){if(SERIES_DEF[i].id===id)return i;}return -1;}
+function serieDef(id){var i=serieIdx(id);return i>=0?SERIES_DEF[i]:{id:id,nombre:SERIE_ROTULO+' '+id,corto:id,color:'#9a9a9a'};}
+function serieCorto(id){return serieDef(id).corto;}
+function serieTxt(id){return SERIE_ROTULO+' '+serieCorto(id);}
+function serieColor(id){return serieDef(id).color;}
+function serieOrden(id){var i=serieIdx(id);return i>=0?i:999;}
+function sbCls(id){return (id==='A'||id==='B'||id==='C')&&serieIdx(id)===({A:0,B:1,C:2})[id]?id:'sx'+serieIdx(id);}
+function serieMapaVacio(){var o={};serieIds().forEach(function(id){o[id]=[];});return o;}
+function normalizarSeriesConfig(v){
+  if(!Array.isArray(v)||!v.length)return null;
+  var out=[];
+  v.slice(0,10).forEach(function(x,i){
+    if(!x||x.id==null)return;
+    var id=String(x.id);
+    out.push({id:id,nombre:x.nombre||(SERIE_ROTULO+' '+(x.corto||id)),corto:String(x.corto||id),color:x.color||SERIES_PALETA[i%SERIES_PALETA.length]});
+  });
+  return out.length?out:null;
+}
+// Estilos para chips y bordes de las series que no son A/B/C "clasicas".
+function aplicarSeriesCss(){
+  var css='';
+  SERIES_DEF.forEach(function(d,i){
+    var c=d.color;
+    css+='.sb.sx'+i+'{background:color-mix(in srgb,'+c+' 25%,transparent);color:'+c+';border:1px solid color-mix(in srgb,'+c+' 45%,transparent)}';
+    css+='.rt tbody tr.seriesx'+i+',.rcard.seriesx'+i+'{border-left-color:'+c+'}';
+  });
+  var st=document.getElementById('seriesCss');
+  if(!st){st=document.createElement('style');st.id='seriesCss';document.head.appendChild(st);}
+  st.textContent=css;
+}
+// Botones de filtro del ranking (General + una por serie).
+function rTabsSeries(){
+  var cont=document.getElementById('serieTabsDyn');
+  if(!cont)return;
+  var h='';
+  SERIES_DEF.forEach(function(d){
+    h+='<button class="tb'+(cSF===d.id?' active':'')+'" role="tab" aria-selected="'+(cSF===d.id?'true':'false')+'" onclick="showTab(\'ranking\',\''+jsAttr(d.id)+'\',this)">'+esc(SERIE_ROTULO+' '+d.corto)+'</button>';
+  });
+  cont.innerHTML=h;
+}
+function aplicarSeriesClub(valor,rotulo){
+  if(typeof rotulo==='string'&&rotulo.trim())SERIE_ROTULO=rotulo.trim();
+  var n=normalizarSeriesConfig(valor);
+  if(n)SERIES_DEF=n;
+  if(cSF!=='all'&&serieIdx(cSF)<0)cSF='all';
+  aplicarSeriesCss();
+  rTabsSeries();
+}
+
+var TEMPORADA_NOMBRE='Escalerilla 2026';
+var TEMPORADA_ANIO=2026;
+var PUNTOS_BASE=Object.assign({},PUNTOS);
+// Mezcla las bases del club sobre los valores base y las deja en PUNTOS, que
+// es lo que usan el ranking, el perfil y el torneo.
+function aplicarBasesPuntosClub(){
+  var o=Object.assign({},PUNTOS_BASE);
+  var b=window.BASES_PUNTOS_CLUB;
+  if(b&&typeof b==='object'){
+    Object.keys(PUNTOS_BASE).forEach(function(k){var v=Number(b[k]);if(b[k]!=null&&isFinite(v))o[k]=v;});
+  }
+  Object.keys(o).forEach(function(k){PUNTOS[k]=o[k];});
+}
 
 function numSets(m){var n=0;if(m.set1)n++;if(m.set2)n++;if(m.set3)n++;return n;}
 function esBagel(setStr,ganadorEsJ1){if(!setStr)return false;var p=setStr.split('-');var a=parseInt(p[0],10),b=parseInt(p[1],10);if(isNaN(a)||isNaN(b))return false;return ganadorEsJ1?(a===6&&b===0):(b===6&&a===0);}
@@ -2351,10 +2462,10 @@ function ordenarRankingGeneral(pl){
 
 function calcularRanking(jugadores,resultados,fixtureSize){
   fixtureSize=fixtureSize||{A:9,B:9,C:22};
-  var porSerie={A:[],B:[],C:[]};
+  var porSerie=serieMapaVacio();
   jugadores.forEach(function(j){if(porSerie[j.serie])porSerie[j.serie].push(j);});
   var salida={};
-  ['A','B','C'].forEach(function(serie){
+  serieIds().forEach(function(serie){
     var jugadoresSerie=porSerie[serie];
     var anulados={};
     jugadoresSerie.forEach(function(j){if(j.estado==='Retirado -50%')anulados[j.nombre]=true;});
@@ -2550,16 +2661,16 @@ function construirTickerHero(){
     var ordenados=DATA.results.slice().sort(function(a,b){return parseFechaDDMMYYYY(b.fecha)-parseFechaDDMMYYYY(a.fecha);});
     var ult=ordenados[0];
     if(ult.dobleWO){
-      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.jugador1)+'</b> vs <b>'+esc(ult.jugador2)+'</b> \u2014 Doble W.O. (Serie '+esc(ult.serie)+')');
+      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.jugador1)+'</b> vs <b>'+esc(ult.jugador2)+'</b> \u2014 Doble W.O. ('+esc(serieTxt(ult.serie))+')');
     }else{
-      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.ganador)+'</b> venci\u00f3 a '+esc(ult.perdedor)+' '+esc(ult.score)+' (Serie '+esc(ult.serie)+')');
+      partes.push('\ud83c\udfbe \u00daltimo resultado: <b>'+esc(ult.ganador)+'</b> venci\u00f3 a '+esc(ult.perdedor)+' '+esc(ult.score)+' ('+esc(serieTxt(ult.serie))+')');
     }
   }
   if(DATA.matches&&DATA.matches.length){
     var pendientes=DATA.matches.filter(function(m){return m.status==='pending'&&m.fecha;}).sort(function(a,b){return parseFechaDDMMYYYY(a.fecha)-parseFechaDDMMYYYY(b.fecha);});
     if(pendientes.length){
       var prox=pendientes[0];
-      partes.push('\ud83d\udcc5 Pr\u00f3ximo partido: <b>'+esc(prox.p1||'Por definir')+'</b> vs <b>'+esc(prox.p2||'Por definir')+'</b> \u00b7 '+esc(prox.fecha)+(prox.hora?(' '+esc(prox.hora)):'')+' (Serie '+esc(prox.serie)+')');
+      partes.push('\ud83d\udcc5 Pr\u00f3ximo partido: <b>'+esc(prox.p1||'Por definir')+'</b> vs <b>'+esc(prox.p2||'Por definir')+'</b> \u00b7 '+esc(prox.fecha)+(prox.hora?(' '+esc(prox.hora)):'')+' ('+esc(serieTxt(prox.serie))+')');
     }
   }
   if(DATA.players&&DATA.players.length){
@@ -2572,7 +2683,7 @@ function construirTickerHero(){
   var jugados=(DATA.results||[]).length;
   var pend=(DATA.matches||[]).filter(function(m){return m.status==='pending';}).length;
   partes.push('\ud83d\udcca '+jugados+' partidos jugados \u00b7 '+pend+' pendientes esta temporada');
-  if(!partes.length)partes.push('\ud83c\udfbe Bienvenido al Club de Tenis Estadio Quilicura');
+  if(!partes.length)partes.push('\ud83c\udfbe Bienvenido a '+CLUB_NOMBRE);
   var html=partes.map(function(p){return '<span class="hticker-part">'+p+'</span>';}).join('');
   if(g1.__html===html)return; // sin cambios: no reiniciar el marquee
   g1.__html=html;
@@ -2586,7 +2697,7 @@ function rJugadorDelMes(){
   var jm=calcularJugadorDelMes();
   if(!jm){el.classList.remove('show');return;}
   document.getElementById('hjmNombre').textContent=jm.nombre;
-  document.getElementById('hjmDelta').textContent=fraseDestacado(jm.nombre)+' - '+jm.cantidad+(jm.cantidad===1?' victoria seguida':' victorias seguidas')+' - Serie '+jm.serie;
+  document.getElementById('hjmDelta').textContent=fraseDestacado(jm.nombre)+' - '+jm.cantidad+(jm.cantidad===1?' victoria seguida':' victorias seguidas')+' - '+serieTxt(jm.serie);
   // Foto de cuerpo: viene directo del jugador (jugadores.foto_cuerpo_url
   // en Supabase, ya incluido en DATA.players). Si el jugador destacado no
   // tiene foto cargada, simplemente no se muestra (la tarjeta sigue
@@ -2702,7 +2813,7 @@ async function cargarJugadoresYResultadosSupabase(){
 
     var ranking=calcularRanking(jugadoresRaw,resultadosRaw,FIXTURE_SIZE_ACTUAL);
     var porNombre={};
-    ['A','B','C'].forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
+    serieIds().forEach(function(s){ranking[s].forEach(function(f){porNombre[f.nombre]=f;});});
 
     DATA.players=jugadoresRaw.map(function(j){
       var f=porNombre[j.nombre]||{pj:0,pg:0,pp:0,total:0,retirado:false};
@@ -2913,9 +3024,9 @@ var tintActualPorTipo={interno:null,abierto:null};
 // Colores de marca por serie (mismos tonos que .sb.A/.sb.B/.sb.C y el glow
 // del podio): Serie A = rojo, Serie B = azul, Serie C = verde. ABIERTO usa
 // el amarillo/lima de marca (--am) ya que no pertenece a una sola serie.
-var SERIE_COLORES={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a',ABIERTO:'#D4E60A'};
+var SERIE_COLORES={ABIERTO:'#D4E60A'};
 function colorDeTorneo(t){
-  return (t.serie&&SERIE_COLORES[t.serie])?SERIE_COLORES[t.serie]:SERIE_COLORES.ABIERTO;
+  return t.serie?serieColor(t.serie):SERIE_COLORES.ABIERTO;
 }
 // "" para interno (ids historicos, sin sufijo) y "Abierto" para el
 // nuevo tipo -- asi los ids de interno no cambian y no hay riesgo de
@@ -2988,12 +3099,24 @@ async function cargarFixtureSizeSupabase(){
   }catch(err){
     console.warn('Sin conexion al cargar el tamaño de fixture.',err);
   }
+  await aplicarTemporadaClub();
+  // Series/categorias del club (hasta 10) y rotulo ("Serie" / "Categoria").
+  try{
+    var cs=await window.supabaseClient.from('configuracion_sitio').select('clave,valor').in('clave',['series','serie_rotulo']).eq('club_id',CLUB_ACTUAL_ID);
+    if(!cs.error&&cs.data){
+      var vS=null,vR=null;
+      cs.data.forEach(function(r){if(r.clave==='series')vS=r.valor;else if(r.clave==='serie_rotulo')vR=r.valor;});
+      aplicarSeriesClub(vS,typeof vR==='string'?vR:null);
+    }
+  }catch(e){console.warn('No se pudo cargar la configuracion de series.',e);}
   // Bases de puntuacion propias del club (opcional): configuracion_sitio
-  // clave 'bases_puntos' = {"gana2sets":300,...}. Si no existe, rige PUNTOS.
+  // clave 'bases_puntos' = {"gana2sets":300,...}. Cada club define las suyas;
+  // un bono en 0 queda desactivado. Lo que no se define usa los valores base.
   try{
     var bp=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','bases_puntos').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
     window.BASES_PUNTOS_CLUB=(bp&&bp.data&&bp.data.valor&&typeof bp.data.valor==='object')?bp.data.valor:null;
   }catch(e){window.BASES_PUNTOS_CLUB=null;}
+  aplicarBasesPuntosClub();
   // Los bonos de disponibilidad se cargan en el mismo paso, asi todos los
   // lugares que ya refrescan el fixture tambien refrescan estos bonos
   // antes de recalcular el ranking.
@@ -3063,6 +3186,10 @@ async function resolverClubDesdeURL(){
       .select('id,activo,sitio_web_externo')
       .eq('slug',slug).maybeSingle();
     if(res.error||!res.data){
+      if(slug!==CLUB_SLUG_DEFAULT&&!res.error){
+        mostrarClubNoEncontrado(slug);
+        return false; // slug escrito a mano que no existe: no mostrar datos de otro club
+      }
       console.warn('No se encontro el club con slug "'+slug+'", se usa el club por defecto.',res.error);
       return true; // sigue con CLUB_ACTUAL_ID por defecto (Quilicura)
     }
@@ -3083,10 +3210,23 @@ async function resolverClubDesdeURL(){
   }
 }
 
+function mostrarClubNoEncontrado(slug){
+  var sp=document.getElementById('splash');
+  document.documentElement.classList.add('club-listo');
+  if(!sp)return;
+  sp.classList.remove('hide');
+  sp.innerHTML='<div style="text-align:center;padding:0 1.8rem;max-width:360px">'
+    +'<div style="font-size:2.4rem;margin-bottom:.7rem">🎾</div>'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem">Club no encontrado</div>'
+    +'<div style="font-size:.85rem;color:#9a9a9a;line-height:1.5">No existe un club con el enlace &quot;'+String(slug).replace(/[^a-z0-9-]/g,'')+'&quot;. Revisa que la direccion este bien escrita.</div>'
+    +'</div>';
+}
+
 // Se muestra en vez de la plantilla cuando el club existe pero tiene el
 // servicio pausado (clubes.activo=false). Reusa la pantalla de splash
 // (ya es un overlay a pantalla completa) en vez de armar una nueva.
 function mostrarClubCongelado(){
+  document.documentElement.classList.add('club-listo');
   var sp=document.getElementById('splash');
   if(!sp)return;
   sp.classList.remove('hide');
@@ -3149,25 +3289,34 @@ function aplicarBrandingClub(tema,albumes){
     if(tema.primario_claro)root.setProperty('--vl',tema.primario_claro);
     if(tema.acento)root.setProperty('--am',tema.acento);
   }
-  document.title=CLUB_NOMBRE+' - Escalerilla 2026';
+  document.title=CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE;
   var metaDesc=document.querySelector('meta[name="description"]');
-  if(metaDesc)metaDesc.setAttribute('content','Ranking en vivo de la Escalerilla por Series 2026 de '+CLUB_NOMBRE+'. Jugadores, resultados, partidos pendientes y estadisticas de las Series A, B y C.');
+  if(metaDesc)metaDesc.setAttribute('content','Ranking en vivo de la Escalerilla por Series 2026 de '+CLUB_NOMBRE+'. Jugadores, resultados, partidos pendientes y estadisticas.');
   var ogSite=document.querySelector('meta[property="og:site_name"]');
   if(ogSite)ogSite.setAttribute('content',CLUB_NOMBRE);
   var ogTitle=document.querySelector('meta[property="og:title"]');
-  if(ogTitle)ogTitle.setAttribute('content',CLUB_NOMBRE+' - Escalerilla 2026');
+  if(ogTitle)ogTitle.setAttribute('content',CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE);
   var ogDesc=document.querySelector('meta[property="og:description"]');
-  if(ogDesc)ogDesc.setAttribute('content','Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.');
+  if(ogDesc)ogDesc.setAttribute('content','Ranking en vivo, resultados y estadisticas de '+TEMPORADA_NOMBRE+'.');
   var ogImg=document.querySelector('meta[property="og:image"]');
   if(ogImg)ogImg.setAttribute('content',CLUB_OG_IMAGE_URL);
   var twTitle=document.querySelector('meta[name="twitter:title"]');
-  if(twTitle)twTitle.setAttribute('content',CLUB_NOMBRE+' - Escalerilla 2026');
+  if(twTitle)twTitle.setAttribute('content',CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE);
   var twImg=document.querySelector('meta[name="twitter:image"]');
   if(twImg)twImg.setAttribute('content',CLUB_OG_IMAGE_URL);
 
   var logos=document.querySelectorAll('.splash-logo,.lc');
   for(var i=0;i<logos.length;i++)logos[i].src=CLUB_LOGO_URL;
 
+  var ltEl=document.querySelector('header .lt');
+  if(ltEl){
+    var tn=String(CLUB_NOMBRE||'').replace(/^club de tenis\s+/i,'').trim();
+    ltEl.innerHTML='CLUB DE TENIS<br><span></span>';
+    ltEl.querySelector('span').textContent=tn.toUpperCase();
+  }
+  var lcImg=document.querySelector('.lc');if(lcImg)lcImg.alt='Logo del '+CLUB_NOMBRE;
+  var appT=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(appT)appT.setAttribute('content',CLUB_NOMBRE_CORTO);
+  document.documentElement.classList.add('club-listo');
   var tagEl=document.getElementById('heroTagline');
   if(tagEl)tagEl.textContent=CLUB_HERO_TAGLINE;
 
@@ -3191,7 +3340,7 @@ function tintCambiar(tipo,k){tintActualPorTipo[tipo]=k;rTorneoSeccion(tipo);}
 // (cuando serie es null, como en el Abierto).
 function etiquetaTorneo(t){
   if(t.nombre)return t.nombre;
-  if(t.serie)return 'Serie '+t.serie+(t.periodo?(' \u00b7 '+t.periodo):'');
+  if(t.serie)return serieTxt(t.serie)+(t.periodo?(' \u00b7 '+t.periodo):'');
   return 'Torneo Abierto'+(t.periodo?(' \u00b7 '+t.periodo):'');
 }
 
@@ -3220,7 +3369,7 @@ function rTintEstadoYCampeon(tipo,t){
   var camp=document.getElementById('tintCampeon'+sufijoTipo(tipo));
   if(!camp)return;
   TINT_CAMPEON_POR_TIPO[tipo]=t;
-  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo" loading="lazy">';
+  var img=CLUB_TROFEO_URL?'<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo" loading="lazy">':'<span class="trofeo-ic" style="font-size:2rem;line-height:1">\ud83c\udfc6</span>';
   var attrs='tabindex="0" role="button" aria-label="Ver campe\u00f3n en grande" onclick="tocarCampeonBox(this,\''+tipo+'\')" onkeydown="'+kbActivate("tocarCampeonBox(this,'"+tipo+"')")+'"';
   var etiquetaCampeon=esc(etiquetaTorneo(t));
   if(t.campeon){
@@ -3278,7 +3427,7 @@ function abrirCampeonModal(tipo){
   if(modal.parentNode!==document.body)document.body.appendChild(modal); // nunca dentro de una seccion que puede estar oculta
   if(modal.classList.contains('activo'))return; // ya esta abierto: no volver a bloquear el scroll encima
   card.style.setProperty('--serie-color',colorDeTorneo(t));
-  var img='<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo">';
+  var img=CLUB_TROFEO_URL?'<img class="trofeo-ic" src="'+CLUB_TROFEO_URL+'" alt="Trofeo">':'<span class="trofeo-ic" style="font-size:2rem;line-height:1">\ud83c\udfc6</span>';
   var etiquetaModal=esc(etiquetaTorneo(t));
   if(t.campeon){
     card.className='tint-campeon-modal-card';
@@ -3317,13 +3466,13 @@ function actualizarMetaDinamico(){
   });
   var title,desc;
   if(campeonReciente){
-    var quien=campeonReciente.serie?('la Serie '+campeonReciente.serie):(campeonReciente.nombre||'el Torneo Abierto');
+    var quien=campeonReciente.serie?('la '+serieTxt(campeonReciente.serie)):(campeonReciente.nombre||'el Torneo Abierto');
     title='🏆 '+campeonReciente.campeon+' es el campeon de '+quien+' — '+CLUB_NOMBRE_CORTO;
     var etiquetaTipo=tipoReciente==='abierto'?'Torneo Abierto':'Torneo Interno';
     desc=etiquetaTipo+' '+(campeonReciente.periodo?campeonReciente.periodo+' ':'')+campeonReciente.temporada+'. Revisa el bracket completo y el ranking en vivo del club.';
   }else{
-    title=CLUB_NOMBRE+' - Escalerilla 2026';
-    desc='Ranking en vivo, resultados y estadisticas de la Escalerilla por Series 2026. Series A, B y C.';
+    title=CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE;
+    desc='Ranking en vivo, resultados y estadisticas de '+TEMPORADA_NOMBRE+'.';
   }
   ogTitle.setAttribute('content',title);
   if(ogDesc)ogDesc.setAttribute('content',desc);
@@ -3660,6 +3809,9 @@ function iniciarRealtime(){
 
 var DATA = {"players":[{"id":1,"nombre":"Gonzalo Reyes","serie":"A","pts":1950,"pj":8,"pg":7,"pp":1,"trend":0,"retirado":false},{"id":2,"nombre":"Marcelo Cardenas","serie":"A","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":3,"nombre":"Hector Leiva","serie":"A","pts":675,"pj":4,"pg":2,"pp":2,"trend":0,"retirado":false},{"id":4,"nombre":"Eric Cabezas","serie":"A","pts":25,"pj":1,"pg":0,"pp":1,"trend":0,"retirado":false},{"id":5,"nombre":"Israel Muñoz","serie":"A","pts":325,"pj":4,"pg":1,"pp":3,"trend":0,"retirado":false},{"id":6,"nombre":"Cristian Vega","serie":"A","pts":850,"pj":6,"pg":3,"pp":3,"trend":0,"retirado":false},{"id":7,"nombre":"Marco Toledo","serie":"A","pts":325,"pj":6,"pg":1,"pp":5,"trend":0,"retirado":false},{"id":8,"nombre":"Cristian Vargas","serie":"A","pts":1475,"pj":7,"pg":5,"pp":2,"trend":0,"retirado":false},{"id":9,"nombre":"Manuel Cubillos","serie":"A","pts":725,"pj":6,"pg":2,"pp":4,"trend":0,"retirado":false},{"id":10,"nombre":"Felipe Alvarado","serie":"A","pts":650,"pj":4,"pg":2,"pp":2,"trend":0,"retirado":false},{"id":11,"nombre":"Alex Gonzalez","serie":"B","pts":1575,"pj":8,"pg":6,"pp":2,"trend":0,"retirado":false},{"id":12,"nombre":"Humberto Cabezas","serie":"B","pts":775,"pj":8,"pg":2,"pp":6,"trend":0,"retirado":false},{"id":13,"nombre":"Luis Quiroz","serie":"B","pts":425,"pj":8,"pg":1,"pp":7,"trend":0,"retirado":false},{"id":14,"nombre":"German Lara","serie":"B","pts":825,"pj":8,"pg":3,"pp":5,"trend":0,"retirado":false},{"id":15,"nombre":"Miguel Gonzalez","serie":"B","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":16,"nombre":"Oscar Medina","serie":"B","pts":950,"pj":8,"pg":3,"pp":5,"trend":0,"retirado":false},{"id":17,"nombre":"Cristobal Tello","serie":"B","pts":1200,"pj":8,"pg":4,"pp":4,"trend":0,"retirado":false},{"id":18,"nombre":"Ricardo Ciangherotti","serie":"B","pts":1475,"pj":8,"pg":5,"pp":3,"trend":0,"retirado":false},{"id":19,"nombre":"Luis Duran","serie":"B","pts":2300,"pj":8,"pg":7,"pp":1,"trend":0,"retirado":false},{"id":20,"nombre":"Cristian Crisostomo","serie":"B","pts":1625,"pj":8,"pg":5,"pp":3,"trend":0,"retirado":false},{"id":21,"nombre":"Fernando Tello","serie":"C","pts":1325,"pj":11,"pg":4,"pp":7,"trend":0,"retirado":false},{"id":22,"nombre":"Marcelo Lorca","serie":"C","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":23,"nombre":"Juan Estevez","serie":"C","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":24,"nombre":"Franco Montero","serie":"C","pts":3650,"pj":14,"pg":12,"pp":2,"trend":0,"retirado":false},{"id":25,"nombre":"Victor Lopez","serie":"C","pts":2500,"pj":9,"pg":8,"pp":1,"trend":0,"retirado":false},{"id":26,"nombre":"Carlos Videla","serie":"C","pts":2325,"pj":11,"pg":7,"pp":4,"trend":0,"retirado":false},{"id":27,"nombre":"Ivan Huina","serie":"C","pts":3125,"pj":11,"pg":10,"pp":1,"trend":0,"retirado":false},{"id":28,"nombre":"J Pablo Sta Cruz","serie":"C","pts":1425,"pj":13,"pg":4,"pp":9,"trend":0,"retirado":false},{"id":29,"nombre":"Ruben Sanchez","serie":"C","pts":975,"pj":11,"pg":3,"pp":8,"trend":0,"retirado":false},{"id":30,"nombre":"Douglas Diaz","serie":"C","pts":1175,"pj":9,"pg":3,"pp":6,"trend":0,"retirado":false},{"id":31,"nombre":"Hector Varela","serie":"C","pts":650,"pj":9,"pg":2,"pp":7,"trend":0,"retirado":false},{"id":32,"nombre":"Franco Figueroa","serie":"C","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":33,"nombre":"Diego Ugarte","serie":"C","pts":3825,"pj":13,"pg":12,"pp":1,"trend":0,"retirado":false},{"id":34,"nombre":"Humberto Varas","serie":"C","pts":400,"pj":6,"pg":1,"pp":5,"trend":0,"retirado":false},{"id":35,"nombre":"Daniel Tripaiano","serie":"C","pts":1325,"pj":9,"pg":5,"pp":4,"trend":0,"retirado":false},{"id":36,"nombre":"German Sendra","serie":"C","pts":950,"pj":9,"pg":3,"pp":6,"trend":0,"retirado":false},{"id":37,"nombre":"Miguel Osores","serie":"C","pts":0,"pj":0,"pg":0,"pp":0,"trend":0,"retirado":true},{"id":38,"nombre":"Nicolas Gomez","serie":"C","pts":275,"pj":11,"pg":0,"pp":11,"trend":0,"retirado":false},{"id":39,"nombre":"Luis Vega","serie":"C","pts":1000,"pj":10,"pg":3,"pp":7,"trend":0,"retirado":false},{"id":40,"nombre":"Marcelo Lastra","serie":"C","pts":1475,"pj":7,"pg":5,"pp":2,"trend":0,"retirado":false},{"id":41,"nombre":"Patricio Orellana","serie":"C","pts":1500,"pj":9,"pg":5,"pp":4,"trend":0,"retirado":false},{"id":42,"nombre":"Juan Espina","serie":"C","pts":1225,"pj":12,"pg":3,"pp":9,"trend":0,"retirado":false},{"id":43,"nombre":"David Llevi","serie":"C","pts":1800,"pj":8,"pg":6,"pp":2,"trend":0,"retirado":false}],"results":[{"fecha":"11-04-2026","ganador":"Humberto Varas","perdedor":"Hector Varela","score":"1-6 1-6","serie":"C"},{"fecha":"11-04-2026","ganador":"Fernando Tello","perdedor":"Nicolas Gomez","score":"6-0 6-1","serie":"C"},{"fecha":"11-04-2026","ganador":"Cristian Crisostomo","perdedor":"Luis Quiroz","score":"W.O.","serie":"B"},{"fecha":"11-04-2026","ganador":"Diego Ugarte","perdedor":"Daniel Tripaiano","score":"6-1 6-3","serie":"C"},{"fecha":"11-04-2026","ganador":"Luis Duran","perdedor":"Humberto Cabezas","score":"2-6 0-6","serie":"B"},{"fecha":"12-04-2026","ganador":"Ricardo Ciangherotti","perdedor":"German Lara","score":"6-3 3-6 5-10","serie":"B"},{"fecha":"12-04-2026","ganador":"Manuel Cubillos","perdedor":"Marco Toledo","score":"6-4 6-2","serie":"A"},{"fecha":"12-04-2026","ganador":"Gonzalo Reyes","perdedor":"Hector Leiva","score":"6-7 7-6 10-5","serie":"A"},{"fecha":"12-04-2026","ganador":"Luis Vega","perdedor":"German Sendra","score":"4-6 1-6","serie":"C"},{"fecha":"18-04-2026","ganador":"Ivan Huina","perdedor":"German Sendra","score":"6-2 6-3","serie":"C"},{"fecha":"18-04-2026","ganador":"Victor Lopez","perdedor":"J Pablo Sta Cruz","score":"6-1 6-3","serie":"C"},{"fecha":"18-04-2026","ganador":"Cristobal Tello","perdedor":"Oscar Medina","score":"6-2 5-7 2-10","serie":"B"},{"fecha":"19-04-2026","ganador":"Luis Duran","perdedor":"Luis Quiroz","score":"0-6 0-6","serie":"B"},{"fecha":"19-04-2026","ganador":"Daniel Tripaiano","perdedor":"Douglas Diaz","score":"3-6 2-6","serie":"C"},{"fecha":"19-04-2026","ganador":"Gonzalo Reyes","perdedor":"Felipe Alvarado","score":"7-6 6-2","serie":"A"},{"fecha":"19-04-2026","ganador":"Diego Ugarte","perdedor":"Hector Varela","score":"0-6 0-6","serie":"C"},{"fecha":"19-04-2026","ganador":"Gonzalo Reyes","perdedor":"Eric Cabezas","score":"6-3 6-1","serie":"A"},{"fecha":"25-04-2026","ganador":"Humberto Cabezas","perdedor":"Oscar Medina","score":"6-2 7-6","serie":"B"},{"fecha":"25-04-2026","ganador":"Ruben Sanchez","perdedor":"J Pablo Sta Cruz","score":"3-6 4-6","serie":"C"},{"fecha":"25-04-2026","ganador":"Cristobal Tello","perdedor":"German Lara","score":"5-7 5-7","serie":"B"},{"fecha":"25-04-2026","ganador":"Carlos Videla","perdedor":"Humberto Varas","score":"6-0 6-3","serie":"C"},{"fecha":"25-04-2026","ganador":"Ricardo Ciangherotti","perdedor":"Luis Quiroz","score":"3-6 5-7","serie":"B"},{"fecha":"25-04-2026","ganador":"Alex Gonzalez","perdedor":"Cristian Crisostomo","score":"6-7 6-4 10-9","serie":"B"},{"fecha":"26-04-2026","ganador":"Cristian Vargas","perdedor":"Cristian Vega","score":"2-6 4-6","serie":"A"},{"fecha":"26-04-2026","ganador":"Ivan Huina","perdedor":"Nicolas Gomez","score":"6-0 6-0","serie":"C"},{"fecha":"26-04-2026","ganador":"Cristian Vargas","perdedor":"Manuel Cubillos","score":"6-1 6-2","serie":"A"},{"fecha":"02-05-2026","ganador":"Ruben Sanchez","perdedor":"German Sendra","score":"0-6 6-4 10-8","serie":"C"},{"fecha":"02-05-2026","ganador":"Ricardo Ciangherotti","perdedor":"Luis Duran","score":"W.O.","serie":"B"},{"fecha":"02-05-2026","ganador":"Ivan Huina","perdedor":"Hector Varela","score":"6-0 6-0","serie":"C"},{"fecha":"02-05-2026","ganador":"German Lara","perdedor":"Luis Quiroz","score":"6-4 3-6 4-10","serie":"B"},{"fecha":"03-05-2026","ganador":"Hector Leiva","perdedor":"Cristian Vega","score":"W.O.","serie":"A"},{"fecha":"03-05-2026","ganador":"Cristian Crisostomo","perdedor":"Cristobal Tello","score":"3-6 0-6","serie":"B"},{"fecha":"03-05-2026","ganador":"Alex Gonzalez","perdedor":"Oscar Medina","score":"6-1 6-2","serie":"B"},{"fecha":"03-05-2026","ganador":"Carlos Videla","perdedor":"J Pablo Sta Cruz","score":"6-1 6-4","serie":"C"},{"fecha":"03-05-2026","ganador":"Cristian Vega","perdedor":"Gonzalo Reyes","score":"6-4 1-6 10-6","serie":"A"},{"fecha":"09-05-2026","ganador":"Franco Montero","perdedor":"Fernando Tello","score":"0-6 3-6","serie":"C"},{"fecha":"09-05-2026","ganador":"Douglas Diaz","perdedor":"Nicolas Gomez","score":"6-0 6-0","serie":"C"},{"fecha":"09-05-2026","ganador":"Victor Lopez","perdedor":"Daniel Tripaiano","score":"W.O.","serie":"C"},{"fecha":"10-05-2026","ganador":"Humberto Cabezas","perdedor":"Luis Quiroz","score":"6-4 6-3","serie":"B"},{"fecha":"10-05-2026","ganador":"Ricardo Ciangherotti","perdedor":"Oscar Medina","score":"2-6 5-7","serie":"B"},{"fecha":"10-05-2026","ganador":"Daniel Tripaiano","perdedor":"Fernando Tello","score":"6-1 0-6 5-10","serie":"C"},{"fecha":"10-05-2026","ganador":"Israel Muñoz","perdedor":"Manuel Cubillos","score":"7-6 3-6 10-7","serie":"A"},{"fecha":"10-05-2026","ganador":"Felipe Alvarado","perdedor":"Cristian Vargas","score":"6-3 7-6","serie":"A"},{"fecha":"16-05-2026","ganador":"Carlos Videla","perdedor":"German Sendra","score":"6-1 6-1","serie":"C"},{"fecha":"16-05-2026","ganador":"Victor Lopez","perdedor":"Nicolas Gomez","score":"6-1 6-1","serie":"C"},{"fecha":"16-05-2026","ganador":"Franco Montero","perdedor":"Douglas Diaz","score":"6-1 6-3","serie":"C"},{"fecha":"16-05-2026","ganador":"Alex Gonzalez","perdedor":"Cristobal Tello","score":"7-6 1-6 10-7","serie":"B"},{"fecha":"17-05-2026","ganador":"Luis Vega","perdedor":"Ruben Sanchez","score":"3-6 2-6","serie":"C"},{"fecha":"17-05-2026","ganador":"Hector Varela","perdedor":"Nicolas Gomez","score":"3-6 6-2 10-6","serie":"C"},{"fecha":"17-05-2026","ganador":"Cristian Vargas","perdedor":"Hector Leiva","score":"7-6 6-3","serie":"A"},{"fecha":"17-05-2026","ganador":"Luis Duran","perdedor":"Cristian Crisostomo","score":"6-0 6-0","serie":"B"},{"fecha":"17-05-2026","ganador":"Manuel Cubillos","perdedor":"Cristian Vega","score":"6-2 6-3","serie":"A"},{"fecha":"23-05-2026","ganador":"Cristian Crisostomo","perdedor":"Ricardo Ciangherotti","score":"2-6 3-6","serie":"B"},{"fecha":"23-05-2026","ganador":"Oscar Medina","perdedor":"German Lara","score":"W.O.","serie":"B"},{"fecha":"23-05-2026","ganador":"Ruben Sanchez","perdedor":"Hector Varela","score":"6-2 6-2","serie":"C"},{"fecha":"24-05-2026","ganador":"Victor Lopez","perdedor":"Franco Montero","score":"3-6 4-6","serie":"C"},{"fecha":"24-05-2026","ganador":"Felipe Alvarado","perdedor":"Marco Toledo","score":"7-6 6-4","serie":"A"},{"fecha":"24-05-2026","ganador":"Gonzalo Reyes","perdedor":"Manuel Cubillos","score":"6-2 6-4","serie":"A"},{"fecha":"24-05-2026","ganador":"Carlos Videla","perdedor":"Douglas Diaz","score":"6-2 6-1","serie":"C"},{"fecha":"30-05-2026","ganador":"Cristian Crisostomo","perdedor":"German Lara","score":"4-6 5-7","serie":"B"},{"fecha":"30-05-2026","ganador":"Alex Gonzalez","perdedor":"Luis Quiroz","score":"W.O.","serie":"B"},{"fecha":"30-05-2026","ganador":"Ricardo Ciangherotti","perdedor":"Humberto Cabezas","score":"5-7 4-6","serie":"B"},{"fecha":"31-05-2026","ganador":"Cristian Vargas","perdedor":"Israel Muñoz","score":"6-3 1-6 10-8","serie":"A"},{"fecha":"31-05-2026","ganador":"Douglas Diaz","perdedor":"Humberto Varas","score":"W.O.","serie":"C"},{"fecha":"31-05-2026","ganador":"Cristobal Tello","perdedor":"Humberto Cabezas","score":"2-6 3-6","serie":"B"},{"fecha":"31-05-2026","ganador":"Victor Lopez","perdedor":"Diego Ugarte","score":"6-3 6-3","serie":"C"},{"fecha":"31-05-2026","ganador":"Franco Montero","perdedor":"German Sendra","score":"W.O.","serie":"C"},{"fecha":"31-05-2026","ganador":"Cristian Vega","perdedor":"Felipe Alvarado","score":"6-4 7-6","serie":"A"},{"fecha":"06-06-2026","ganador":"Alex Gonzalez","perdedor":"Humberto Cabezas","score":"4-6 6-4 10-8","serie":"B"},{"fecha":"06-06-2026","ganador":"Daniel Tripaiano","perdedor":"Ruben Sanchez","score":"4-6 5-7","serie":"C"},{"fecha":"06-06-2026","ganador":"Carlos Videla","perdedor":"Fernando Tello","score":"6-7 3-6","serie":"C"},{"fecha":"06-06-2026","ganador":"Ivan Huina","perdedor":"Luis Vega","score":"W.O.","serie":"C"},{"fecha":"07-06-2026","ganador":"J Pablo Sta Cruz","perdedor":"Nicolas Gomez","score":"6-0 6-0","serie":"C"},{"fecha":"07-06-2026","ganador":"Hector Varela","perdedor":"Luis Vega","score":"W.O.","serie":"C"},{"fecha":"07-06-2026","ganador":"Oscar Medina","perdedor":"Luis Quiroz","score":"W.O.","serie":"B"},{"fecha":"13-06-2026","ganador":"Fernando Tello","perdedor":"Luis Vega","score":"W.O.","serie":"C"},{"fecha":"13-06-2026","ganador":"Diego Ugarte","perdedor":"Franco Montero","score":"6-7 6-7","serie":"C"},{"fecha":"13-06-2026","ganador":"German Sendra","perdedor":"Humberto Varas","score":"3-6 6-1 8-10","serie":"C"},{"fecha":"13-06-2026","ganador":"Luis Duran","perdedor":"Oscar Medina","score":"0-6 3-6","serie":"B"},{"fecha":"13-06-2026","ganador":"Victor Lopez","perdedor":"Douglas Diaz","score":"6-0 6-0","serie":"C"},{"fecha":"14-06-2026","ganador":"Luis Duran","perdedor":"German Lara","score":"0-6 1-6","serie":"B"},{"fecha":"14-06-2026","ganador":"Oscar Medina","perdedor":"Cristian Crisostomo","score":"6-4 1-6 10-4","serie":"B"},{"fecha":"14-06-2026","ganador":"Carlos Videla","perdedor":"Ruben Sanchez","score":"6-3 6-0","serie":"C"},{"fecha":"20-06-2026","ganador":"Cristobal Tello","perdedor":"Ricardo Ciangherotti","score":"6-4 6-1","serie":"B"},{"fecha":"20-06-2026","ganador":"Ivan Huina","perdedor":"Daniel Tripaiano","score":"W.O.","serie":"C"},{"fecha":"20-06-2026","ganador":"Diego Ugarte","perdedor":"Ruben Sanchez","score":"6-7 1-6","serie":"C"},{"fecha":"20-06-2026","ganador":"German Lara","perdedor":"Humberto Cabezas","score":"1-6 2-6","serie":"B"},{"fecha":"21-06-2026","ganador":"Alex Gonzalez","perdedor":"Ricardo Ciangherotti","score":"6-3 6-3","serie":"B"},{"fecha":"27-06-2026","ganador":"Victor Lopez","perdedor":"Ruben Sanchez","score":"6-0 6-3","serie":"C"},{"fecha":"27-06-2026","ganador":"Luis Duran","perdedor":"Alex Gonzalez","score":"3-6 3-6","serie":"B"},{"fecha":"27-06-2026","ganador":"Luis Quiroz","perdedor":"Cristobal Tello","score":"W.O.","serie":"B"},{"fecha":"27-06-2026","ganador":"German Sendra","perdedor":"J Pablo Sta Cruz","score":"W.O.","serie":"C"},{"fecha":"28-06-2026","ganador":"J Pablo Sta Cruz","perdedor":"Daniel Tripaiano","score":"W.O.","serie":"C"},{"fecha":"28-06-2026","ganador":"Ivan Huina","perdedor":"Fernando Tello","score":"4-6 6-3 3-10","serie":"C"},{"fecha":"04-07-2026","ganador":"German Lara","perdedor":"Alex Gonzalez","score":"6-3 3-6 4-10","serie":"B"},{"fecha":"04-07-2026","ganador":"Franco Montero","perdedor":"Luis Vega","score":"7-5 7-5","serie":"C"},{"fecha":"04-07-2026","ganador":"Daniel Tripaiano","perdedor":"Carlos Videla","score":"4-6 6-2 8-10","serie":"C"},{"fecha":"04-07-2026","ganador":"Cristian Crisostomo","perdedor":"Humberto Cabezas","score":"0-6 6-7","serie":"B"},{"fecha":"05-07-2026","ganador":"Ivan Huina","perdedor":"Victor Lopez","score":"W.O.","serie":"C"},{"fecha":"05-07-2026","ganador":"Douglas Diaz","perdedor":"Hector Varela","score":"W.O.","serie":"C"},{"fecha":"05-07-2026","ganador":"Luis Duran","perdedor":"Cristobal Tello","score":"2-6 1-6","serie":"B"},{"fecha":"11-07-2026","ganador":"German Sendra","perdedor":"Nicolas Gomez","score":"6-1 6-3","serie":"C"},{"fecha":"11-07-2026","ganador":"Diego Ugarte","perdedor":"Douglas Diaz","score":"1-6 2-6","serie":"C"},{"fecha":"12-07-2026","ganador":"Diego Ugarte","perdedor":"Carlos Videla","score":"3-6 3-6","serie":"C"},{"fecha":"19-07-2026","ganador":"Franco Montero","perdedor":"J Pablo Sta Cruz","score":"6-0 6-3","serie":"C"},{"fecha":"25-07-2026","ganador":"Fernando Tello","perdedor":"J Pablo Sta Cruz","score":"6-2 5-7 10-8","serie":"C"},{"fecha":"26-07-2026","ganador":"Franco Montero","perdedor":"Humberto Varas","score":"6-0 6-0","serie":"C"},{"fecha":"08-08-2026","ganador":"Diego Ugarte","perdedor":"Fernando Tello","score":"3-6 4-6","serie":"C"},{"fecha":"08-08-2026","ganador":"J Pablo Sta Cruz","perdedor":"Douglas Diaz","score":"3-6 6-3 10-8","serie":"C"},{"fecha":"09-08-2026","ganador":"Franco Montero","perdedor":"Carlos Videla","score":"6-4 6-4","serie":"C"},{"fecha":"15-08-2026","ganador":"Diego Ugarte","perdedor":"Nicolas Gomez","score":"6-0 6-0","serie":"C"},{"fecha":"16-08-2026","ganador":"Gonzalo Reyes","perdedor":"Israel Muñoz","score":"6-3 6-1","serie":"A"},{"fecha":"16-08-2026","ganador":"Gonzalo Reyes","perdedor":"Cristian Vargas","score":"6-3 3-6 6-3","serie":"A"},{"fecha":"22-08-2026","ganador":"Diego Ugarte","perdedor":"J Pablo Sta Cruz","score":"2-6 4-6","serie":"C"},{"fecha":"23-08-2026","ganador":"Cristian Vega","perdedor":"Marco Toledo","score":"6-2 7-5","serie":"A"},{"fecha":"23-08-2026","ganador":"Hector Leiva","perdedor":"Manuel Cubillos","score":"6-1 6-2","serie":"A"},{"fecha":"30-08-2026","ganador":"Luis Vega","perdedor":"J Pablo Sta Cruz","score":"2-6 0-6","serie":"C"},{"fecha":"30-08-2026","ganador":"Marco Toledo","perdedor":"Israel Muñoz","score":"4-6 6-2 10-4","serie":"A"},{"fecha":"30-08-2026","ganador":"Cristian Vargas","perdedor":"Marco Toledo","score":"6-3 6-1","serie":"A"},{"fecha":"06-09-2026","ganador":"Gonzalo Reyes","perdedor":"Marco Toledo","score":"6-0 6-1","serie":"A"},{"fecha":"06-09-2026","ganador":"Franco Montero","perdedor":"Ruben Sanchez","score":"6-1 6-3","serie":"C"},{"fecha":"06-09-2026","ganador":"Marcelo Cardenas","perdedor":"Marco Toledo","score":"7-5 6-4","serie":"A"},{"fecha":"26-04-2026","ganador":"Patricio Orellana","perdedor":"Humberto Varas","score":"W.O.","serie":"C"},{"fecha":"02-05-2026","ganador":"Diego Ugarte","perdedor":"Patricio Orellana","score":"W.O.","serie":"C"},{"fecha":"10-05-2026","ganador":"Franco Montero","perdedor":"Patricio Orellana","score":"6-0 6-1","serie":"C"},{"fecha":"16-05-2026","ganador":"Patricio Orellana","perdedor":"Luis Vega","score":"6-0 6-7 10-9","serie":"C"},{"fecha":"17-05-2026","ganador":"Ivan Huina","perdedor":"Patricio Orellana","score":"7-6 6-1","serie":"C"},{"fecha":"23-05-2026","ganador":"Ivan Huina","perdedor":"Marcelo Lastra","score":"6-1 6-3","serie":"C"},{"fecha":"06-06-2026","ganador":"Patricio Orellana","perdedor":"Hector Varela","score":"0-6 2-6","serie":"C"},{"fecha":"06-06-2026","ganador":"Marcelo Lastra","perdedor":"Nicolas Gomez","score":"6-0 6-1","serie":"C"},{"fecha":"13-06-2026","ganador":"Franco Montero","perdedor":"Marcelo Lastra","score":"4-6 6-4 6-10","serie":"C"},{"fecha":"14-06-2026","ganador":"Marcelo Lastra","perdedor":"Fernando Tello","score":"3-6 3-6","serie":"C"},{"fecha":"20-06-2026","ganador":"Marcelo Lastra","perdedor":"Patricio Orellana","score":"6-4 5-7 3-10","serie":"C"},{"fecha":"28-06-2026","ganador":"Patricio Orellana","perdedor":"Nicolas Gomez","score":"W.O.","serie":"C"},{"fecha":"12-07-2026","ganador":"Marcelo Lastra","perdedor":"Ruben Sanchez","score":"6-1 6-3","serie":"C"},{"fecha":"15-08-2026","ganador":"Marcelo Lastra","perdedor":"J Pablo Sta Cruz","score":"6-2 7-5","serie":"C"},{"fecha":"02-05-2026","ganador":"Juan Espina","perdedor":"Luis Vega","score":"W.O.","serie":"C"},{"fecha":"03-05-2026","ganador":"David Llevi","perdedor":"Nicolas Gomez","score":"6-0 6-2","serie":"C"},{"fecha":"09-05-2026","ganador":"David Llevi","perdedor":"Ivan Huina","score":"6-2 6-3","serie":"C"},{"fecha":"09-05-2026","ganador":"Diego Ugarte","perdedor":"Juan Espina","score":"1-6 0-6","serie":"C"},{"fecha":"16-05-2026","ganador":"Fernando Tello","perdedor":"Juan Espina","score":"1-6 0-6","serie":"C"},{"fecha":"23-05-2026","ganador":"Carlos Videla","perdedor":"Juan Espina","score":"6-0 6-0","serie":"C"},{"fecha":"23-05-2026","ganador":"Diego Ugarte","perdedor":"David Llevi","score":"W.O.","serie":"C"},{"fecha":"24-05-2026","ganador":"David Llevi","perdedor":"Luis Vega","score":"6-2 6-1","serie":"C"},{"fecha":"30-05-2026","ganador":"Daniel Tripaiano","perdedor":"Juan Espina","score":"3-6 0-2","serie":"C"},{"fecha":"30-05-2026","ganador":"David Llevi","perdedor":"Carlos Videla","score":"6-3 6-0","serie":"C"},{"fecha":"07-06-2026","ganador":"David Llevi","perdedor":"Fernando Tello","score":"6-0 6-1","serie":"C"},{"fecha":"20-06-2026","ganador":"Franco Montero","perdedor":"Juan Espina","score":"1-6 0-6","serie":"C"},{"fecha":"21-06-2026","ganador":"Victor Lopez","perdedor":"Juan Espina","score":"0-6 2-6","serie":"C"},{"fecha":"27-06-2026","ganador":"Juan Espina","perdedor":"Hector Varela","score":"0-6 0-6","serie":"C"},{"fecha":"04-07-2026","ganador":"Ivan Huina","perdedor":"Juan Espina","score":"2-6 0-6","serie":"C"},{"fecha":"04-07-2026","ganador":"Franco Montero","perdedor":"David Llevi","score":"W.O.","serie":"C"},{"fecha":"05-07-2026","ganador":"David Llevi","perdedor":"German Sendra","score":"6-1 6-0","serie":"C"},{"fecha":"11-07-2026","ganador":"Juan Espina","perdedor":"Ruben Sanchez","score":"W.O.","serie":"C"},{"fecha":"12-07-2026","ganador":"Patricio Orellana","perdedor":"Juan Espina","score":"1-6 0-6","serie":"C"},{"fecha":"18-07-2026","ganador":"J Pablo Sta Cruz","perdedor":"Juan Espina","score":"6-0 6-2","serie":"C"}],"matches":[{"id":4,"p1":null,"p2":"Douglas Diaz","serie":"C","fecha":"11-04-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":11,"p1":"Alex Gonzalez","p2":"Miguel Gonzalez","serie":"B","fecha":"12-04-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":13,"p1":null,"p2":"Ruben Sanchez","serie":"C","fecha":"12-04-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":14,"p1":null,"p2":"Carlos Videla","serie":"C","fecha":"18-04-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":16,"p1":"Franco Montero","p2":null,"serie":"C","fecha":"18-04-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":17,"p1":null,"p2":"Luis Vega","serie":"C","fecha":"18-04-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":24,"p1":"Fernando Tello","p2":null,"serie":"C","fecha":"19-04-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":33,"p1":"Victor Lopez","p2":null,"serie":"C","fecha":"26-04-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":36,"p1":null,"p2":"Franco Montero","serie":"C","fecha":"26-04-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":37,"p1":null,"p2":"Humberto Varas","serie":"C","fecha":"26-04-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":38,"p1":null,"p2":"Diego Ugarte","serie":"C","fecha":"02-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":39,"p1":null,"p2":"Luis Vega","serie":"C","fecha":"02-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":47,"p1":"Humberto Cabezas","p2":null,"serie":"B","fecha":"03-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":50,"p1":null,"p2":"Luis Duran","serie":"B","fecha":"09-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":52,"p1":"Humberto Varas","p2":null,"serie":"C","fecha":"09-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":53,"p1":null,"p2":"J Pablo Sta Cruz","serie":"C","fecha":"09-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":61,"p1":null,"p2":"Diego Ugarte","serie":"C","fecha":"10-05-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":62,"p1":null,"p2":"Diego Ugarte","serie":"C","fecha":"16-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":67,"p1":null,"p2":"Luis Vega","serie":"C","fecha":"16-05-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":71,"p1":"Ivan Huina","p2":null,"serie":"C","fecha":"17-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":74,"p1":"Ivan Huina","p2":null,"serie":"C","fecha":"23-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":75,"p1":null,"p2":"Daniel Tripainao","serie":"C","fecha":"23-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":78,"p1":"Luis Quiroz","p2":null,"serie":"B","fecha":"23-05-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":83,"p1":null,"p2":"German Sendra","serie":"C","fecha":"24-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":85,"p1":"J Pablo Sta Cruz","p2":"Humberto Varas","serie":"C","fecha":"24-05-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":87,"p1":null,"p2":"Cristobal Tello","serie":"B","fecha":"30-05-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":88,"p1":null,"p2":"J Pablo Sta Cruz","serie":"C","fecha":"30-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":90,"p1":"Fernando Tello","p2":null,"serie":"C","fecha":"30-05-2026","hora":"11:00-12:30","status":"pending","score":null},{"id":99,"p1":"Hector Varela","p2":null,"serie":"C","fecha":"06-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":102,"p1":null,"p2":"Nicolas Gomez","serie":"C","fecha":"06-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":104,"p1":null,"p2":null,"serie":"A","fecha":"07-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":107,"p1":null,"p2":null,"serie":"A","fecha":"07-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":108,"p1":"German Lara","p2":null,"serie":"B","fecha":"07-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":114,"p1":null,"p2":null,"serie":"C","fecha":"13-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":116,"p1":null,"p2":null,"serie":"A","fecha":"14-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":118,"p1":null,"p2":null,"serie":"A","fecha":"14-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":119,"p1":null,"p2":null,"serie":"C","fecha":"14-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":126,"p1":null,"p2":"Hector Varela","serie":"C","fecha":"20-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":127,"p1":"Franco Montero","p2":null,"serie":"C","fecha":"20-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":128,"p1":"Carlos Videla","p2":null,"serie":"C","fecha":"21-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":129,"p1":null,"p2":"Cristian Crisostomo","serie":"B","fecha":"21-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":130,"p1":null,"p2":null,"serie":"A","fecha":"21-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":131,"p1":"Fernando Tello","p2":null,"serie":"C","fecha":"21-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":132,"p1":null,"p2":null,"serie":"A","fecha":"21-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":134,"p1":null,"p2":"Douglas Diaz","serie":"C","fecha":"27-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":140,"p1":null,"p2":null,"serie":"A","fecha":"28-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":141,"p1":null,"p2":null,"serie":"A","fecha":"28-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":143,"p1":null,"p2":"Nicolas Gomez","serie":"C","fecha":"28-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":144,"p1":null,"p2":null,"serie":"A","fecha":"28-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":147,"p1":null,"p2":null,"serie":"C","fecha":"04-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":148,"p1":null,"p2":"Oscar Medina","serie":"B","fecha":"04-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":152,"p1":null,"p2":null,"serie":"B","fecha":"05-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":153,"p1":null,"p2":null,"serie":"A","fecha":"05-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":156,"p1":null,"p2":null,"serie":"A","fecha":"05-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":158,"p1":"J Pablo Sta Cruz","p2":null,"serie":"C","fecha":"11-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":160,"p1":null,"p2":"Carlos Videla","serie":"C","fecha":"11-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":161,"p1":"Fernando Tello","p2":"Humberto Varas","serie":"C","fecha":"11-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":166,"p1":null,"p2":null,"serie":"A","fecha":"12-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":167,"p1":null,"p2":"Daniel Tripainao","serie":"C","fecha":"12-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":168,"p1":"Ruben Sanchez","p2":null,"serie":"C","fecha":"12-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":169,"p1":null,"p2":null,"serie":"A","fecha":"12-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":170,"p1":"Hector Varela","p2":null,"serie":"C","fecha":"18-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":171,"p1":null,"p2":"Franco Montero","serie":"C","fecha":"18-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":172,"p1":"Victor Lopez","p2":"Luis Vega","serie":"C","fecha":"18-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":173,"p1":"Ruben Sanchez","p2":null,"serie":"C","fecha":"18-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":174,"p1":"Fernando Tello","p2":"German Sendra","serie":"C","fecha":"18-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":175,"p1":"Ivan Huina","p2":"Diego Ugarte","serie":"C","fecha":"18-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":176,"p1":"Ivan Huina","p2":"Douglas Diaz","serie":"C","fecha":"19-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":177,"p1":"Daniel Tripaiano","p2":"German Sendra","serie":"C","fecha":"19-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":178,"p1":null,"p2":null,"serie":"A","fecha":"19-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":180,"p1":null,"p2":null,"serie":"A","fecha":"19-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":181,"p1":null,"p2":"Nicolas Gomez","serie":"C","fecha":"19-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":182,"p1":"Ruben Sanchez","p2":"Nicolas Gomez","serie":"C","fecha":"25-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":184,"p1":"Douglas Diaz","p2":"German Sendra","serie":"C","fecha":"25-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":185,"p1":"Carlos Videla","p2":"Ivan Huina","serie":"C","fecha":"25-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":186,"p1":"Humberto Varas","p2":"Daniel Tripaiano","serie":"C","fecha":"25-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":187,"p1":null,"p2":"Luis Vega","serie":"C","fecha":"25-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":188,"p1":null,"p2":"Victor Lopez","serie":"C","fecha":"26-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":190,"p1":null,"p2":null,"serie":"A","fecha":"26-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":191,"p1":"Diego Ugarte","p2":null,"serie":"C","fecha":"26-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":192,"p1":null,"p2":null,"serie":"A","fecha":"26-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":193,"p1":null,"p2":"German Sendra","serie":"C","fecha":"26-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":194,"p1":null,"p2":"Daniel Tripainao","serie":"C","fecha":"01-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":195,"p1":"Carlos Videla","p2":"Luis Vega","serie":"C","fecha":"01-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":196,"p1":"Franco Montero","p2":"Hector Varela","serie":"C","fecha":"01-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":197,"p1":null,"p2":"Humberto Varas","serie":"C","fecha":"01-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":198,"p1":"Ivan Huina","p2":"J Pablo Sta Cruz","serie":"C","fecha":"01-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":199,"p1":"Douglas Diaz","p2":null,"serie":"C","fecha":"01-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":200,"p1":null,"p2":null,"serie":"A","fecha":"02-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":201,"p1":"Hector Varela","p2":"German Sendra","serie":"C","fecha":"02-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":202,"p1":null,"p2":"Nicolas Gomez","serie":"C","fecha":"02-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":203,"p1":null,"p2":null,"serie":"A","fecha":"02-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":204,"p1":"Diego Ugarte","p2":"Luis Vega","serie":"C","fecha":"02-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":205,"p1":"Fernando Tello","p2":"Ruben Sanchez","serie":"C","fecha":"02-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":207,"p1":"Ruben Sanchez","p2":"Humberto Varas","serie":"C","fecha":"08-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":208,"p1":"Victor Lopez","p2":"Carlos Videla","serie":"C","fecha":"08-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":210,"p1":null,"p2":null,"serie":"C","fecha":"08-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":211,"p1":"Daniel Tripaiano","p2":"Nicolas Gomez","serie":"C","fecha":"08-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":212,"p1":null,"p2":"Ivan Huina","serie":"C","fecha":"09-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":213,"p1":null,"p2":null,"serie":"A","fecha":"09-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":214,"p1":null,"p2":null,"serie":"A","fecha":"09-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":215,"p1":null,"p2":null,"serie":"C","fecha":"09-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":217,"p1":null,"p2":"Hector Varela","serie":"C","fecha":"09-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":218,"p1":"J Pablo Sta Cruz","p2":null,"serie":"C","fecha":"15-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":219,"p1":"Douglas Diaz","p2":"Luis Vega","serie":"C","fecha":"15-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":220,"p1":"Fernando Tello","p2":"Hector Varela","serie":"C","fecha":"15-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":222,"p1":"Victor Lopez","p2":"German Sendra","serie":"C","fecha":"15-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":223,"p1":"Ivan Huina","p2":"Humberto Varas","serie":"C","fecha":"15-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":224,"p1":"Victor Lopez","p2":"Humberto Varas","serie":"C","fecha":"16-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":226,"p1":"Daniel Tripaiano","p2":"Luis Vega","serie":"C","fecha":"16-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":227,"p1":null,"p2":null,"serie":"C","fecha":"16-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":228,"p1":"Ruben Sanchez","p2":"Douglas Diaz","serie":"C","fecha":"16-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":230,"p1":null,"p2":"German Sendra","serie":"C","fecha":"22-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":231,"p1":"Franco Montero","p2":"Daniel Tripaiano","serie":"C","fecha":"22-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":232,"p1":"Ivan Huina","p2":"Ruben Sanchez","serie":"C","fecha":"22-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":233,"p1":"Carlos Videla","p2":null,"serie":"C","fecha":"22-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":235,"p1":"Victor Lopez","p2":null,"serie":"C","fecha":"22-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":237,"p1":"Fernando Tello","p2":"Victor Lopez","serie":"C","fecha":"23-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":238,"p1":"Douglas Diaz","p2":null,"serie":"C","fecha":"23-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":239,"p1":"Diego Ugarte","p2":"German Sendra","serie":"C","fecha":"23-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":240,"p1":"Franco Montero","p2":"Nicolas Gomez","serie":"C","fecha":"23-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":242,"p1":"Carlos Videla","p2":"Hector Varela","serie":"C","fecha":"29-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":243,"p1":"Nicolas Gomez","p2":"Luis Vega","serie":"C","fecha":"29-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":246,"p1":null,"p2":"Humberto Varas","serie":"C","fecha":"29-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":247,"p1":null,"p2":"Ivan Huina","serie":"C","fecha":"29-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":248,"p1":null,"p2":"Ruben Sanchez","serie":"C","fecha":"30-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":249,"p1":"Diego Ugarte","p2":"Humberto Varas","serie":"C","fecha":"30-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":252,"p1":"Daniel Tripainao","p2":null,"serie":"C","fecha":"30-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":254,"p1":"Franco Montero","p2":"Ivan Huina","serie":"C","fecha":"05-09-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":255,"p1":"German Sendra","p2":null,"serie":"C","fecha":"05-09-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":256,"p1":null,"p2":"Victor Lopez","serie":"C","fecha":"05-09-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":257,"p1":"Carlos Videla","p2":"Nicolas Gomez","serie":"C","fecha":"05-09-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":258,"p1":"Fernando Tello","p2":null,"serie":"C","fecha":"05-09-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":259,"p1":"J Pablo Sta Cruz","p2":"Hector Varela","serie":"C","fecha":"05-09-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":260,"p1":"Fernando Tello","p2":"Douglas Diaz","serie":"C","fecha":"06-09-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":263,"p1":"Hector Varela","p2":"Daniel Tripaiano","serie":"C","fecha":"06-09-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":266,"p1":"Marcelo Lastra","p2":"Victor Lopez","serie":"C","fecha":"26-04-2026","hora":"08:00-09:30","status":"pending","score":null},{"id":269,"p1":"Marcelo Lastra","p2":"Humberto Varas","serie":"C","fecha":"09-05-2026","hora":"09:30-11:00","status":"pending","score":null},{"id":279,"p1":"Carlos Videla","p2":"Patricio Orellana","serie":"C","fecha":"21-06-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":281,"p1":"J Pablo Sta Cruz","p2":"Patricio Orellana","serie":"C","fecha":"11-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":283,"p1":"Hector Varela","p2":"Marcelo Lastra","serie":"C","fecha":"18-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":284,"p1":"Ruben Sanchez","p2":"Patricio Orellana","serie":"C","fecha":"18-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":285,"p1":"Diego Ugarte","p2":"Marcelo Lastra","serie":"C","fecha":"26-07-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":286,"p1":"Patricio Orellana","p2":"German Sendra","serie":"C","fecha":"26-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":287,"p1":"Patricio Orellana","p2":"Daniel Tripaiano","serie":"C","fecha":"01-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":288,"p1":"Douglas Diaz","p2":"Marcelo Lastra","serie":"C","fecha":"01-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":289,"p1":"Marcelo Lastra","p2":"Luis Vega","serie":"C","fecha":"09-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":291,"p1":"Carlos Videla","p2":"Marcelo Lastra","serie":"C","fecha":"22-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":292,"p1":"Victor Lopez","p2":"Patricio Orellana","serie":"C","fecha":"22-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":293,"p1":"Douglas Diaz","p2":"Patricio Orellana","serie":"C","fecha":"23-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":294,"p1":"Daniel Tripaiano","p2":"Marcelo Lastra","serie":"C","fecha":"30-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":295,"p1":"Marcelo Lastra","p2":"German Sendra","serie":"C","fecha":"05-09-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":296,"p1":"Fernando Tello","p2":"Patricio Orellana","serie":"C","fecha":"05-09-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":307,"p1":"Juan Espina","p2":"Humberto Varas","serie":"C","fecha":"06-06-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":309,"p1":"David Llevi","p2":"Daniel Tripaiano","serie":"C","fecha":"14-06-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":320,"p1":"Juan Espina","p2":"German Sendra","serie":"C","fecha":"19-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":321,"p1":"Marcelo Lastra","p2":"Juan Espina","serie":"C","fecha":"25-07-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":322,"p1":"Juan Espina","p2":"David Llevi","serie":"C","fecha":"26-07-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":323,"p1":"Nicolas Gomez","p2":"Juan Espina","serie":"C","fecha":"01-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":324,"p1":"Juan Espina","p2":"Douglas Diaz","serie":"C","fecha":"02-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":325,"p1":"David Llevi","p2":"Hector Varela","serie":"C","fecha":"08-08-2026","hora":"12:00-13:30","status":"pending","score":null},{"id":326,"p1":"Victor Lopez","p2":"David Llevi","serie":"C","fecha":"09-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":327,"p1":"David Llevi","p2":"Marcelo Lastra","serie":"C","fecha":"16-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":328,"p1":"David Llevi","p2":"Douglas Diaz","serie":"C","fecha":"22-08-2026","hora":"09:00-10:30","status":"pending","score":null},{"id":329,"p1":"David Llevi","p2":"Ruben Sanchez","serie":"C","fecha":"29-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":330,"p1":"David Llevi","p2":"Patricio Orellana","serie":"C","fecha":"30-08-2026","hora":"10:30-12:00","status":"pending","score":null},{"id":331,"p1":"J Pablo Sta Cruz","p2":"David Llevi","serie":"C","fecha":"06-09-2026","hora":"10:30-12:00","status":"pending","score":null}]};
 DATA.titulos=[];
+// Los datos incrustados arriba son una copia de Quilicura (primer pintado rapido).
+// Cualquier otro club parte vacio: nunca se le muestran jugadores ni resultados ajenos.
+if(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura'){DATA.players=[];DATA.results=[];DATA.matches=[];}
 var cart=[],sf="todos",cSF="all",mF="all",onlyConfirmed=false;
 function toggleConfirmed(el){onlyConfirmed=el.checked;rMatches();}
 
@@ -3710,23 +3862,41 @@ function animarContador(el,valorFinal){
   }
   requestAnimationFrame(paso);
 }
-var TEMPORADA_INICIO=new Date(2026,0,1); // ajustar a la fecha real de inicio de la temporada
+var TEMPORADA_INICIO=new Date(2026,0,1);
+var TEMPORADA_FIN=null;
 function diasDeCompetencia(){
-  var ms=Date.now()-TEMPORADA_INICIO.getTime();
+  var ahora=Date.now();
+  if(TEMPORADA_FIN&&ahora>TEMPORADA_FIN.getTime())ahora=TEMPORADA_FIN.getTime();
+  var ms=ahora-TEMPORADA_INICIO.getTime();
   return Math.max(0,Math.floor(ms/86400000)+1);
+}
+// Lee la temporada activa del club (nombre y fechas) para el hero y los titulos.
+async function aplicarTemporadaClub(){
+  try{
+    var r=await window.supabaseClient.from('temporadas').select('nombre,fecha_inicio,fecha_fin').eq('club_id',CLUB_ACTUAL_ID).eq('activa',true).limit(1).maybeSingle();
+    if(r.error||!r.data)return;
+    var t=r.data;
+    if(t.nombre)TEMPORADA_NOMBRE=t.nombre;
+    if(t.fecha_inicio){TEMPORADA_INICIO=new Date(t.fecha_inicio+'T00:00:00');TEMPORADA_ANIO=parseInt(String(t.fecha_inicio).slice(0,4),10)||TEMPORADA_ANIO;}
+    if(t.fecha_fin)TEMPORADA_FIN=new Date(t.fecha_fin+'T23:59:59');
+    document.title=CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE;
+    var h=document.querySelector('.htag');if(h)h.textContent='Temporada '+TEMPORADA_ANIO;
+    var se=document.querySelector('#ranking .se, .sh .se');if(se&&/^Temporada/.test(se.textContent))se.textContent='Temporada '+TEMPORADA_ANIO;
+  }catch(e){console.warn('No se pudo cargar la temporada activa.',e);}
 }
 function rHeroStats(){
   var activos=DATA.players.filter(function(p){return !p.retirado;}).length;
   var jugados=DATA.results.length;
-  var series={};DATA.players.forEach(function(p){series[p.serie]=true;});
-  var nSeries=Object.keys(series).length;
+  var nSeries=serieIds().length;
+  var dots=document.querySelector('.hstSeriesDots');
+  if(dots)dots.innerHTML=SERIES_DEF.slice(0,10).map(function(x){return '<span style="background:'+esc(x.color)+'"></span>';}).join('');
   animarContador(document.getElementById("sp"),activos);
   animarContador(document.getElementById("sm"),diasDeCompetencia());
   animarContador(document.getElementById("ss"),nSeries);
   animarContador(document.getElementById("sr"),jugados);
-  var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - Escalerilla 2026 - "+activos+" jugadores activos - "+jugados+" partidos jugados";
+  var elGs=document.getElementById("gs");if(elGs)elGs.textContent="Datos reales - "+TEMPORADA_NOMBRE+" - "+activos+" jugadores activos - "+jugados+" partidos jugados";
   var elHm=document.getElementById("heroMascotImg");
-  if(elHm){if(elHm.getAttribute("src")!==CLUB_MASCOTA_URL)elHm.src=CLUB_MASCOTA_URL;elHm.style.display="block";}
+  if(elHm){if(!CLUB_MASCOTA_URL){elHm.style.display="none";}else{if(elHm.getAttribute("src")!==CLUB_MASCOTA_URL)elHm.src=CLUB_MASCOTA_URL;elHm.style.display="block";}}
   rJugadorDelMes();
   construirTickerHero();
 }
@@ -3870,7 +4040,7 @@ function rRanking(){
     var ret=p.retirado?" <span class=\"ret\">RET</span>":"";
     var rs=p.retirado?" style=\"opacity:0.4;\"":"";
     var esMio=!!(jugadorVinculado&&jugadorVinculado.nombre===p.nombre);
-    var claseSerie="serie"+esc(p.serie);
+    var claseSerie="serie"+sbCls(p.serie);
     var iniP="";var partesP=p.nombre.split(" ");for(var k=0;k<partesP.length&&iniP.length<2;k++){if(partesP[k])iniP+=partesP[k][0];}
     iniP=iniP.toUpperCase();
     var fotoH=p.avatarUrl
@@ -3902,7 +4072,7 @@ function rRanking(){
     h+="<tr class=\""+claseSerie+(esMio?" miFila":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\""+rs+">";
     h+="<td class=\"rp "+pc+"\">"+pos+"</td>";
     h+="<td class=\"pn\"><div class=\"pnwrap\">"+fotoH+"<span>"+banderaMini+esc(p.nombre)+ret+"</span></div></td>";
-    h+="<td><span class=\"sb "+esc(p.serie)+"\">"+esc(p.serie)+"</span></td>";
+    h+="<td><span class=\"sb "+sbCls(p.serie)+"\">"+esc(serieCorto(p.serie))+"</span></td>";
     h+="<td class=\"pb\">"+p.pts+(p.inter>0?"<span style=\"display:block;font-size:.58rem;font-weight:400;color:var(--gl);letter-spacing:0\">incl. torneo +"+p.inter+"</span>":"")+"</td><td>"+p.pj+"</td><td>"+p.pg+"</td><td>"+p.pp+"</td>";
     h+="<td><div class=\"wb\"><div class=\"wt\"><div class=\"wf\" style=\"width:"+wr+"%\"></div></div><span class=\"wl\">"+wr+"%</span>"+rachaMini+formaH+"</div></td>";
     h+="<td>"+trH+"</td></tr>";
@@ -3914,7 +4084,7 @@ function rRanking(){
     hc+="<div class=\"rcard "+claseSerie+(esMio?" miFila":"")+(p.retirado?" retirado":"")+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", puesto "+pos+", "+p.pts+" puntos\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"rcard-pos "+pc+"\">"+pos+"</div>"
       +fotoCardH
-      +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+banderaMini+esc(p.nombre)+"<span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(p.serie)+"</span>"+ret+rachaMini+"</div>"
+      +"<div class=\"rcard-main\"><div class=\"rcard-name\">"+banderaMini+esc(p.nombre)+"<span class=\"sb "+sbCls(p.serie)+"\" style=\"font-size:.58rem;padding:.08rem .35rem\">"+esc(serieCorto(p.serie))+"</span>"+ret+rachaMini+"</div>"
       +"<div class=\"rcard-stats\"><span><b>"+p.pj+"</b> PJ</span><span><b>"+p.pg+"</b> PG</span><span><b>"+p.pp+"</b> PP</span><span>"+trH+"</span></div></div>"
       +"<div class=\"rcard-right\"><div class=\"rcard-pts\">"+p.pts+"</div>"+(p.inter>0?"<div class=\"rcard-win\">incl. torneo +"+p.inter+"</div>":"")+"<div class=\"rcard-win\">"+wr+"% win</div>"+formaH+"</div>"
       +"</div>";
@@ -3979,7 +4149,6 @@ function rPodio(){
   // Tono de glow pulsante segun la serie del jugador (no segun su posicion
   // en el podio): Serie A rojo, Serie B azul, Serie C verde. Mismos tonos
   // que ya se usan en los chips .sb.A/.sb.B/.sb.C del resto del sitio.
-  var colorSerieGlow={A:'#e05a4a',B:'#5a9ee0',C:'#7ed44a'};
   var h='<div class="podio">';
   for(var i=0;i<3;i++){
     var p=top3[i];
@@ -3989,12 +4158,12 @@ function rPodio(){
       ?"<img class=\"podio-avatar\" src=\""+p.avatarUrl+"\" alt=\"\" onerror=\"imgSwapInitials(this,'"+jsAttr(iniP)+"','podio-avatar-i','"+jsAttr(p.nombre)+"')\">"
       :"<div class=\"podio-avatar-i\""+styleIniciales(p.nombre)+">"+esc(iniP)+"</div>";
     var clickCmd="showProfile('"+jsAttr(p.nombre)+"');document.getElementById('perfil').scrollIntoView({behavior:'smooth'});";
-    var glow=colorSerieGlow[p.serie]||colorSerieGlow.C;
-    h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", Serie "+esc(p.serie)+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
+    var glow=serieColor(p.serie);
+    h+="<div class=\"podio-item "+claves[i]+"\" style=\"--podio-glow:"+glow+"\" tabindex=\"0\" role=\"button\" aria-label=\"Ver perfil de "+esc(p.nombre)+", posicion "+(i+1)+", "+esc(serieTxt(p.serie))+"\" onclick=\""+clickCmd+"\" onkeydown=\""+kbActivate(clickCmd)+"\">"
       +"<div class=\"podio-avatar-wrap\">"+avatarH+"<div class=\"podio-medal "+medallas[i]+"\"><img src=\""+archivosMedalla[i]+"\" alt=\""+medallas[i]+"\" onerror=\"var pn=this.parentNode;this.onerror=null;pn.innerHTML='"+["🥇","🥈","🥉"][i]+"';pn.style.fontSize='2.4rem';pn.style.filter='drop-shadow(0 4px 4px rgba(0,0,0,.5))';\"></div></div>"
       +"<div class=\"podio-name\">"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</div>"
       +"<div class=\"podio-pts\">"+p.pts+" pts</div>"
-      +"<div class=\"podio-serie\"><span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(p.serie)+"</span></div>"
+      +"<div class=\"podio-serie\"><span class=\"sb "+sbCls(p.serie)+"\" style=\"font-size:.6rem;padding:.1rem .4rem\">"+esc(serieCorto(p.serie))+"</span></div>"
       +"</div>";
   }
   h+='</div>';
@@ -4055,7 +4224,7 @@ function exportarRankingImagen(){
   btn.innerHTML='<span class="gi2">⏳</span>Generando...';
   document.body.classList.add('exportando');
 
-  var titulo=(cSF==='all'?'Ranking General':'Ranking Serie '+cSF);
+  var titulo=(cSF==='all'?'Ranking General':'Ranking '+serieTxt(cSF));
   var fechaHoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
   var top3=pl.slice(0,3),resto=pl.slice(3);
 
@@ -4089,7 +4258,7 @@ function exportarRankingImagen(){
     filasH[col]+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.08)">'
       +'<div style="font-family:\'Bebas Neue\',sans-serif;color:#9a9a9a;font-size:14px;width:22px">'+pos+'</div>'
       +'<div style="flex:1;font-family:Barlow,Arial,sans-serif;color:#f5f5f0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+'</div>'
-      +'<div style="font-family:\'Barlow Condensed\',Arial,sans-serif;font-size:11px;color:#9a9a9a;border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 5px">'+esc(p.serie)+'</div>'
+      +'<div style="font-family:\'Barlow Condensed\',Arial,sans-serif;font-size:11px;color:#9a9a9a;border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 5px">'+esc(serieCorto(p.serie))+'</div>'
       +'<div style="font-family:\'Barlow Condensed\',Arial,sans-serif;font-weight:700;color:#5BBF2A;font-size:14px;width:44px;text-align:right">'+p.pts+'</div>'
       +'</div>';
   });
@@ -4109,7 +4278,7 @@ function exportarRankingImagen(){
 
   html2canvas(wrap,{backgroundColor:'#0e0e0e',scale:2,useCORS:true}).then(function(canvas){
     var link=document.createElement('a');
-    link.download='ranking-ctq-'+(cSF==='all'?'general':cSF)+'-'+new Date().toISOString().slice(0,10)+'.png';
+    link.download='ranking-'+String(window.CLUB_SLUG_INICIAL||'club')+'-'+(cSF==='all'?'general':cSF)+'-'+new Date().toISOString().slice(0,10)+'.png';
     link.href=canvas.toDataURL('image/png');
     link.click();
   }).catch(function(err){
@@ -4156,7 +4325,7 @@ function rMatches(){
     if(m.status==='pending'&&m.p1&&m.p2){
       h+="<div class=\"mprevia\">"+esc(generarPrevia(m.p1,m.p2,m.serie))+"</div>";
     }
-    h+="<div class=\"mf\"><span class=\"mst\">Serie "+esc(m.serie)+(m.cancha?" \u00b7 Cancha "+esc(m.cancha):"")+"</span><span class=\"mr\">2026</span></div></div>";
+    h+="<div class=\"mf\"><span class=\"mst\">"+esc(serieTxt(m.serie))+(m.cancha?" \u00b7 Cancha "+esc(m.cancha):"")+"</span><span class=\"mr\">2026</span></div></div>";
   }
   grid.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;grid-column:1/-1;padding:2rem\">Sin partidos.</p>";
 }
@@ -4456,7 +4625,7 @@ function rResults(){
         h+="<div class=\"rpl\"><span class=\"rw\">"+esc(r.ganador)+"</span><span class=\"rvs\">def.</span><span class=\"rlo\">"+esc(r.perdedor)+"</span></div>";
         h+="<div class=\"rsb\">"+esc(r.score)+"</div>";
       }
-      h+="<span class=\"sb "+esc(r.serie)+"\" style=\"font-size:.65rem;padding:.1rem .4rem;\">"+esc(r.serie)+"</span></div>";
+      h+="<span class=\"sb "+sbCls(r.serie)+"\" style=\"font-size:.65rem;padding:.1rem .4rem;\">"+esc(serieCorto(r.serie))+"</span></div>";
     }
   }
   list.innerHTML=h||"<p style=\"color:var(--gl);text-align:center;padding:2rem\">Aun no hay resultados registrados.</p>";
@@ -4475,7 +4644,7 @@ function filterPS(val){
   var h="";
   for(var i=0;i<m.length;i++){
     var p=m[i];
-    h+="<div onclick=\"showProfile('"+jsAttr(p.nombre)+"')\" style=\"padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);font-size:.88rem;\">"+esc(p.nombre)+" <span class=\"sb "+esc(p.serie)+"\" style=\"font-size:.62rem;\">"+esc(p.serie)+"</span></div>";
+    h+="<div onclick=\"showProfile('"+jsAttr(p.nombre)+"')\" style=\"padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);font-size:.88rem;\">"+esc(p.nombre)+" <span class=\"sb "+sbCls(p.serie)+"\" style=\"font-size:.62rem;\">"+esc(serieCorto(p.serie))+"</span></div>";
   }
   s.innerHTML=h;
 }
@@ -4654,7 +4823,7 @@ async function handleAvatarFile(tipo,nombre,jugadorId,inputEl){
 // clubes.nombre en Supabase; cargarConfigClubSupabase() lo sobreescribe
 // apenas responde la base (ver Fase 2). Si el club cambia de nombre, el
 // unico lugar que hay que tocar es la fila en la tabla "clubes".
-var CLUB_JUGADOR="Club de Tenis Estadio Quilicura";
+var CLUB_JUGADOR=(window.CLUB_SLUG_INICIAL&&window.CLUB_SLUG_INICIAL!=='quilicura')?"Club de Tenis":"Club de Tenis Estadio Quilicura";
 
 // Ficha tecnica opcional por jugador: nivel, mano dominante, superficie
 // favorita, golpe favorito. Se completa a criterio de cada jugador o del
@@ -4862,9 +5031,9 @@ function renderFichaTecnica(nombre){
       +sel("nivel","Nivel")+sel("mano","Mano dominante")
       +sel("superficie","Superficie favorita")+sel("golpe","Golpe favorito")
       +"<div class=\"ftitem comuna\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna laboral</div>"
-      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-laboral\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaLaboral||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
+      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-laboral\" placeholder=\"Ej: Santiago\" maxlength=\"60\" value=\""+esc(ft.comunaLaboral||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +"<div class=\"ftitem comuna\" style=\"grid-column:1/-1\"><div class=\"ftlbl\">Comuna particular</div>"
-      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-particular\" placeholder=\"Ej: Quilicura\" maxlength=\"60\" value=\""+esc(ft.comunaParticular||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
+      +"<input type=\"text\" class=\"ftselect\" id=\"ftsel-comuna-particular\" placeholder=\"Ej: Santiago\" maxlength=\"60\" value=\""+esc(ft.comunaParticular||'')+"\""+(fichaGuardando?" disabled":"")+"></div>"
       +renderDispoDesafiosEdit(nombre)
       +"</div>"
       +"<div class=\"ftactions\">"
@@ -5314,14 +5483,14 @@ async function _showProfileImpl(nombre,scroll,fondo){
   var mgCallH="";
   if(tend.matagigantes.victoriasSorpresa>0){
     var mejor=tend.matagigantes.detalle[0];
-    mgCallH="<div class=\"mgcall\">\ud83c\udfaf <b>Matagigantes:</b> "+tend.matagigantes.victoriasSorpresa+" victoria(s) contra rivales mejor ubicados esta temporada - la mas destacada, contra "+esc(mejor.rival)+" (Serie "+esc(mejor.serie)+")</div>";
+    mgCallH="<div class=\"mgcall\">\ud83c\udfaf <b>Matagigantes:</b> "+tend.matagigantes.victoriasSorpresa+" victoria(s) contra rivales mejor ubicados esta temporada - la mas destacada, contra "+esc(mejor.rival)+" ("+esc(serieTxt(mejor.serie))+")</div>";
   }
   // Insignias: reputacion visible del jugador dentro de la comunidad.
   // Solo se muestran las que salen de datos reales (titulos, rachas,
   // matagigantes); no se inventan insignias sin respaldo.
   var insItems=[];
   for(var ti=0;ti<tits.length;ti++){
-    insItems.push({ic:"\ud83c\udfc6",name:"Campeon Serie "+esc(tits[ti].serie)+" \u00b7 "+(tits[ti].periodo?esc(tits[ti].periodo)+" ":"")+esc(tits[ti].temporada),gold:true});
+    insItems.push({ic:"\ud83c\udfc6",name:"Campeon "+esc(serieTxt(tits[ti].serie))+" \u00b7 "+(tits[ti].periodo?esc(tits[ti].periodo)+" ":"")+esc(tits[ti].temporada),gold:true});
   }
   if(tend.matagigantes.victoriasSorpresa>0){
     insItems.push({ic:"\ud83c\udfaf",name:"Matagigantes ("+tend.matagigantes.victoriasSorpresa+")"});
@@ -5382,8 +5551,8 @@ async function _showProfileImpl(nombre,scroll,fondo){
     +"</div>";
   var pccHtml=
     "<div class=\"ppcwrap\"><div class=\"ppc\"><div class=\"pherowrap"+(tieneFigura?" hasfig":"")+"\"><div class=\"phero\">"+avatarH
-    +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+esc(p.serie)+"\">Serie "+esc(p.serie)+"</span></div>"
-    +"<h2>"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - Serie "+esc(p.serie)+" <b>#"+sp+"</b></p>"
+    +"<div class=\"pin\"><div class=\"pbg\"><span class=\"sb "+sbCls(p.serie)+"\">"+esc(serieTxt(p.serie))+"</span></div>"
+    +"<h2>"+(p.banderaIso&&typeof mrcBanderaEmoji==='function'?"<span title=\""+esc(p.pais||'')+"\">"+mrcBanderaEmoji(p.banderaIso)+"</span> ":"")+esc(p.nombre)+"</h2><p>Ranking General <b>#"+rp+"</b> - "+esc(serieTxt(p.serie))+" <b>#"+sp+"</b></p>"
     +rAvatarUploadBtns(p.nombre,p.id)
     +"</div></div>"
     +"<div class=\"pbody\">"
@@ -5421,7 +5590,7 @@ async function _showProfileImpl(nombre,scroll,fondo){
 function populateH2H(){
   var o="<option value=\"\">Seleccionar...</option>";
   for(var i=0;i<DATA.players.length;i++){
-    o+="<option value=\""+esc(DATA.players[i].nombre)+"\">"+esc(DATA.players[i].nombre)+" ("+esc(DATA.players[i].serie)+")</option>";
+    o+="<option value=\""+esc(DATA.players[i].nombre)+"\">"+esc(DATA.players[i].nombre)+" ("+esc(serieCorto(DATA.players[i].serie))+")</option>";
   }
   var h1El=document.getElementById("h1"),h2El=document.getElementById("h2");
   if(h1El.__o===o)return; // misma lista: no tocar (conserva la seleccion)
@@ -5541,10 +5710,10 @@ function formaSVG(hist,n,w,h){
 }
 // {nombre: posicion en su serie} usando pts actuales, excluye retirados.
 function rankingPorSerieDesdeDATA(){
-  var porSerie={A:[],B:[],C:[]};
+  var porSerie=serieMapaVacio();
   for(var i=0;i<DATA.players.length;i++){var p=DATA.players[i];if(!p.retirado&&porSerie[p.serie])porSerie[p.serie].push(p);}
   var pos={};
-  ['A','B','C'].forEach(function(serie){
+  serieIds().forEach(function(serie){
     var ord=porSerie[serie].slice().sort(function(a,b){return b.pts-a.pts;});
     ord.forEach(function(p,i){pos[p.nombre]=i+1;});
   });
@@ -5685,10 +5854,10 @@ function evolucionJugador(nombre){
 function calcularDeltaSemanal(){
   var ahora=Date.now();
   var haceUnaSemana=ahora-7*24*60*60*1000;
-  var porSerie={A:[],B:[],C:[]};
+  var porSerie=serieMapaVacio();
   DATA.players.forEach(function(p){if(!p.retirado&&porSerie[p.serie])porSerie[p.serie].push(p);});
   var deltas={};
-  ['A','B','C'].forEach(function(serie){
+  serieIds().forEach(function(serie){
     var partidosSerie=DATA.results.filter(function(r){return r.serie===serie;});
     var actual=porSerie[serie].map(function(p){return {nombre:p.nombre,pts:_ptsHasta(p.nombre,partidosSerie,ahora)};});
     var anterior=porSerie[serie].map(function(p){return {nombre:p.nombre,pts:_ptsHasta(p.nombre,partidosSerie,haceUnaSemana)};});
@@ -5739,7 +5908,7 @@ function rTopMatagigantes(){
   for(var i=0;i<hazanas.length;i++){
     var h=hazanas[i],t=textoCazador(h);
     rows+='<div class="tmrow tmcard"><div class="tmbadge">'+esc(t.titulo)+'</div>'
-      +'<div class="tmname">'+esc(h.jugador)+' <span class="tmvs">vs</span> '+esc(h.rival)+' <span class="tmserie">(Serie '+esc(h.serie)+')</span></div>'
+      +'<div class="tmname">'+esc(h.jugador)+' <span class="tmvs">vs</span> '+esc(h.rival)+' <span class="tmserie">('+esc(serieTxt(h.serie))+')</span></div>'
       +'<div class="tmflavor">'+t.frase+'</div>'
       +'<div class="tmscorebadge">'+esc(h.score)+'</div></div>';
   }
@@ -5763,7 +5932,7 @@ function generarPrevia(p1,p2,serie){
 
   if(n1&&n2&&((n1===1&&n2===2)||(n2===1&&n1===2))){
     var lider=n1===1?p1:p2;
-    frase="Duelo de estilos: el lider de la Serie "+serie+" "+pick(VS_LIDER_ESCOLTA,seed);
+    frase="Duelo de estilos: el lider de la "+serieTxt(serie)+" "+pick(VS_LIDER_ESCOLTA,seed);
     if(h.total>0){
       var wl=lider===p1?h.w1:h.w2,we=lider===p1?h.w2:h.w1;
       frase+=", "+pick(FAVOR_H2H,seed)+" "+wl+"-"+we+(wl>=we?" a favor del primero":" a favor del segundo");
@@ -5773,7 +5942,7 @@ function generarPrevia(p1,p2,serie){
     frase+=".";
   }else if(n1===1||n2===1){
     var rival2=n1===1?p2:p1,rkRival=n1===1?rk2:rk1;
-    frase="El lider de la Serie "+serie+" "+pick(VS_LIDER_OTRO,seed)+" "+rival2+" (puesto "+rkRival+")";
+    frase="El lider de la "+serieTxt(serie)+" "+pick(VS_LIDER_OTRO,seed)+" "+rival2+" (puesto "+rkRival+")";
     frase+=h.total>0?", con "+h.total+" antecedente"+(h.total>1?"s":"")+" entre ambos.":", "+pick(SIN_HIST,seed)+".";
   }else if(n1&&n2){
     frase=pick(INTRO_GENERICO,seed)+" "+serie+": puesto "+n1+" vs puesto "+n2;
@@ -5802,7 +5971,7 @@ async function calcH2H(){
   }
   var w1=0,w2=0;
   for(var i=0;i<ml.length;i++){if(ml[i].ganador===p1)w1++;else if(ml[i].ganador===p2)w2++;}
-  var s1="A",s2="A";
+  var s1=serieIds()[0],s2=serieIds()[0];
   for(var i=0;i<DATA.players.length;i++){
     if(DATA.players[i].nombre===p1)s1=DATA.players[i].serie;
     if(DATA.players[i].nombre===p2)s2=DATA.players[i].serie;
@@ -5823,9 +5992,9 @@ async function calcH2H(){
   }
   if(!rH)rH="<p style=\"text-align:center;color:var(--gl);padding:1rem\">Sin partidos entre estos jugadores</p>";
   con.innerHTML="<div class=\"h2hsb\"><div class=\"h2ht\">"
-    +"<div class=\"h2hp\"><div class=\"h2hpn\">"+esc(p1)+"</div><span class=\"sb "+esc(s1)+"\" style=\"font-size:.62rem;\">Serie "+esc(s1)+"</span><div class=\"h2hw "+(w1>=w2?"win":"lose")+"\">"+w1+"</div></div>"
+    +"<div class=\"h2hp\"><div class=\"h2hpn\">"+esc(p1)+"</div><span class=\"sb "+sbCls(s1)+"\" style=\"font-size:.62rem;\">"+esc(serieTxt(s1))+"</span><div class=\"h2hw "+(w1>=w2?"win":"lose")+"\">"+w1+"</div></div>"
     +"<div class=\"h2hdiv\"><span class=\"h2hdl\">Historial</span><div class=\"h2hrc\">"+ml.length+" partidos</div></div>"
-    +"<div class=\"h2hp\"><div class=\"h2hpn\">"+esc(p2)+"</div><span class=\"sb "+esc(s2)+"\" style=\"font-size:.62rem;\">Serie "+esc(s2)+"</span><div class=\"h2hw "+(w2>=w1?"win":"lose")+"\">"+w2+"</div></div>"
+    +"<div class=\"h2hp\"><div class=\"h2hpn\">"+esc(p2)+"</div><span class=\"sb "+sbCls(s2)+"\" style=\"font-size:.62rem;\">"+esc(serieTxt(s2))+"</span><div class=\"h2hw "+(w2>=w1?"win":"lose")+"\">"+w2+"</div></div>"
     +"</div>"
     +"<div class=\"h2hstats\">"
     +"<div class=\"h2hstat\"><span class=\"h2hstatv "+(typeof mr1==='number'&&(typeof mr2!=='number'||mr1<mr2)?"win":"")+"\">"+mr1+"</span><span class=\"h2hstatl\">🏅 Mejor Ranking</span><span class=\"h2hstatv "+(typeof mr2==='number'&&(typeof mr1!=='number'||mr2<mr1)?"win":"")+"\">"+mr2+"</span></div>"
@@ -5959,7 +6128,8 @@ function sendWA(){
   for(var i=0;i<cart.length;i++)total+=cart[i].qty*cart[i].precio;
   var its="";
   for(var i=0;i<cart.length;i++)its+="- "+cart[i].nombre+" x"+cart[i].qty+" $"+(cart[i].qty*cart[i].precio).toLocaleString("es-CL")+"\n";
-  var msg="PEDIDO CTQ\nNombre: "+n+"\nMetro: "+m+"\n\nProductos:\n"+its+"\nTotal: $"+total.toLocaleString("es-CL")+(nt?"\nNota: "+nt:"");
+  var msg="PEDIDO "+String(CLUB_NOMBRE_CORTO||"").toUpperCase()+"\nNombre: "+n+"\nMetro: "+m+"\n\nProductos:\n"+its+"\nTotal: $"+total.toLocaleString("es-CL")+(nt?"\nNota: "+nt:"");
+  if(!WA){alert("Este club aun no configura su WhatsApp para pedidos.");return;}
   window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
 }
 
