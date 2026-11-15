@@ -1231,7 +1231,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 <script>
 (function(){
   try{
-    var s=(new URLSearchParams(location.search).get('club')||'quilicura').trim().toLowerCase();
+    var s=String(window.CLUB_SLUG_FORZADO||new URLSearchParams(location.search).get('club')||'quilicura').trim().toLowerCase();
     window.CLUB_SLUG_INICIAL=s;
     if(s!=='quilicura'){
       document.documentElement.classList.add('club-otro');
@@ -3178,7 +3178,7 @@ async function resolverClubDesdeURL(){
   var slug=CLUB_SLUG_DEFAULT;
   try{
     var params=new URLSearchParams(window.location.search);
-    slug=(params.get('club')||CLUB_SLUG_DEFAULT).trim().toLowerCase();
+    slug=String(window.CLUB_SLUG_FORZADO||params.get('club')||CLUB_SLUG_DEFAULT).trim().toLowerCase();
   }catch(e){}
   CLUB_SLUG_ACTUAL=slug;
   try{
@@ -3863,11 +3863,10 @@ function animarContador(el,valorFinal){
   requestAnimationFrame(paso);
 }
 var TEMPORADA_INICIO=new Date(2026,0,1);
-var TEMPORADA_FIN=null;
 function diasDeCompetencia(){
-  var ahora=Date.now();
-  if(TEMPORADA_FIN&&ahora>TEMPORADA_FIN.getTime())ahora=TEMPORADA_FIN.getTime();
-  var ms=ahora-TEMPORADA_INICIO.getTime();
+  // La temporada la cierra el administrador a mano (suele extenderse): se
+  // cuenta desde el inicio hasta hoy, sin tope en fecha_fin.
+  var ms=Date.now()-TEMPORADA_INICIO.getTime();
   return Math.max(0,Math.floor(ms/86400000)+1);
 }
 // Lee la temporada activa del club (nombre y fechas) para el hero y los titulos.
@@ -3878,7 +3877,6 @@ async function aplicarTemporadaClub(){
     var t=r.data;
     if(t.nombre)TEMPORADA_NOMBRE=t.nombre;
     if(t.fecha_inicio){TEMPORADA_INICIO=new Date(t.fecha_inicio+'T00:00:00');TEMPORADA_ANIO=parseInt(String(t.fecha_inicio).slice(0,4),10)||TEMPORADA_ANIO;}
-    if(t.fecha_fin)TEMPORADA_FIN=new Date(t.fecha_fin+'T23:59:59');
     document.title=CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE;
     var h=document.querySelector('.htag');if(h)h.textContent='Temporada '+TEMPORADA_ANIO;
     var se=document.querySelector('#ranking .se, .sh .se');if(se&&/^Temporada/.test(se.textContent))se.textContent='Temporada '+TEMPORADA_ANIO;
