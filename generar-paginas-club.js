@@ -53,7 +53,8 @@ function paginaDeClub(club) {
   const corto = club.nombre_corto || nombre;
   const url = SITE_URL + club.slug + '.html';
   const desc = `Ranking en vivo, resultados y estadisticas de ${nombre}. Jugadores, partidos y mas.`;
-  const imagen = absoluta(club.og_image_url) || absoluta(club.logo_url) || SITE_URL + 'icon-512.png';
+  // Sin logo propio el club usa la pelota de tenis neutra (nunca el escudo de otro club).
+  const imagen = absoluta(club.og_image_url) || absoluta(club.logo_url) || SITE_URL + 'pelota-512.png';
   const color = club.color_tema || '#0e0e0e';
   let h = TEMPLATE;
 
@@ -69,6 +70,7 @@ function paginaDeClub(club) {
   h = reemplazarMeta(h, /<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${esc(imagen)}">`);
   h = reemplazarMeta(h, /<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${esc(url)}">`);
   h = reemplazarMeta(h, /<link rel="manifest" href="[^"]*">/, `<link rel="manifest" href="manifest-${esc(club.slug)}.json">`);
+  h = reemplazarMeta(h, /<link rel="apple-touch-icon" href="[^"]*">/, `<link rel="apple-touch-icon" href="${esc(absoluta(club.logo_url) || SITE_URL + 'pelota-192.png')}">`);
   h = reemplazarMeta(h, /<meta name="theme-color" content="[^"]*">/, `<meta name="theme-color" content="${esc(color)}">`);
   h = reemplazarMeta(h, /<meta name="apple-mobile-web-app-title" content="[^"]*">/, `<meta name="apple-mobile-web-app-title" content="${esc(corto)}">`);
   // Datos estructurados para buscadores
@@ -89,6 +91,17 @@ function manifestDeClub(club) {
   base.description = `Ranking en vivo, resultados y estadisticas de ${club.nombre}`;
   base.start_url = pagina + '?utm_source=pwa';
   base.scope = './';
+  if (!club.logo_url) {
+    base.icons = [
+      { src: 'pelota-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: 'pelota-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: 'pelota-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    ];
+  } else {
+    const L = absoluta(club.logo_url);
+    base.icons = [{ src: L, sizes: '512x512', type: /\.png(\?|$)/i.test(L) ? 'image/png' : 'image/jpeg', purpose: 'any' }];
+  }
+  (base.shortcuts || []).forEach(s => { s.icons = [{ src: club.logo_url ? absoluta(club.logo_url) : 'pelota-192.png', sizes: '192x192' }]; });
   base.theme_color = club.color_tema || base.theme_color;
   (base.shortcuts || []).forEach(s => { s.url = s.url.replace(/^\.\/(#.*)$/, pagina + '$1'); });
   return base;
