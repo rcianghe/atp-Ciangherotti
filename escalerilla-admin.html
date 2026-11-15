@@ -911,12 +911,12 @@ const ENTITIES = {
       {key:'encargado_nombre',label:'Nombre encargado',type:'text'},
       {key:'encargado_contacto',label:'Contacto encargado',type:'text'},
       {key:'link_cancha',label:'Link cancha (mapa)',type:'text'},
-      {key:'logo_url',label:'Logo URL',type:'text'},
-      {key:'foto_portada_url',label:'Foto de portada (cancha/club, para el portal)',type:'text'},
-      {key:'mascota_hero_url',label:'Mascota del hero (imagen)',type:'text'},
-      {key:'trofeo_url',label:'Trofeo (imagen, torneos)',type:'text'},
+      {key:'logo_url',label:'Logo del club (imagen)',type:'fileurl',bucket:'afiches'},
+      {key:'foto_portada_url',label:'Foto de portada (cancha/club, para el portal)',type:'fileurl',bucket:'afiches'},
+      {key:'mascota_hero_url',label:'Mascota del hero (imagen)',type:'fileurl',bucket:'afiches'},
+      {key:'trofeo_url',label:'Trofeo (imagen, torneos)',type:'fileurl',bucket:'afiches'},
       {key:'hero_tagline',label:'Tagline del hero (ej: QUILICURA)',type:'text'},
-      {key:'og_image_url',label:'Imagen para redes sociales (Open Graph)',type:'text'},
+      {key:'og_image_url',label:'Imagen para redes sociales (Open Graph)',type:'fileurl',bucket:'afiches'},
       {key:'whatsapp_numero',label:'WhatsApp (solo números, ej: 56912345678)',type:'text'},
       {key:'tema',label:'Colores del club',type:'jsonFields',subfields:[
         {key:'primario',label:'Primario',placeholder:'#5BBF2A'},
@@ -1060,7 +1060,7 @@ const ENTITIES = {
       {key:'nombre',label:'Nombre',type:'text',required:true},
       {key:'tipo',label:'Tipo',type:'select',options:['plataforma','liga','federacion']},
       {key:'slug',label:'Slug (URL)',type:'text'},
-      {key:'logo_url',label:'Logo URL',type:'text'},
+      {key:'logo_url',label:'Logo (imagen)',type:'fileurl',bucket:'afiches'},
       {key:'descripcion',label:'Descripción',type:'textarea'},
       {key:'configuracion',label:'Configuración avanzada (JSON, opcional)',type:'json'},
       {key:'activo',label:'Organización activa',type:'bool',default:true},
@@ -3158,10 +3158,42 @@ async function saveRecord(){
   }
   btn.disabled=false; btn.textContent='Guardar';
   if(error){ toast('Error al guardar: '+error.message, true); return; }
+  if(currentEntity==='jugadores'){
+    const aviso = await inscribirJugadorEnTemporadaActiva(payload, editingId);
+    if(aviso){ toast('Jugador guardado, pero: '+aviso, true); closeModal(); fetchAndRenderRows(); loadLookups(); return; }
+  }
   toast('Guardado correctamente.');
   closeModal();
   fetchAndRenderRows();
   if(currentEntity==='jugadores'||currentEntity==='clubes'||currentEntity==='temporadas'||currentEntity==='competiciones'||currentEntity==='membresias'||currentEntity==='organizaciones') loadLookups();
+}
+
+// La web publica solo muestra a quienes estan INSCRITOS en la temporada activa del club.
+// Al crear (o cambiar la serie de) un jugador se inscribe solo, sin duplicar si ya lo estaba.
+async function inscribirJugadorEnTemporadaActiva(payload, idEditado){
+  try{
+    if(!payload.serie) return null;
+    let jugadorId = idEditado, clubId = payload.club_id || carpetaClubParaSubida();
+    if(!jugadorId){
+      let q = sb.from('jugadores').select('id,club_id').eq('nombre', payload.nombre).order('created_at',{ascending:false}).limit(1);
+      if(clubId) q = q.eq('club_id', clubId);
+      const r = await q;
+      if(r.error || !r.data || !r.data[0]) return 'no pude inscribirlo en la temporada (inscríbelo en Inscripciones).';
+      jugadorId = r.data[0].id; clubId = clubId || r.data[0].club_id;
+    }
+    if(!clubId){
+      const rj = await sb.from('jugadores').select('club_id').eq('id', jugadorId).maybeSingle();
+      clubId = rj.data && rj.data.club_id;
+    }
+    if(!clubId) return null;
+    const t = await sb.from('temporadas').select('id').eq('club_id', clubId).eq('activa', true).limit(1);
+    if(t.error || !t.data || !t.data[0]) return 'el club no tiene una temporada activa; créala para que el jugador aparezca en el ranking.';
+    const ya = await sb.from('inscripciones').select('id,serie').eq('jugador_id', jugadorId).eq('temporada_id', t.data[0].id).maybeSingle();
+    if(ya.data) return null; // ya inscrito: no se toca (los cambios de serie en plena temporada se hacen en Inscripciones)
+    const ins = await sb.from('inscripciones').insert({ jugador_id: jugadorId, temporada_id: t.data[0].id, serie: String(payload.serie) });
+    if(ins.error) return 'no pude inscribirlo en la temporada: '+ins.error.message;
+    return null;
+  }catch(err){ console.warn('Inscripcion automatica', err); return 'no pude inscribirlo en la temporada (inscríbelo en Inscripciones).'; }
 }
 
 async function confirmDelete(id){
