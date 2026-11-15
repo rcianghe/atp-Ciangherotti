@@ -1225,6 +1225,7 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 <style>
 /* Club distinto al de la plantilla base: se oculta lo que aun dice "Quilicura"
    hasta que llega la configuracion real del club (evita el parpadeo). */
+html.club-otro #heroTenis,html.club-otro #heroTenisBr{display:none}
 html.club-otro:not(.club-listo) .splash-logo,html.club-otro:not(.club-listo) .lc-wrap,html.club-otro:not(.club-listo) .lt,html.club-otro:not(.club-listo) #heroTagline{visibility:hidden}
 html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 </style>
@@ -1274,7 +1275,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
       <div class="heroTopStack">
         <div class="htbox">
           <div class="htag">Temporada 2026</div>
-          <h1 class="ht"><span class="g">TEN<span class="ti">i</span>S</span><br><span class="y" id="heroTagline">QUILICURA</span></h1>
+          <h1 class="ht"><span class="g" id="heroTenis">TEN<span class="ti">i</span>S</span><br id="heroTenisBr"><span class="y" id="heroTagline">QUILICURA</span></h1>
         </div>
         <div class="hstats" role="group" aria-label="Estadisticas en vivo del club">
           <div class="hstats-live"><span class="hstats-dot" aria-hidden="true"></span>Estadisticas en vivo</div>
@@ -1296,7 +1297,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
             </div>
             <div class="hstCard hst-red">
               <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zM11 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zM11 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></div>
-              <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl">Series</div><div class="hstSeriesDots" aria-hidden="true"><span style="background:#e05a4a"></span><span style="background:#5a9ee0"></span><span style="background:#7ed44a"></span></div></div>
+              <div class="hstBody"><div class="hsn" id="ss">3</div><div class="hsl" id="hslSeries">Series</div><div class="hstSeriesDots" aria-hidden="true"><span style="background:#e05a4a"></span><span style="background:#5a9ee0"></span><span style="background:#7ed44a"></span></div></div>
             </div>
             <div class="hstCard hst-green">
               <div class="hstIcwrap"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></div>
@@ -1335,7 +1336,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 
 <section id="ranking">
   <div class="container">
-    <div class="sh fi2"><div class="se">Temporada 2026</div><h2 class="st">Ranking por Series</h2><div class="sl"></div></div>
+    <div class="sh fi2"><div class="se">Temporada 2026</div><h2 class="st" id="stRankSeries">Ranking por Series</h2><div class="sl"></div></div>
     <div class="gs" id="gs">Datos reales - Escalerilla 2026 - 37 jugadores activos - 148 partidos jugados</div>
     <div class="rankerr" id="rankErr">No se pudo actualizar el ranking en vivo. Mostrando el último dato disponible.</div>
     <div class="tabs" role="tablist" aria-label="Filtrar ranking por serie">
@@ -1407,7 +1408,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 
 <section id="torneo-interno">
   <div class="container">
-    <div class="sh fi2"><div class="se">Post Escalerilla 2026</div><h2 class="st">Torneo Interno por Series</h2><div class="sl"></div></div>
+    <div class="sh fi2"><div class="se">Post Escalerilla 2026</div><h2 class="st" id="stTorneoSeries">Torneo Interno por Series</h2><div class="sl"></div></div>
     <div class="tabs" id="tintTabs" role="tablist" aria-label="Filtrar Torneo Interno por serie"></div>
     <div class="tint-estado" id="tintEstado"></div>
     <div id="tintCampeon"></div>
@@ -1473,7 +1474,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
     </div>
 <footer>
   <div class="fl2" id="footerClubNombre">CLUB DE TENIS ESTADIO QUILICURA</div>
-  <div class="fs">Escalerilla por Series 2026</div>
+  <div class="fs" id="footerSeries">Escalerilla por Series 2026</div>
   <div class="fls">
     <a href="#ranking">Ranking</a><a href="#afiches">Afiches</a><a href="#resultados">Resultados</a>
     <a href="#perfil">Jugadores</a><a href="#estadisticas">H2H</a><a href="#torneo-interno" id="footerInterno">Interno</a><a href="#torneo-abierto" id="footerAbierto">Abierto</a><a href="#galeria">Galeria</a><a href="#tienda">Tienda</a>
@@ -1528,6 +1529,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
   // el sitio sigue funcionando con estos valores, igual que siempre.
   var CLUB_NOMBRE = 'Club de Tenis Estadio Quilicura';
   var CLUB_NOMBRE_CORTO = 'CTQ Escalerilla';
+  var LOGO_NEUTRO = 'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#c8e63a" stroke="#9db52a" stroke-width="3"/><path d="M14 30c22 8 22 32 0 40M86 30c-22 8-22 32 0 40" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>');
   var CLUB_LOGO_URL = 'logo-club-tenis-estadio-quilicura.jpg';
   var CLUB_MASCOTA_URL = 'jugadores/big-3.PNG';
   var CLUB_TROFEO_URL = 'trofeo-torneo-interno-quilicura.PNG';
@@ -1539,7 +1541,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
     CLUB_ACTUAL_ID = '';
     CLUB_NOMBRE = 'Club de Tenis';
     CLUB_NOMBRE_CORTO = 'Club';
-    CLUB_LOGO_URL = 'icon-192.png';
+    CLUB_LOGO_URL = LOGO_NEUTRO;
     CLUB_MASCOTA_URL = '';
     CLUB_TROFEO_URL = '';
     CLUB_HERO_TAGLINE = '';
@@ -2358,6 +2360,29 @@ function serieIdx(id){for(var i=0;i<SERIES_DEF.length;i++){if(SERIES_DEF[i].id==
 function serieDef(id){var i=serieIdx(id);return i>=0?SERIES_DEF[i]:{id:id,nombre:SERIE_ROTULO+' '+id,corto:id,color:'#9a9a9a'};}
 function serieCorto(id){return serieDef(id).corto;}
 function serieTxt(id){return SERIE_ROTULO+' '+serieCorto(id);}
+function serieRotuloPlural(){
+  var r=String(SERIE_ROTULO||'Serie').trim()||'Serie';
+  var n=r.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if(n==='serie')return 'Series';
+  if(n==='categoria')return 'Categorías';
+  return /[aeiou]$/i.test(r)?r+'s':r+'es';
+}
+// Todos los textos fijos "Series" de la pagina usan el rotulo del club (Serie / Categoria...).
+function aplicarRotuloSeriesTextos(){
+  var P=serieRotuloPlural();
+  function t(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  t('hslSeries',P);
+  t('stRankSeries','Ranking por '+P);
+  t('stTorneoSeries','Torneo Interno por '+P);
+  var anio=(typeof TEMPORADA_ANIO!=='undefined'&&TEMPORADA_ANIO)?TEMPORADA_ANIO:'';
+  t('footerSeries','Escalerilla por '+P+(anio?' '+anio:''));
+  var esBase=!window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura';
+  if(!esBase){
+    var th=document.getElementById('heroTenis'),br=document.getElementById('heroTenisBr');
+    if(th)th.style.display='none';
+    if(br)br.style.display='none';
+  }
+}
 function serieColor(id){return serieDef(id).color;}
 function serieOrden(id){var i=serieIdx(id);return i>=0?i:999;}
 function sbCls(id){return (id==='A'||id==='B'||id==='C')&&serieIdx(id)===({A:0,B:1,C:2})[id]?id:'sx'+serieIdx(id);}
@@ -2400,6 +2425,7 @@ function aplicarSeriesClub(valor,rotulo){
   if(n)SERIES_DEF=n;
   if(cSF!=='all'&&serieIdx(cSF)<0)cSF='all';
   aplicarSeriesCss();
+  aplicarRotuloSeriesTextos();
   rTabsSeries();
 }
 
@@ -3212,6 +3238,7 @@ async function resolverClubDesdeURL(){
 
 function mostrarClubNoEncontrado(slug){
   var sp=document.getElementById('splash');
+  aplicarRotuloSeriesTextos();
   document.documentElement.classList.add('club-listo');
   if(!sp)return;
   sp.classList.remove('hide');
@@ -3291,7 +3318,7 @@ function aplicarBrandingClub(tema,albumes){
   }
   document.title=CLUB_NOMBRE+' - '+TEMPORADA_NOMBRE;
   var metaDesc=document.querySelector('meta[name="description"]');
-  if(metaDesc)metaDesc.setAttribute('content','Ranking en vivo de la Escalerilla por Series 2026 de '+CLUB_NOMBRE+'. Jugadores, resultados, partidos pendientes y estadisticas.');
+  if(metaDesc)metaDesc.setAttribute('content','Ranking en vivo de la Escalerilla por '+serieRotuloPlural()+' de '+CLUB_NOMBRE+'. Jugadores, resultados, partidos pendientes y estadisticas.');
   var ogSite=document.querySelector('meta[property="og:site_name"]');
   if(ogSite)ogSite.setAttribute('content',CLUB_NOMBRE);
   var ogTitle=document.querySelector('meta[property="og:title"]');
@@ -3886,6 +3913,7 @@ function rHeroStats(){
   var activos=DATA.players.filter(function(p){return !p.retirado;}).length;
   var jugados=DATA.results.length;
   var nSeries=serieIds().length;
+  aplicarRotuloSeriesTextos();
   var dots=document.querySelector('.hstSeriesDots');
   if(dots)dots.innerHTML=SERIES_DEF.slice(0,10).map(function(x){return '<span style="background:'+esc(x.color)+'"></span>';}).join('');
   animarContador(document.getElementById("sp"),activos);
