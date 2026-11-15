@@ -2518,7 +2518,8 @@ function paintNuevoClub(){
   const creado = ultimoClubCreado ? `
     <div class="panel" style="border:2px solid #3d8a1a;margin-bottom:16px"><div class="panel-body" style="padding:14px 18px">
       <h3 style="margin:0 0 6px">✅ Club creado: ${e(ultimoClubCreado.nombre)}</h3>
-      <p style="margin:4px 0">Enlace de la web: <b>${e(ultimoClubCreado.url)}</b> <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${e(ultimoClubCreado.url)}');toast('Enlace copiado.')">Copiar</button></p>
+      <p style="margin:4px 0">Enlace para compartir en WhatsApp: <b>${e(ultimoClubCreado.url)}</b> <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${e(ultimoClubCreado.url)}');toast('Enlace copiado.')">Copiar</button></p>
+      <p class="hint" style="margin:4px 0">Ese enlace con la vista previa del club se publica solo en unos minutos (la acción de GitHub "Paginas de club" corre cada 30 minutos; también puedes ejecutarla a mano). Mientras tanto la web ya funciona en: ${e(ultimoClubCreado.urlApp)}</p>
       ${ultimoClubCreado.admin?`<p style="margin:4px 0">Administrador invitado: <b>${e(ultimoClubCreado.admin)}</b>. Debe entrar a este panel con <b>Continuar con Google</b> usando ese mismo correo; queda enlazado solo a su club.</p>`:'<p style="margin:4px 0">No invitaste a ningún administrador todavía.</p>'}
       <p class="hint" style="margin:4px 0">Siguientes pasos: cargar jugadores e inscripciones del club, subir su logo y revisar su configuración en "Series y puntos".</p>
     </div></div>` : '';
@@ -2603,8 +2604,9 @@ async function crearClubNuevo(){
   });
   btn.disabled = false; btn.textContent = '🆕 Crear club';
   if(error){ toast('No se pudo crear el club: '+error.message, true); return; }
-  const url = new URL('index.html?club='+encodeURIComponent(data.slug), location.href).href;
-  ultimoClubCreado = { nombre:n.nombre, url, admin:n.adminEmail.trim() };
+  const url = new URL(data.slug+'.html', location.href).href;
+  const urlApp = new URL('index.html?club='+encodeURIComponent(data.slug), location.href).href;
+  ultimoClubCreado = { nombre:n.nombre, url, urlApp, admin:n.adminEmail.trim() };
   nuevoClub = ncNuevo();
   toast('Club creado.');
   await loadLookups(); populateClubFilterSelect();
