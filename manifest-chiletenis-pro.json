@@ -20,22 +20,10 @@
   ],
   "icons": [
     {
-      "src": "pelota-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "pelota-512.png",
+      "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
-    },
-    {
-      "src": "pelota-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -45,7 +33,7 @@
       "url": "./chiletenis-pro.html#ranking",
       "icons": [
         {
-          "src": "pelota-192.png",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
           "sizes": "192x192"
         }
       ]
@@ -56,7 +44,7 @@
       "url": "./chiletenis-pro.html#resultados",
       "icons": [
         {
-          "src": "pelota-192.png",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
           "sizes": "192x192"
         }
       ]
@@ -67,7 +55,7 @@
       "url": "./chiletenis-pro.html#perfil",
       "icons": [
         {
-          "src": "pelota-192.png",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
           "sizes": "192x192"
         }
       ]

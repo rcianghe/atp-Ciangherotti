@@ -12,12 +12,12 @@
 <meta property="og:site_name" content="ChileTenis Pro">
 <meta property="og:title" content="ChileTenis Pro">
 <meta property="og:description" content="Ranking en vivo, resultados y estadisticas de ChileTenis Pro. Jugadores, partidos y mas.">
-<meta property="og:image" content="https://rcianghe.github.io/atp-Ciangherotti/pelota-512.png">
+<meta property="og:image" content="https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg">
 <meta property="og:url" content="https://rcianghe.github.io/atp-Ciangherotti/chiletenis-pro.html">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ChileTenis Pro">
 <meta name="twitter:description" content="Ranking en vivo, resultados y estadisticas de ChileTenis Pro. Jugadores, partidos y mas.">
-<meta name="twitter:image" content="https://rcianghe.github.io/atp-Ciangherotti/pelota-512.png">
+<meta name="twitter:image" content="https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg">
 
 <link rel="manifest" href="manifest-chiletenis-pro.json">
 <link rel="canonical" href="https://rcianghe.github.io/atp-Ciangherotti/chiletenis-pro.html">
@@ -26,9 +26,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://hjqzpxsqdbjcidmlvgkv.supabase.co" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SportsClub","name":"ChileTenis Pro","sport":"Tennis","url":"https://rcianghe.github.io/atp-Ciangherotti/chiletenis-pro.html","logo":"https://rcianghe.github.io/atp-Ciangherotti/pelota-512.png"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SportsClub","name":"ChileTenis Pro","sport":"Tennis","url":"https://rcianghe.github.io/atp-Ciangherotti/chiletenis-pro.html","logo":"https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg"}</script>
 <meta name="theme-color" content="#3a87fe">
-<link rel="apple-touch-icon" href="https://rcianghe.github.io/atp-Ciangherotti/pelota-192.png">
+<link rel="apple-touch-icon" href="https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1233,7 +1233,23 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 <script>
 (function(){
   try{
-    var s=String(window.CLUB_SLUG_FORZADO||new URLSearchParams(location.search).get('club')||'quilicura').trim().toLowerCase();
+    var qs=new URLSearchParams(location.search);
+    var s=String(window.CLUB_SLUG_FORZADO||qs.get('club')||'').trim().toLowerCase();
+    if(!s){
+      // Volviendo del login de Google la URL pierde "?club=": se recupera el club
+      // que la persona estaba viendo (guardado justo antes de iniciar sesion).
+      var vuelta=/access_token|[?&]code=|refresh_token/.test(location.hash+location.search);
+      try{
+        var g=JSON.parse(localStorage.getItem('club_login_pendiente')||'null');
+        if(vuelta&&g&&g.slug&&Date.now()-g.t<15*60*1000){
+          s=String(g.slug);
+          var u=new URL(location.href);u.searchParams.set('club',s);
+          history.replaceState(null,'',u.pathname+u.search+u.hash);
+        }
+        localStorage.removeItem('club_login_pendiente');
+      }catch(e){}
+    }
+    s=s||'quilicura';
     window.CLUB_SLUG_INICIAL=s;
     if(s!=='quilicura'){
       document.documentElement.classList.add('club-otro');
@@ -1805,6 +1821,7 @@ function loginConGoogle(){
   // (el login "no entra" aunque Google si autentico). Por eso se arma
   // la URL base limpia (origin+pathname), sin ningun hash previo.
   var redirectLimpio=window.location.origin+window.location.pathname;
+  try{localStorage.setItem('club_login_pendiente',JSON.stringify({slug:window.CLUB_SLUG_INICIAL||'quilicura',t:Date.now()}));}catch(e){}
   window.supabaseClient.auth.signInWithOAuth({
     provider:'google',
     options:{redirectTo:redirectLimpio}
@@ -1865,6 +1882,17 @@ async function sincronizarJugadorVinculado(){
   try{
     var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').eq('user_id',usuarioActual.uid).maybeSingle();
     jugadorVinculado=(!res.error&&res.data)?res.data:null;
+    // Si el administrador ya registro el correo de Google de esta persona en su ficha,
+    // el perfil se vincula solo (sin tener que buscarse en la lista).
+    if(!jugadorVinculado&&usuarioActual.email&&CLUB_ACTUAL_ID){
+      var cand=await window.supabaseClient.from('jugadores').select('id,nombre,serie')
+        .is('user_id',null).eq('club_id',CLUB_ACTUAL_ID).ilike('email',usuarioActual.email);
+      if(!cand.error&&cand.data&&cand.data.length===1){
+        var up=await window.supabaseClient.from('jugadores')
+          .update({user_id:usuarioActual.uid}).eq('id',cand.data[0].id).is('user_id',null).select('id,nombre,serie').maybeSingle();
+        if(!up.error&&up.data)jugadorVinculado=up.data;
+      }
+    }
   }catch(err){
     console.warn('No se pudo verificar el perfil vinculado.',err);
     jugadorVinculado=null;
@@ -1884,7 +1912,9 @@ async function sincronizarJugadorVinculado(){
 async function cargarJugadoresSinReclamar(){
   if(!window.supabaseClient)return[];
   try{
-    var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').is('user_id',null).order('nombre');
+    var q=window.supabaseClient.from('jugadores').select('id,nombre,serie').is('user_id',null).order('nombre');
+    if(CLUB_ACTUAL_ID)q=q.eq('club_id',CLUB_ACTUAL_ID);
+    var res=await q;
     return res.error?[]:res.data;
   }catch(err){
     console.warn('No se pudo cargar la lista de perfiles disponibles.',err);
@@ -1927,7 +1957,7 @@ async function confirmarReclamo(){
   var jugadorId=sel?sel.value:'';
   if(!jugadorId){alert("Selecciona tu nombre de la lista.");return;}
   var opt=sel.options[sel.selectedIndex];
-  var nombreJugador=opt?opt.textContent.replace(/\s*\(Serie.*\)$/,''):'';
+  var nombreJugador=opt?opt.textContent.replace(/\s*\([^)]*\)$/,''):'';
 
   // Resguardo extra: si por alguna razon esta cuenta ya quedo vinculada
   // a otro jugador (dos pestanas abiertas, etc.), no dejar que reclame
@@ -3230,6 +3260,8 @@ async function resolverClubDesdeURL(){
       return false; // no cargar datos de un club con el servicio pausado
     }
     CLUB_ACTUAL_ID=c.id;
+    // Si la sesion ya estaba lista antes de conocer el club, vuelve a buscar el perfil de ESTE club.
+    if(typeof usuarioActual!=='undefined'&&usuarioActual&&typeof jugadorVinculado!=='undefined'&&!jugadorVinculado&&typeof sincronizarJugadorVinculado==='function')sincronizarJugadorVinculado();
     return true;
   }catch(err){
     console.warn('Sin conexion al resolver el club por slug, se usa el club por defecto.',err);
