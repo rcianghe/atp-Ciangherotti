@@ -1877,6 +1877,7 @@ function cerrarAvisoPago(){
 // uid). Si lo encuentra, listo. Si no, deja jugadorVinculado en null
 // para que se muestre el panel de "Reclama tu perfil".
 async function sincronizarJugadorVinculado(){
+  verificarAdminClub();
   if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;rAuthBox();refrescarAvisoPago();return;}
   try{
     var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').eq('user_id',usuarioActual.uid).maybeSingle();
@@ -3101,6 +3102,12 @@ var TORNEO_VISIBLE_CONFIG={
 };
 var torneoVisiblePorTipo={interno:true,abierto:true};
 
+function ocultarTiendaClubOtro(){
+  if(!window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura')return;
+  var els=document.querySelectorAll('#tienda,a[href="#tienda"],.mni[href="#tienda"]');
+  for(var i=0;i<els.length;i++)els[i].style.display='none';
+  aplicarVisibilidadTorneo('interno');
+}
 function aplicarVisibilidadTorneo(tipo){
   var cfg=TORNEO_VISIBLE_CONFIG[tipo];
   if(!cfg)return;
@@ -3259,6 +3266,7 @@ async function resolverClubDesdeURL(){
       return false; // no cargar datos de un club con el servicio pausado
     }
     CLUB_ACTUAL_ID=c.id;
+    cargarStockClub();verificarAdminClub();
     // Si la sesion ya estaba lista antes de conocer el club, vuelve a buscar el perfil de ESTE club.
     if(typeof usuarioActual!=='undefined'&&usuarioActual&&typeof jugadorVinculado!=='undefined'&&!jugadorVinculado&&typeof sincronizarJugadorVinculado==='function')sincronizarJugadorVinculado();
     return true;
@@ -3270,7 +3278,6 @@ async function resolverClubDesdeURL(){
 
 function mostrarClubNoEncontrado(slug){
   var sp=document.getElementById('splash');
-  aplicarRotuloSeriesTextos();
   document.documentElement.classList.add('club-listo');
   if(!sp)return;
   sp.classList.remove('hide');
@@ -3375,6 +3382,8 @@ function aplicarBrandingClub(tema,albumes){
   }
   var lcImg=document.querySelector('.lc');if(lcImg)lcImg.alt='Logo del '+CLUB_NOMBRE;
   var appT=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(appT)appT.setAttribute('content',CLUB_NOMBRE_CORTO);
+  aplicarRotuloSeriesTextos();
+  ocultarTiendaClubOtro();
   document.documentElement.classList.add('club-listo');
   var tagEl=document.getElementById('heroTagline');
   if(tagEl)tagEl.textContent=CLUB_HERO_TAGLINE;
@@ -6061,27 +6070,51 @@ async function calcH2H(){
     +"<div class=\"h2hm\"><div class=\"rmt\">Partidos jugados</div>"+rH+"</div></div>";
 }
 
-// Estado de stock editable por el usuario. Se guarda en localStorage del
-// dispositivo (misma logica que la disponibilidad de jugadores) para que
-// marcar un producto como "sin stock" persista entre visitas.
-function getStockOverride(id){
-  try{
-    var raw=localStorage.getItem("stock_"+id);
-    return raw?JSON.parse(raw).stock:null;
-  }catch(e){return null;}
-}
+// Stock de la tienda: lo define SOLO un administrador del club y se guarda en
+// configuracion_sitio ("tienda_stock"), igual para todos los visitantes.
+// Los jugadores y visitantes ven el estado pero no pueden cambiarlo.
+var STOCK_CLUB={};
+var ES_ADMIN_CLUB=false;
 function stockEfectivo(p){
-  var ov=getStockOverride(p.id);
-  return ov||p.stock;
+  return STOCK_CLUB[p.id]||p.stock;
+}
+async function cargarStockClub(){
+  if(!window.supabaseClient||!CLUB_ACTUAL_ID)return;
+  try{
+    var r=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','tienda_stock').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
+    if(!r.error&&r.data&&r.data.valor&&typeof r.data.valor==='object'){STOCK_CLUB=r.data.valor;if(document.getElementById('sg'))rStore();}
+  }catch(e){console.warn('No se pudo cargar el stock de la tienda.',e);}
+}
+// Solo si la sesion pertenece a un administrador (universal o de ESTE club) aparece el boton de stock.
+async function verificarAdminClub(){
+  var antes=ES_ADMIN_CLUB;ES_ADMIN_CLUB=false;
+  try{
+    if(window.supabaseClient&&usuarioActual&&CLUB_ACTUAL_ID){
+      var r=await window.supabaseClient.from('admins').select('club_id').eq('user_id',usuarioActual.uid);
+      if(!r.error&&r.data)ES_ADMIN_CLUB=r.data.some(function(a){return !a.club_id||a.club_id===CLUB_ACTUAL_ID;});
+    }
+  }catch(e){}
+  if(antes!==ES_ADMIN_CLUB&&document.getElementById('sg'))rStore();
 }
 function toggleStock(id){
   var pr=null;
   for(var i=0;i<PRODS.length;i++){if(PRODS[i].id===id){pr=PRODS[i];break;}}
   if(!pr)return;
-  var actual=stockEfectivo(pr);
-  var nuevo=actual==="out"?"ok":"out";
-  try{localStorage.setItem("stock_"+id,JSON.stringify({stock:nuevo}));}catch(e){}
-  rStore();
+  if(!ES_ADMIN_CLUB){return;} // solo administradores
+  guardarStockClub(id,stockEfectivo(pr)==="out"?"ok":"out");
+}
+async function guardarStockClub(id,nuevo){
+  var previo=Object.assign({},STOCK_CLUB);
+  STOCK_CLUB[id]=nuevo;rStore();
+  try{
+    var r=await window.supabaseClient.from('configuracion_sitio')
+      .upsert({club_id:CLUB_ACTUAL_ID,clave:'tienda_stock',valor:STOCK_CLUB,actualizado_en:new Date().toISOString()},{onConflict:'club_id,clave'});
+    if(r.error)throw r.error;
+  }catch(e){
+    console.warn('No se pudo guardar el stock.',e);
+    STOCK_CLUB=previo;rStore();
+    alert('No se pudo guardar el cambio. Solo un administrador puede modificar el stock.');
+  }
 }
 
 function filterStore(v,el){
@@ -6110,7 +6143,7 @@ function rStore(){
     var mediaH=p.img?"<img src=\""+p.img+"\" alt=\""+p.nombre+"\" style=\"width:100%;height:100%;object-fit:cover\">":"<span style=\"font-size:3.6rem\">"+(p.emoji||"🎾")+"</span>";
     h+="<div class=\"pc\"><div class=\"pi\">"+bH+"<span class=\"pstk "+st+"\">"+sL[st]+"</span>"+mediaH+"</div>";
     h+="<div class=\"pbd\"><div class=\"pcat\">"+(cL[p.cat]||p.cat)+"</div><div class=\"pnm\">"+p.nombre+"</div><div class=\"pdc\">"+p.desc+"</div>";
-    h+="<button class=\"stkToggle\" onclick=\"toggleStock("+p.id+")\">"+(st==="out"?"Marcar disponible":"Marcar sin stock")+"</button></div>";
+    h+=(ES_ADMIN_CLUB?"<button class=\"stkToggle\" onclick=\"toggleStock("+p.id+")\">"+(st==="out"?"Marcar disponible":"Marcar sin stock")+"</button>":"")+"</div>";
     h+="<div class=\"pft\"><div><div class=\"ppr\">$"+p.precio.toLocaleString("es-CL")+"</div><span class=\"pprs\">c/u</span></div>";
     h+="<button class=\"bac\" onclick=\"addToCart("+p.id+")\" "+dis+">"+txt+"</button></div></div>";
   }
