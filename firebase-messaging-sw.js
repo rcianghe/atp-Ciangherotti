@@ -28,11 +28,11 @@ const ICONO = new URL('icon-192.png', self.registration.scope).href;
 messaging.onBackgroundMessage(function (payload) {
   if (payload.notification) return;
   const d = payload.data || {};
-  return self.registration.showNotification(d.title || 'Club Tenis Estadio Quilicura', {
+  return self.registration.showNotification(d.title || 'Novedades del club', {
     body: d.body || '¡Hay novedades en el ranking/escalerilla!',
     icon: ICONO,
     badge: ICONO,
-    tag: d.tag || 'ctq-novedades',
+    tag: d.tag || ('club-' + (d.club || 'novedades')),
     data: { url: d.url || self.registration.scope }
   });
 });
@@ -45,8 +45,16 @@ self.addEventListener('notificationclick', function (event) {
     self.registration.scope;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (lista) {
+      // Enfoca solo una ventana que ya muestre ESA pagina (cada club tiene la suya);
+      // si hay otra abierta, la lleva al destino en vez de dejar el club equivocado.
+      const sinQuery = function (u) { return String(u).split('#')[0].split('?')[0]; };
       for (const c of lista) {
-        if (c.url.indexOf(self.registration.scope) === 0 && 'focus' in c) return c.focus();
+        if (sinQuery(c.url) === sinQuery(destino) && 'focus' in c) return c.focus();
+      }
+      for (const c of lista) {
+        if (c.url.indexOf(self.registration.scope) === 0 && 'navigate' in c && 'focus' in c) {
+          return c.navigate(destino).then(function (w) { return w ? w.focus() : null; }).catch(function () { return self.clients.openWindow(destino); });
+        }
       }
       return self.clients.openWindow(destino);
     })
@@ -55,7 +63,7 @@ self.addEventListener('notificationclick', function (event) {
 
 /* ---------------------------- OFFLINE ---------------------------- */
 // Subir la version invalida todo el cache anterior en el siguiente "activate".
-const VERSION = 'ctq-v2';
+const VERSION = 'ctq-v3';
 const CACHE_SHELL = VERSION + '-shell';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const MAX_RUNTIME = 80;
