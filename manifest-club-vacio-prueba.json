@@ -20,19 +20,19 @@
   ],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "pelota-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "pelota-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512-maskable.png",
+      "src": "pelota-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -45,7 +45,7 @@
       "url": "./club-vacio-prueba.html#ranking",
       "icons": [
         {
-          "src": "icon-192.png",
+          "src": "pelota-192.png",
           "sizes": "192x192"
         }
       ]
@@ -56,7 +56,7 @@
       "url": "./club-vacio-prueba.html#resultados",
       "icons": [
         {
-          "src": "icon-192.png",
+          "src": "pelota-192.png",
           "sizes": "192x192"
         }
       ]
@@ -67,7 +67,7 @@
       "url": "./club-vacio-prueba.html#perfil",
       "icons": [
         {
-          "src": "icon-192.png",
+          "src": "pelota-192.png",
           "sizes": "192x192"
         }
       ]
