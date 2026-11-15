@@ -2936,7 +2936,7 @@ async function showEntity(key, opts={}){
 
   const content = document.getElementById('content');
   content.innerHTML = `
-    ${key==='push_tokens' ? '<div class="advisory">⚠️ Esta tabla no tiene Row Level Security activada — cualquiera con la clave anónima puede leerla o modificarla. Revisa la nota de seguridad al final de este chat para el SQL de corrección.</div>' : ''}
+    ${key==='push_tokens' ? '<div class="advisory">ℹ️ Cada suscripción pertenece a un jugador, por lo que solo recibe avisos de su propio club.</div>' : ''}
     <div class="panel">
       <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
         <div class="table-toolbar" style="margin:0;">
