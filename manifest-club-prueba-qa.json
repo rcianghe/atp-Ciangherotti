@@ -1,0 +1,76 @@
+{
+  "id": "./club-prueba-qa.html",
+  "name": "Club de Tenis Providencia (Prueba QA)",
+  "short_name": "Providencia",
+  "description": "Ranking en vivo, resultados y estadisticas de Club de Tenis Providencia (Prueba QA)",
+  "start_url": "./club-prueba-qa.html?utm_source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0e0e0e",
+  "theme_color": "#5BBF2A",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "categories": [
+    "sports"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ranking",
+      "short_name": "Ranking",
+      "url": "./club-prueba-qa.html#ranking",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Resultados",
+      "short_name": "Resultados",
+      "url": "./club-prueba-qa.html#resultados",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Mi perfil",
+      "short_name": "Perfil",
+      "url": "./club-prueba-qa.html#perfil",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

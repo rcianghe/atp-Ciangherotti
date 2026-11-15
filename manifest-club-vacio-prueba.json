@@ -1,0 +1,76 @@
+{
+  "id": "./club-vacio-prueba.html",
+  "name": "Club de Tenis Prueba Vacío",
+  "short_name": "Prueba",
+  "description": "Ranking en vivo, resultados y estadisticas de Club de Tenis Prueba Vacío",
+  "start_url": "./club-vacio-prueba.html?utm_source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0e0e0e",
+  "theme_color": "#2E7DD1",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "categories": [
+    "sports"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ranking",
+      "short_name": "Ranking",
+      "url": "./club-vacio-prueba.html#ranking",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Resultados",
+      "short_name": "Resultados",
+      "url": "./club-vacio-prueba.html#resultados",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Mi perfil",
+      "short_name": "Perfil",
+      "url": "./club-vacio-prueba.html#perfil",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
