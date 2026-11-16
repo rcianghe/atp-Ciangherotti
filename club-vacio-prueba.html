@@ -3103,11 +3103,19 @@ var TORNEO_VISIBLE_CONFIG={
 };
 var torneoVisiblePorTipo={interno:true,abierto:true};
 
+// La tienda se ve segun configuracion_sitio.tienda_visible (la define solo el administrador
+// universal). Sin ese dato: visible en el club base, oculta en los demas.
 function ocultarTiendaClubOtro(){
-  if(!window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura')return;
+  var esBase=!window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura';
+  var visible=TIENDA_VISIBLE===null?esBase:TIENDA_VISIBLE;
   var els=document.querySelectorAll('#tienda,a[href="#tienda"],.mni[href="#tienda"]');
-  for(var i=0;i<els.length;i++)els[i].style.display='none';
-  aplicarVisibilidadTorneo('interno');
+  for(var i=0;i<els.length;i++)els[i].style.display=visible?'':'none';
+  var mn=document.querySelector('nav.mn');
+  if(mn){
+    var its=mn.querySelectorAll('.mni'),vis=0;
+    for(var k=0;k<its.length;k++){if(its[k].style.display!=='none')vis++;}
+    mn.style.gridTemplateColumns='repeat('+Math.max(vis,1)+',1fr)';
+  }
 }
 function aplicarVisibilidadTorneo(tipo){
   var cfg=TORNEO_VISIBLE_CONFIG[tipo];
@@ -6075,24 +6083,32 @@ async function calcH2H(){
 // configuracion_sitio ("tienda_stock"), igual para todos los visitantes.
 // Los jugadores y visitantes ven el estado pero no pueden cambiarlo.
 var STOCK_CLUB={};
-var ES_ADMIN_CLUB=false;
+var ES_ADMIN_CLUB=false;   // true solo para el administrador universal (nadie mas cambia stock ni visibilidad)
+var TIENDA_VISIBLE=null;   // null = aun no se sabe
 function stockEfectivo(p){
   return STOCK_CLUB[p.id]||p.stock;
 }
 async function cargarStockClub(){
   if(!window.supabaseClient||!CLUB_ACTUAL_ID)return;
   try{
-    var r=await window.supabaseClient.from('configuracion_sitio').select('valor').eq('clave','tienda_stock').eq('club_id',CLUB_ACTUAL_ID).maybeSingle();
-    if(!r.error&&r.data&&r.data.valor&&typeof r.data.valor==='object'){STOCK_CLUB=r.data.valor;if(document.getElementById('sg'))rStore();}
+    var r=await window.supabaseClient.from('configuracion_sitio').select('clave,valor').in('clave',['tienda_stock','tienda_visible']).eq('club_id',CLUB_ACTUAL_ID);
+    if(!r.error&&r.data){
+      r.data.forEach(function(x){
+        if(x.clave==='tienda_stock'&&x.valor&&typeof x.valor==='object')STOCK_CLUB=x.valor;
+        if(x.clave==='tienda_visible')TIENDA_VISIBLE=(x.valor===true||x.valor==='true');
+      });
+      if(document.getElementById('sg'))rStore();
+      ocultarTiendaClubOtro();
+    }
   }catch(e){console.warn('No se pudo cargar el stock de la tienda.',e);}
 }
-// Solo si la sesion pertenece a un administrador (universal o de ESTE club) aparece el boton de stock.
+// Solo el administrador universal (club_id nulo) ve el boton de stock.
 async function verificarAdminClub(){
   var antes=ES_ADMIN_CLUB;ES_ADMIN_CLUB=false;
   try{
     if(window.supabaseClient&&usuarioActual&&CLUB_ACTUAL_ID){
       var r=await window.supabaseClient.from('admins').select('club_id').eq('user_id',usuarioActual.uid);
-      if(!r.error&&r.data)ES_ADMIN_CLUB=r.data.some(function(a){return !a.club_id||a.club_id===CLUB_ACTUAL_ID;});
+      if(!r.error&&r.data)ES_ADMIN_CLUB=r.data.some(function(a){return !a.club_id;});
     }
   }catch(e){}
   if(antes!==ES_ADMIN_CLUB&&document.getElementById('sg'))rStore();
