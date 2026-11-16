@@ -2303,7 +2303,7 @@ async function renderConfigClub(){
   const clubId = clubBonosId();
   if(!clubId){ body.innerHTML = '<div class="advisory">Elige un club en el selector de la izquierda para configurar sus series y puntos.</div>'; return; }
   body.innerHTML = '<div class="panel"><div class="empty-state">Cargando…</div></div>';
-  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo','bases_puntos','fixture_size']);
+  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo','bases_puntos','fixture_size','tienda_visible']);
   if(r.error){ body.innerHTML = `<div class="advisory">No se pudo cargar: ${bdEsc(r.error.message)}</div>`; return; }
   const c = {}; (r.data||[]).forEach(x=>{ c[x.clave]=x.valor; });
   const series = normalizarSeriesAdm(c.series) || SERIES_DEFAULT.map(x=>({...x}));
@@ -2312,7 +2312,8 @@ async function renderConfigClub(){
     series: series.map(s=>({...s, existente:true})),
     rotulo: typeof c.serie_rotulo==='string' && c.serie_rotulo ? c.serie_rotulo : 'Serie',
     puntos: Object.assign({}, PUNTOS_DEFAULT_ADM, (c.bases_puntos && typeof c.bases_puntos==='object') ? c.bases_puntos : {}),
-    fixture: (c.fixture_size && typeof c.fixture_size==='object') ? c.fixture_size : {}
+    fixture: (c.fixture_size && typeof c.fixture_size==='object') ? c.fixture_size : {},
+    tienda: c.tienda_visible===true
   };
   paintConfigClub();
 }
@@ -2386,7 +2387,26 @@ function paintConfigClub(){
       <p class="hint" style="margin-top:0">Un bono en 0 queda desactivado. Los bonos "gana todos" y "juega todos" usan el tamaño de fixture de cada serie (columna Fixture).</p>
       <div style="max-width:460px">${pts}</div>
       <div style="margin-top:16px"><button class="btn btn-primary" id="cfgGuardar" onclick="guardarConfigClub()">💾 Guardar configuración</button></div>
-    </div></div>`;
+    </div></div>
+    ${adminClubIdActual ? '' : `<div class="panel" style="margin-top:16px"><div class="panel-head"><h3>🛒 Tienda en la web</h3></div>
+    <div class="panel-body" style="padding:14px 18px">
+      <p class="hint" style="margin-top:0">Solo el administrador universal decide si la TIENDA se ve en la web de este club y cambia el stock (botón "Marcar sin stock" en la propia tienda). Los clubes nuevos parten con la tienda oculta. Ojo: hoy la tienda muestra los productos del club base.</p>
+      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="cfgTienda" ${c.tienda?'checked':''}> Mostrar la TIENDA en la web de este club</label>
+      <div style="margin-top:12px"><button class="btn btn-primary" id="cfgTiendaBtn" onclick="guardarTiendaVisible()">💾 Guardar tienda</button></div>
+    </div></div>`}`;
+}
+async function guardarTiendaVisible(){
+  if(adminClubIdActual){ toast('Solo el administrador universal puede cambiar esto.', true); return; }
+  const chk = document.getElementById('cfgTienda'); const btn = document.getElementById('cfgTiendaBtn');
+  if(!chk || !cfgClub) return;
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const { error } = await sb.from('configuracion_sitio').upsert(
+    { club_id:cfgClub.clubId, clave:'tienda_visible', valor:!!chk.checked, actualizado_en:new Date().toISOString() },
+    { onConflict:'club_id,clave' });
+  btn.disabled = false; btn.textContent = '💾 Guardar tienda';
+  if(error){ toast('No se pudo guardar: '+error.message, true); return; }
+  cfgClub.tienda = !!chk.checked;
+  toast(chk.checked ? 'La tienda ahora se ve en la web de este club.' : 'La tienda quedó oculta en este club.');
 }
 
 async function guardarConfigClub(){
