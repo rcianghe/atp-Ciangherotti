@@ -1109,7 +1109,26 @@ ENTITIES.tienda_productos = { label:'Productos', group:'Tienda', table:'tienda_p
     {key:'orden',label:'Orden en la tienda (1, 2, 3…)',type:'number',default:0},
   ]};
 
-const NAV_GROUPS = ['Resumen','Competición','Club','Plataforma','Tienda','Sistema'];
+/* FOTOS: los álbumes de cada club los define solo el administrador universal. */
+ENTITIES.albumes_clubes = { label:'Álbumes de cada club', group:'Fotos', table:'clubes', pk:'id',
+  select:'id,nombre,nombre_corto,albumes_galeria',
+  order:{col:'nombre'}, searchCols:['nombre'], noCreate:true, noDelete:true,
+  columns:[
+    {key:'nombre',label:'Club'},
+    {key:'albumes_galeria',label:'Afiches',render:(v)=>v&&v.afiches?'<a href="'+escAttr(v.afiches)+'" target="_blank" rel="noopener">✔ ver</a>':'<span class="hint">sin link</span>'},
+    {key:'albumes_galeria',label:'Vintage',render:(v)=>v&&v.vintage?'<a href="'+escAttr(v.vintage)+'" target="_blank" rel="noopener">✔ ver</a>':'<span class="hint">sin link</span>'},
+    {key:'albumes_galeria',label:'Competición del mes',render:(v)=>v&&v.competicion_mes?'<a href="'+escAttr(v.competicion_mes)+'" target="_blank" rel="noopener">✔ ver</a>':'<span class="hint">sin link</span>'},
+  ],
+  fields:[
+    {key:'nombre',label:'Club',type:'text',disabledOnEdit:true},
+    {key:'albumes_galeria',label:'Links de las fotos de este club (Google Fotos u otra carpeta). Si dejas uno vacío, ese botón no aparece en la web del club.',type:'jsonFields',subfields:[
+      {key:'afiches',label:'Álbum Afiches (URL)',placeholder:'https://photos.app.goo.gl/...'},
+      {key:'vintage',label:'Álbum Vintage / historia del club (URL)',placeholder:'https://photos.app.goo.gl/...'},
+      {key:'competicion_mes',label:'Álbum Competición del mes (URL)',placeholder:'https://photos.app.goo.gl/...'},
+    ]},
+  ]};
+
+const NAV_GROUPS = ['Resumen','Competición','Club','Plataforma','Tienda','Fotos','Sistema'];
 
 /* =========================================================================
    HELPERS DE FORMATO / BADGES
@@ -1839,7 +1858,7 @@ function buildNav(){
   const nav = document.getElementById('navContainer');
   let html = `<div class="nav-item active" data-view="dashboard" onclick="showDashboard('resumen')"><span class="rung"></span>📊 Resumen</div>`;
   NAV_GROUPS.slice(1).forEach(group=>{
-    if(group==='Tienda' && adminClubIdActual) return; // la tienda es solo del administrador universal
+    if((group==='Tienda'||group==='Fotos') && adminClubIdActual) return; // tienda y fotos de clubes: solo administrador universal
     html += `<div class="nav-group-label">${group}</div>`;
     Object.entries(ENTITIES).filter(([k,e])=>e.group===group).forEach(([key,e])=>{
       html += `<div class="nav-item" data-view="${key}" onclick="showEntity('${key}')"><span class="rung"></span>${e.label}</div>`;
