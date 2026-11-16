@@ -1457,9 +1457,9 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
   <div class="container">
     <div class="sh fi2"><div class="se">Afiches y duelos</div><h2 class="st">Galeria</h2><div class="sl"></div></div>
     <div class="galb">
-      <a class="galbtn" id="galLinkAfiches" href="https://photos.app.goo.gl/znY8dphD822ZyRpd6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album Afiches</a>
-      <a class="galbtn" id="galLinkVintage" href="https://photos.app.goo.gl/CNKX5xdh7h5WvA27A" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
-      <a class="galbtn" id="galLinkCompeticion" href="https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
+      <a class="galbtn" id="galLinkAfiches" href="#" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">📸</span>Ver album Afiches</a>
+      <a class="galbtn" id="galLinkVintage" href="#" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏛️</span>Ver album Vintage Club</a>
+      <a class="galbtn" id="galLinkCompeticion" href="#" target="_blank" rel="noopener" onclick="return abrirAlbumGaleria(event)"><span class="gi2">🏆</span>Ver album Competición del Mes Actual</a>
     </div>
   </div>
 </section>
@@ -3102,6 +3102,33 @@ var TORNEO_VISIBLE_CONFIG={
 };
 var torneoVisiblePorTipo={interno:true,abierto:true};
 
+// Ajusta las columnas del menu inferior (celular) a los botones que realmente se ven.
+function recalcularNavMovil(){
+  var mn=document.querySelector('nav.mn');
+  if(mn){
+    var its=mn.querySelectorAll('.mni'),vis=0;
+    for(var k=0;k<its.length;k++){if(its[k].style.display!=='none')vis++;}
+    mn.style.gridTemplateColumns='repeat('+Math.max(vis,1)+',1fr)';
+  }
+}
+// GALERIA: cada club muestra SOLO sus propios albumes (los define el administrador universal).
+// Un boton sin link desaparece; sin ningun link, desaparece la seccion Galeria completa.
+var ALBUMES_BASE={afiches:'https://photos.app.goo.gl/znY8dphD822ZyRpd6',vintage:'https://photos.app.goo.gl/CNKX5xdh7h5WvA27A',competicion_mes:'https://photos.app.goo.gl/dFAQv3pqdSG4dmoP6'};
+function aplicarAlbumesGaleria(albumes){
+  var esBase=!window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura';
+  var a=albumes&&typeof albumes==='object'?albumes:{};
+  var mapa=[['galLinkAfiches','afiches'],['galLinkVintage','vintage'],['galLinkCompeticion','competicion_mes']];
+  var hay=0;
+  for(var i=0;i<mapa.length;i++){
+    var el=document.getElementById(mapa[i][0]);if(!el)continue;
+    var url=String(a[mapa[i][1]]||'').trim()||(esBase?ALBUMES_BASE[mapa[i][1]]:'');
+    if(url&&/^https?:\/\//i.test(url)){el.href=url;el.style.display='';hay++;}
+    else{el.removeAttribute('href');el.style.display='none';}
+  }
+  var els=document.querySelectorAll('#galeria,a[href="#galeria"],.mni[href="#galeria"]');
+  for(var j=0;j<els.length;j++)els[j].style.display=hay?'':'none';
+  recalcularNavMovil();
+}
 // La tienda se ve segun configuracion_sitio.tienda_visible (la define solo el administrador
 // universal). Sin ese dato: visible en el club base, oculta en los demas.
 function ocultarTiendaClubOtro(){
@@ -3109,12 +3136,7 @@ function ocultarTiendaClubOtro(){
   var visible=TIENDA_VISIBLE===null?esBase:TIENDA_VISIBLE;
   var els=document.querySelectorAll('#tienda,a[href="#tienda"],.mni[href="#tienda"]');
   for(var i=0;i<els.length;i++)els[i].style.display=visible?'':'none';
-  var mn=document.querySelector('nav.mn');
-  if(mn){
-    var its=mn.querySelectorAll('.mni'),vis=0;
-    for(var k=0;k<its.length;k++){if(its[k].style.display!=='none')vis++;}
-    mn.style.gridTemplateColumns='repeat('+Math.max(vis,1)+',1fr)';
-  }
+  recalcularNavMovil();
 }
 function aplicarVisibilidadTorneo(tipo){
   var cfg=TORNEO_VISIBLE_CONFIG[tipo];
@@ -3401,10 +3423,8 @@ function aplicarBrandingClub(tema,albumes){
   var footerCopyEl=document.getElementById('footerCopyright');
   if(footerCopyEl)footerCopyEl.textContent=CLUB_NOMBRE+' '+new Date().getFullYear();
 
+  aplicarAlbumesGaleria(albumes);
   if(albumes){
-    var la=document.getElementById('galLinkAfiches');if(la&&albumes.afiches)la.href=albumes.afiches;
-    var lv=document.getElementById('galLinkVintage');if(lv&&albumes.vintage)lv.href=albumes.vintage;
-    var lc=document.getElementById('galLinkCompeticion');if(lc&&albumes.competicion_mes)lc.href=albumes.competicion_mes;
   }
 }
 
