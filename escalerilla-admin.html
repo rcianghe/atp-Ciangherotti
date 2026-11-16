@@ -469,6 +469,7 @@ async function onClubFilterChange(v){
 let adminClubIdActual = null; // se completa en doLogin/checkExistingSession desde admins.club_id
 
 function carpetaClubParaSubida(){
+  if(currentEntity==='tienda_productos' && !adminClubIdActual) return 'tienda'; // fotos de la tienda: no dependen de un club
   return adminClubIdActual || selectedClubId || null;
 }
 
@@ -1083,7 +1084,32 @@ const ENTITIES = {
     fields:[]},
 };
 
-const NAV_GROUPS = ['Resumen','Competición','Club','Plataforma','Sistema'];
+/* TIENDA: es del administrador universal (no de los clubes). Una sola tienda que ven los visitantes de todos los clubes. */
+ENTITIES.tienda_productos = { label:'Productos', group:'Tienda', table:'tienda_productos', pk:'id',
+  select:'id,nombre,categoria,descripcion,precio,imagen_url,emoji,badge,stock,visible,orden',
+  order:{col:'orden'}, searchCols:['nombre'],
+  columns:[
+    {key:'imagen_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`:'<span class="hint">—</span>'},
+    {key:'nombre',label:'Producto'},
+    {key:'categoria',label:'Categoría'},
+    {key:'precio',label:'Precio',render:v=>'$'+Number(v||0).toLocaleString('es-CL')},
+    {key:'stock',label:'Stock',render:v=>v==='out'?'<span class="badge badge-gray">Sin stock</span>':(v==='low'?'<span class="badge badge-gray">Pocas unidades</span>':'<span class="badge badge-green">Disponible</span>')},
+    {key:'visible',label:'En la web',render:v=>v===false?'<span class="badge badge-gray">Oculto</span>':'<span class="badge badge-green">Visible</span>'},
+  ],
+  fields:[
+    {key:'nombre',label:'Nombre del producto',type:'text',required:true},
+    {key:'categoria',label:'Categoría',type:'select',options:['pelotas','accesorios','otros'],default:'otros'},
+    {key:'descripcion',label:'Descripción',type:'textarea'},
+    {key:'precio',label:'Precio (CLP, sin puntos)',type:'number',required:true},
+    {key:'imagen_url',label:'Foto del producto (imagen)',type:'fileurl',bucket:'afiches'},
+    {key:'emoji',label:'Emoji (se usa si no hay foto)',type:'text'},
+    {key:'badge',label:'Etiqueta',type:'select',options:[{v:'',l:'Ninguna'},{v:'new',l:'Nuevo'},{v:'hot',l:'Popular'},{v:'offer',l:'Oferta'}],default:''},
+    {key:'stock',label:'Stock',type:'select',options:[{v:'ok',l:'Disponible'},{v:'low',l:'Pocas unidades'},{v:'out',l:'Sin stock (se ve, pero no se puede pedir)'}],default:'ok'},
+    {key:'visible',label:'Visible en la web (si lo apagas, desaparece para los visitantes)',type:'bool',default:true},
+    {key:'orden',label:'Orden en la tienda (1, 2, 3…)',type:'number',default:0},
+  ]};
+
+const NAV_GROUPS = ['Resumen','Competición','Club','Plataforma','Tienda','Sistema'];
 
 /* =========================================================================
    HELPERS DE FORMATO / BADGES
@@ -1813,6 +1839,7 @@ function buildNav(){
   const nav = document.getElementById('navContainer');
   let html = `<div class="nav-item active" data-view="dashboard" onclick="showDashboard('resumen')"><span class="rung"></span>📊 Resumen</div>`;
   NAV_GROUPS.slice(1).forEach(group=>{
+    if(group==='Tienda' && adminClubIdActual) return; // la tienda es solo del administrador universal
     html += `<div class="nav-group-label">${group}</div>`;
     Object.entries(ENTITIES).filter(([k,e])=>e.group===group).forEach(([key,e])=>{
       html += `<div class="nav-item" data-view="${key}" onclick="showEntity('${key}')"><span class="rung"></span>${e.label}</div>`;
@@ -2303,7 +2330,7 @@ async function renderConfigClub(){
   const clubId = clubBonosId();
   if(!clubId){ body.innerHTML = '<div class="advisory">Elige un club en el selector de la izquierda para configurar sus series y puntos.</div>'; return; }
   body.innerHTML = '<div class="panel"><div class="empty-state">Cargando…</div></div>';
-  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo','bases_puntos','fixture_size','tienda_visible']);
+  const r = await sb.from('configuracion_sitio').select('clave,valor').eq('club_id', clubId).in('clave',['series','serie_rotulo','bases_puntos','fixture_size']);
   if(r.error){ body.innerHTML = `<div class="advisory">No se pudo cargar: ${bdEsc(r.error.message)}</div>`; return; }
   const c = {}; (r.data||[]).forEach(x=>{ c[x.clave]=x.valor; });
   const series = normalizarSeriesAdm(c.series) || SERIES_DEFAULT.map(x=>({...x}));
@@ -2312,8 +2339,7 @@ async function renderConfigClub(){
     series: series.map(s=>({...s, existente:true})),
     rotulo: typeof c.serie_rotulo==='string' && c.serie_rotulo ? c.serie_rotulo : 'Serie',
     puntos: Object.assign({}, PUNTOS_DEFAULT_ADM, (c.bases_puntos && typeof c.bases_puntos==='object') ? c.bases_puntos : {}),
-    fixture: (c.fixture_size && typeof c.fixture_size==='object') ? c.fixture_size : {},
-    tienda: c.tienda_visible===true
+    fixture: (c.fixture_size && typeof c.fixture_size==='object') ? c.fixture_size : {}
   };
   paintConfigClub();
 }
@@ -2387,26 +2413,32 @@ function paintConfigClub(){
       <p class="hint" style="margin-top:0">Un bono en 0 queda desactivado. Los bonos "gana todos" y "juega todos" usan el tamaño de fixture de cada serie (columna Fixture).</p>
       <div style="max-width:460px">${pts}</div>
       <div style="margin-top:16px"><button class="btn btn-primary" id="cfgGuardar" onclick="guardarConfigClub()">💾 Guardar configuración</button></div>
-    </div></div>
-    ${adminClubIdActual ? '' : `<div class="panel" style="margin-top:16px"><div class="panel-head"><h3>🛒 Tienda en la web</h3></div>
-    <div class="panel-body" style="padding:14px 18px">
-      <p class="hint" style="margin-top:0">Solo el administrador universal decide si la TIENDA se ve en la web de este club y cambia el stock (botón "Marcar sin stock" en la propia tienda). Los clubes nuevos parten con la tienda oculta. Ojo: hoy la tienda muestra los productos del club base.</p>
-      <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="cfgTienda" ${c.tienda?'checked':''}> Mostrar la TIENDA en la web de este club</label>
-      <div style="margin-top:12px"><button class="btn btn-primary" id="cfgTiendaBtn" onclick="guardarTiendaVisible()">💾 Guardar tienda</button></div>
-    </div></div>`}`;
+    </div></div>`;
 }
-async function guardarTiendaVisible(){
+async function cargarTiendaPanel(){
+  const box = document.getElementById('tiendaPanel'); if(!box) return;
+  if(adminClubIdActual){ box.innerHTML = '<div class="advisory">Solo el administrador universal puede administrar la tienda.</div>'; return; }
+  const r = await sb.from('tienda_config').select('visible,whatsapp,zonas_entrega').eq('id',1).maybeSingle();
+  if(r.error){ box.innerHTML = `<div class="advisory">No se pudo cargar la tienda: ${bdEsc(r.error.message)}</div>`; return; }
+  const c = r.data || { visible:true, whatsapp:'', zonas_entrega:[] };
+  box.innerHTML = `<div class="panel" style="margin-bottom:16px"><div class="panel-head"><h3>🛒 Tienda (única, para todos los clubes)</h3></div>
+    <div class="panel-body" style="padding:14px 18px">
+      <label style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input type="checkbox" id="tdVisible" ${c.visible!==false?'checked':''}> <b>Mostrar la TIENDA a los visitantes de todos los clubes</b></label>
+      <p class="hint" style="margin:0 0 12px">Si la desmarcas, la TIENDA desaparece de la web de todos los clubes. Los productos se conservan.</p>
+      <div class="field"><label>WhatsApp que recibe los pedidos (con código de país, solo números)</label><input id="tdWa" value="${escAttr(c.whatsapp||'')}" placeholder="56974723654"></div>
+      <div class="field"><label>Puntos de entrega (separados por coma)</label><textarea id="tdZonas" rows="3">${bdEsc((c.zonas_entrega||[]).join(', '))}</textarea></div>
+      <button class="btn btn-primary" id="tdGuardar" onclick="guardarTiendaConfig()">💾 Guardar ajustes de la tienda</button>
+    </div></div>`;
+}
+async function guardarTiendaConfig(){
   if(adminClubIdActual){ toast('Solo el administrador universal puede cambiar esto.', true); return; }
-  const chk = document.getElementById('cfgTienda'); const btn = document.getElementById('cfgTiendaBtn');
-  if(!chk || !cfgClub) return;
-  btn.disabled = true; btn.textContent = 'Guardando…';
-  const { error } = await sb.from('configuracion_sitio').upsert(
-    { club_id:cfgClub.clubId, clave:'tienda_visible', valor:!!chk.checked, actualizado_en:new Date().toISOString() },
-    { onConflict:'club_id,clave' });
-  btn.disabled = false; btn.textContent = '💾 Guardar tienda';
+  const btn = document.getElementById('tdGuardar'); btn.disabled = true; btn.textContent = 'Guardando…';
+  const zonas = (document.getElementById('tdZonas').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const wa = (document.getElementById('tdWa').value||'').replace(/\D/g,'');
+  const { error } = await sb.from('tienda_config').upsert({ id:1, visible:document.getElementById('tdVisible').checked, whatsapp:wa, zonas_entrega:zonas, actualizado_en:new Date().toISOString() }, { onConflict:'id' });
+  btn.disabled = false; btn.textContent = '💾 Guardar ajustes de la tienda';
   if(error){ toast('No se pudo guardar: '+error.message, true); return; }
-  cfgClub.tienda = !!chk.checked;
-  toast(chk.checked ? 'La tienda ahora se ve en la web de este club.' : 'La tienda quedó oculta en este club.');
+  toast('Ajustes de la tienda guardados.');
 }
 
 async function guardarConfigClub(){
@@ -2956,6 +2988,7 @@ async function showEntity(key, opts={}){
 
   const content = document.getElementById('content');
   content.innerHTML = `
+    ${key==='tienda_productos' ? '<div id="tiendaPanel"></div>' : ''}
     ${key==='push_tokens' ? '<div class="advisory">ℹ️ Cada suscripción pertenece a un jugador, por lo que solo recibe avisos de su propio club.</div>' : ''}
     <div class="panel">
       <div class="panel-head" style="flex-wrap:wrap;gap:10px;">
@@ -2969,6 +3002,7 @@ async function showEntity(key, opts={}){
         <tbody id="tableBody"><tr class="loading-row"><td colspan="${e.columns.length+1}">Cargando…</td></tr></tbody></table>
       </div>
     </div>`;
+  if(key==='tienda_productos') cargarTiendaPanel();
   await fetchAndRenderRows();
 }
 
@@ -3076,7 +3110,7 @@ function renderField(f, record){
   }
   if(f.type==='select'){
     return `<div class="field"><label>${f.label}${f.required?' *':''}</label>
-      <select id="f_${f.key}" ${disabled}>${f.options.map(o=>`<option value="${o}" ${String(val)===String(o)?'selected':''}>${o===''?'(sin definir)':o}</option>`).join('')}</select></div>`;
+      <select id="f_${f.key}" ${disabled}>${f.options.map(o=>{const ov=(o&&typeof o==='object')?o.v:o, ol=(o&&typeof o==='object')?o.l:(o===''?'(sin definir)':o);return `<option value="${escAttr(ov)}" ${String(val)===String(ov)?'selected':''}>${ol}</option>`;}).join('')}</select></div>`;
   }
   if(f.type==='fk'){
     const opts = lookups[f.lookup]||[];
