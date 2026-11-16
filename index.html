@@ -1877,7 +1877,6 @@ function cerrarAvisoPago(){
 // uid). Si lo encuentra, listo. Si no, deja jugadorVinculado en null
 // para que se muestre el panel de "Reclama tu perfil".
 async function sincronizarJugadorVinculado(){
-  verificarAdminClub();
   if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;rAuthBox();refrescarAvisoPago();return;}
   try{
     var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').eq('user_id',usuarioActual.uid).maybeSingle();
@@ -3274,7 +3273,7 @@ async function resolverClubDesdeURL(){
       return false; // no cargar datos de un club con el servicio pausado
     }
     CLUB_ACTUAL_ID=c.id;
-    cargarStockClub();verificarAdminClub();
+    cargarTienda();
     // Si la sesion ya estaba lista antes de conocer el club, vuelve a buscar el perfil de ESTE club.
     if(typeof usuarioActual!=='undefined'&&usuarioActual&&typeof jugadorVinculado!=='undefined'&&!jugadorVinculado&&typeof sincronizarJugadorVinculado==='function')sincronizarJugadorVinculado();
     return true;
@@ -6078,59 +6077,31 @@ async function calcH2H(){
     +"<div class=\"h2hm\"><div class=\"rmt\">Partidos jugados</div>"+rH+"</div></div>";
 }
 
-// Stock de la tienda: lo define SOLO un administrador del club y se guarda en
-// configuracion_sitio ("tienda_stock"), igual para todos los visitantes.
-// Los jugadores y visitantes ven el estado pero no pueden cambiarlo.
-var STOCK_CLUB={};
-var ES_ADMIN_CLUB=false;   // true solo para el administrador universal (nadie mas cambia stock ni visibilidad)
+// LA TIENDA ES UNICA Y DEL ADMINISTRADOR UNIVERSAL (no de cada club).
+// Productos, precios, descripcion, stock y visibilidad viven en las tablas
+// tienda_productos / tienda_config y solo se editan desde escalerilla-admin.
+// Si la base no responde se usa la lista fija de respaldo (PRODS).
 var TIENDA_VISIBLE=null;   // null = aun no se sabe
+var TIENDA_WA="";
 function stockEfectivo(p){
-  return STOCK_CLUB[p.id]||p.stock;
+  return p.stock;
 }
-async function cargarStockClub(){
-  if(!window.supabaseClient||!CLUB_ACTUAL_ID)return;
+async function cargarTienda(){
+  if(!window.supabaseClient)return;
   try{
-    var r=await window.supabaseClient.from('configuracion_sitio').select('clave,valor').in('clave',['tienda_stock','tienda_visible']).eq('club_id',CLUB_ACTUAL_ID);
+    var c=await window.supabaseClient.from('tienda_config').select('visible,whatsapp,zonas_entrega').eq('id',1).maybeSingle();
+    if(!c.error&&c.data){
+      TIENDA_VISIBLE=c.data.visible!==false;
+      if(c.data.whatsapp)TIENDA_WA=String(c.data.whatsapp).replace(/\D/g,'');
+      if(Array.isArray(c.data.zonas_entrega)&&c.data.zonas_entrega.length)METRO=c.data.zonas_entrega;
+    }
+    var r=await window.supabaseClient.from('tienda_productos').select('id,nombre,categoria,descripcion,precio,imagen_url,emoji,badge,stock').eq('visible',true).order('orden').order('id');
     if(!r.error&&r.data){
-      r.data.forEach(function(x){
-        if(x.clave==='tienda_stock'&&x.valor&&typeof x.valor==='object')STOCK_CLUB=x.valor;
-        if(x.clave==='tienda_visible')TIENDA_VISIBLE=(x.valor===true||x.valor==='true');
-      });
+      PRODS=r.data.map(function(x){return {id:x.id,nombre:x.nombre,cat:x.categoria||'otros',img:x.imagen_url||'',emoji:x.emoji||'',desc:x.descripcion||'',precio:x.precio,stock:x.stock||'ok',badge:x.badge||''};});
       if(document.getElementById('sg'))rStore();
-      ocultarTiendaClubOtro();
     }
-  }catch(e){console.warn('No se pudo cargar el stock de la tienda.',e);}
-}
-// Solo el administrador universal (club_id nulo) ve el boton de stock.
-async function verificarAdminClub(){
-  var antes=ES_ADMIN_CLUB;ES_ADMIN_CLUB=false;
-  try{
-    if(window.supabaseClient&&usuarioActual&&CLUB_ACTUAL_ID){
-      var r=await window.supabaseClient.from('admins').select('club_id').eq('user_id',usuarioActual.uid);
-      if(!r.error&&r.data)ES_ADMIN_CLUB=r.data.some(function(a){return !a.club_id;});
-    }
-  }catch(e){}
-  if(antes!==ES_ADMIN_CLUB&&document.getElementById('sg'))rStore();
-}
-function toggleStock(id){
-  var pr=null;
-  for(var i=0;i<PRODS.length;i++){if(PRODS[i].id===id){pr=PRODS[i];break;}}
-  if(!pr)return;
-  if(!ES_ADMIN_CLUB){return;} // solo administradores
-  guardarStockClub(id,stockEfectivo(pr)==="out"?"ok":"out");
-}
-async function guardarStockClub(id,nuevo){
-  var previo=Object.assign({},STOCK_CLUB);
-  STOCK_CLUB[id]=nuevo;rStore();
-  try{
-    var r=await window.supabaseClient.from('configuracion_sitio')
-      .upsert({club_id:CLUB_ACTUAL_ID,clave:'tienda_stock',valor:STOCK_CLUB,actualizado_en:new Date().toISOString()},{onConflict:'club_id,clave'});
-    if(r.error)throw r.error;
-  }catch(e){
-    console.warn('No se pudo guardar el stock.',e);
-    STOCK_CLUB=previo;rStore();
-    alert('No se pudo guardar el cambio. Solo un administrador puede modificar el stock.');
-  }
+    ocultarTiendaClubOtro();
+  }catch(e){console.warn('No se pudo cargar la tienda.',e);}
 }
 
 function filterStore(v,el){
@@ -6159,7 +6130,7 @@ function rStore(){
     var mediaH=p.img?"<img src=\""+p.img+"\" alt=\""+p.nombre+"\" style=\"width:100%;height:100%;object-fit:cover\">":"<span style=\"font-size:3.6rem\">"+(p.emoji||"🎾")+"</span>";
     h+="<div class=\"pc\"><div class=\"pi\">"+bH+"<span class=\"pstk "+st+"\">"+sL[st]+"</span>"+mediaH+"</div>";
     h+="<div class=\"pbd\"><div class=\"pcat\">"+(cL[p.cat]||p.cat)+"</div><div class=\"pnm\">"+p.nombre+"</div><div class=\"pdc\">"+p.desc+"</div>";
-    h+=(ES_ADMIN_CLUB?"<button class=\"stkToggle\" onclick=\"toggleStock("+p.id+")\">"+(st==="out"?"Marcar disponible":"Marcar sin stock")+"</button>":"")+"</div>";
+    h+="</div>";
     h+="<div class=\"pft\"><div><div class=\"ppr\">$"+p.precio.toLocaleString("es-CL")+"</div><span class=\"pprs\">c/u</span></div>";
     h+="<button class=\"bac\" onclick=\"addToCart("+p.id+")\" "+dis+">"+txt+"</button></div></div>";
   }
@@ -6236,8 +6207,9 @@ function sendWA(){
   var its="";
   for(var i=0;i<cart.length;i++)its+="- "+cart[i].nombre+" x"+cart[i].qty+" $"+(cart[i].qty*cart[i].precio).toLocaleString("es-CL")+"\n";
   var msg="PEDIDO "+String(CLUB_NOMBRE_CORTO||"").toUpperCase()+"\nNombre: "+n+"\nMetro: "+m+"\n\nProductos:\n"+its+"\nTotal: $"+total.toLocaleString("es-CL")+(nt?"\nNota: "+nt:"");
-  if(!WA){alert("Este club aun no configura su WhatsApp para pedidos.");return;}
-  window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(msg),"_blank");
+  var wa=TIENDA_WA||(window.CLUB_SLUG_INICIAL==="quilicura"?WA:"");
+  if(!wa){alert("La tienda aun no tiene WhatsApp configurado para pedidos.");return;}
+  window.open("https://wa.me/"+wa+"?text="+encodeURIComponent(msg),"_blank");
 }
 
 // === Resaltado del menu segun seccion visible (scroll-spy) ===
