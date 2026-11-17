@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin — Torneo Interno CTQ</title>
+<title>Panel Torneos</title>
+<link rel="apple-touch-icon" href="icon-torneo-180.png">
+<link rel="icon" type="image/png" href="icon-torneo-192.png">
+<link rel="manifest" href="manifest-torneo.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Panel Torneos">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1d4ed8">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--v:#5BBF2A;--vd:#3d8a1a;--am:#D4E60A;--az:#2E7DD1;--ro:#C0392B;--ng:#0e0e0e;--gd:#1a1a1a;--g:#2a2a2a;--gm:#3a3a3a;--gl:#888;--bl:#f5f5f0}
@@ -60,8 +68,8 @@ input[type=text],input[type=number],select{background:var(--g);border:1px solid 
 </head>
 <body>
 
-<h1>Torneo Interno — Panel Admin</h1>
-<div class="sub" id="subHeader">Club de Tenis Estadio Quilicura</div>
+<h1>Torneos — Panel Admin</h1>
+<div class="sub" id="subHeader"></div>
 
 <div id="app"></div>
 
@@ -84,6 +92,30 @@ var ESTADO_PARTIDO_LABELS={programado:'Programado',en_juego:'En juego',finalizad
 
 var usuarioActual=null, esAdmin=false, chequeoListo=false;
 var serieActual='A';
+// Series/categorias del club (hasta 10) y puntos propios: se leen de configuracion_sitio.
+var SERIES_T=[{id:'A',corto:'A'},{id:'B',corto:'B'},{id:'C',corto:'C'}];
+var SERIE_ROTULO_T='Serie';
+function serieTxtT(id){var x=SERIES_T.filter(function(s){return s.id===id;})[0];return SERIE_ROTULO_T+' '+(x?x.corto:id);}
+async function cargarSeriesYPuntosClub(){
+  SERIES_T=[{id:'A',corto:'A'},{id:'B',corto:'B'},{id:'C',corto:'C'}];SERIE_ROTULO_T='Serie';
+  PUNTOS={gana2sets:300,gana3sets:200,pierde3sets:50,pierde2sets:25,ganaWO:300,pierdeWO:0};
+  if(!clubActual)return;
+  try{
+    var r=await window.supabaseClient.from('configuracion_sitio').select('clave,valor').eq('club_id',clubActual).in('clave',['series','serie_rotulo','bases_puntos']);
+    if(r.error||!r.data)return;
+    r.data.forEach(function(row){
+      if(row.clave==='series'&&Array.isArray(row.valor)&&row.valor.length){
+        var l=[];row.valor.slice(0,10).forEach(function(x){if(x&&x.id!=null)l.push({id:String(x.id),corto:String(x.corto||x.id)});});
+        if(l.length)SERIES_T=l;
+      }
+      if(row.clave==='serie_rotulo'&&typeof row.valor==='string'&&row.valor.trim())SERIE_ROTULO_T=row.valor.trim();
+      if(row.clave==='bases_puntos'&&row.valor&&typeof row.valor==='object'){
+        Object.keys(PUNTOS).forEach(function(k){var v=Number(row.valor[k]);if(row.valor[k]!=null&&isFinite(v))PUNTOS[k]=v;});
+      }
+    });
+  }catch(e){console.warn('No se pudo cargar la configuracion de series.',e);}
+  if(serieActual!=='ABIERTO'&&!SERIES_T.some(function(s){return s.id===serieActual;}))serieActual=SERIES_T[0].id;
+}
 var jugadoresClub=[]; // [{id,nombre,serie,estado}]
 var torneosSerie=[];
 var torneoAbierto=null; // fila de torneos_internos
@@ -201,7 +233,13 @@ window.supabaseClient.auth.getSession().then(function(r){
   usuarioActual=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,email:session.user.email}:null;
   chequearAdmin();
 });
+// Solo se vuelve a chequear si cambia el usuario (login/logout). Los eventos
+// repetidos (INITIAL_SESSION, TOKEN_REFRESHED, SIGNED_IN al volver a la
+// pestana) borraban el club elegido y la pantalla en pleno trabajo.
 window.supabaseClient.auth.onAuthStateChange(function(event,session){
+  var nuevoUid=session?session.user.id:null;
+  var actualUid=usuarioActual?usuarioActual.uid:null;
+  if(nuevoUid===actualUid&&chequeoListo)return;
   usuarioActual=session?{uid:session.user.id,nombre:session.user.user_metadata.full_name,email:session.user.email}:null;
   chequearAdmin();
 });
@@ -251,8 +289,9 @@ async function fijarClubActual(clubId){
     }
   }catch(e){}
   var sub=document.getElementById('subHeader');
-  if(sub)sub.textContent=clubActualNombre||'Club de Tenis Estadio Quilicura';
+  if(sub)sub.textContent=clubActualNombre||'';
   torneoAbierto=null;partidos=[];mensaje=null;
+  await cargarSeriesYPuntosClub();
   await cargarJugadoresClub();
   await cargarTorneosDeSerie(serieActual);
   await cargarVisibilidadTorneos();
@@ -433,16 +472,17 @@ async function prepararSeeding(){
 // (jugadores.es_invitado). El admin reordena con las flechas si el
 // nivel real de alguien no calza con "ultimo de la lista".
 async function prepararSeedingAbierto(){
-  var ptsA=await calcularPuntosBaseSerie('A');
-  var ptsB=await calcularPuntosBaseSerie('B');
-  var ptsC=await calcularPuntosBaseSerie('C');
-  function ordenSerie(s,pts){
-    return jugadoresClub.filter(function(j){return j.serie===s&&!j.es_invitado&&j.estado!=='Retirado -50%';})
+  var ptsPorSerie={};
+  for(var si=0;si<SERIES_T.length;si++){ptsPorSerie[SERIES_T[si].id]=await calcularPuntosBaseSerie(SERIES_T[si].id);}
+  function ordenSerie(sid,pts){
+    return jugadoresClub.filter(function(j){return j.serie===sid&&!j.es_invitado&&j.estado!=='Retirado -50%';})
       .sort(function(a,b){return (pts[b.id]||0)-(pts[a.id]||0);});
   }
   var invitados=jugadoresClub.filter(function(j){return j.es_invitado&&j.estado!=='Retirado -50%';})
     .sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
-  var todos=[].concat(ordenSerie('A',ptsA),ordenSerie('B',ptsB),ordenSerie('C',ptsC),invitados);
+  var todos=[];
+  SERIES_T.forEach(function(sx){todos=todos.concat(ordenSerie(sx.id,ptsPorSerie[sx.id]));});
+  todos=todos.concat(invitados);
   seedList=todos.map(function(j,i){
     return {id:j.id,nombre:j.nombre+(j.es_invitado?' (Escuelita)':''),pts:i+1,incluido:true};
   });
@@ -667,7 +707,7 @@ async function cambiarJugadorPartido(partidoId,campo){
   guardando=true;render();
   var patch={};
   patch[campo+'_id']=nuevoId;
-  patch.ganador_id=null;patch.set1=null;patch.set2=null;patch.set3=null;patch.tipo=null;
+  patch.ganador_id=null;patch.set1=null;patch.set2=null;patch.set3=null;patch.tipo=null;patch.estado_partido='programado';
   var res=await window.supabaseClient.from('torneo_partidos').update(patch).eq('id',partidoId).select().maybeSingle();
   guardando=false;
   if(res.error){setMsg('err','No se pudo cambiar el jugador: '+res.error.message);return;}
@@ -878,13 +918,13 @@ function renderVisibilidadTorneo(tipo){
 
 function renderSelectorYListado(){
   var h='<div class="tabs">';
-  ['A','B','C','ABIERTO'].forEach(function(s){
-    h+='<button class="tb'+(s===serieActual?' active':'')+'" onclick="seleccionarSerie(\''+s+'\')">'+(s==='ABIERTO'?'🏆 Abierto':'Serie '+s)+'</button>';
+  SERIES_T.map(function(x){return x.id;}).concat(['ABIERTO']).forEach(function(s){
+    h+='<button class="tb'+(s===serieActual?' active':'')+'" onclick="seleccionarSerie(\''+jsAttr(s)+'\')">'+(s==='ABIERTO'?'🏆 Abierto':esc(serieTxtT(s)))+'</button>';
   });
   h+='</div>';
 
   var esAbierto=(serieActual==='ABIERTO');
-  var etiquetaVista=esAbierto?'Torneo Abierto':('Serie '+esc(serieActual));
+  var etiquetaVista=esAbierto?'Torneo Abierto':esc(serieTxtT(serieActual));
 
   h+='<div class="card"><b>Torneos — '+etiquetaVista+'</b>';
   if(!torneosSerie.length){
@@ -908,8 +948,8 @@ function renderSelectorYListado(){
     +'<button class="btn v" '+(guardando?'disabled':'')+' onclick="crearTorneo()">'+(guardando?'Creando...':'Crear torneo')+'</button>'
     +'</div><p class="sub" style="margin-bottom:0">'
     +(esAbierto
-      ?'Combina las 3 series + invitados de la escuelita en un ranking unico, con siembra estilo ATP (byes automaticos, sin choques tempranos entre sembrados).'
-      :'Si dejas el nombre vacio, se muestra como "Serie '+esc(serieActual)+'". Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).')
+      ?'Combina todas las series + invitados de la escuelita en un ranking unico, con siembra estilo ATP (byes automaticos, sin choques tempranos entre sembrados).'
+      :'Si dejas el nombre vacio, se muestra como "'+esc(serieTxtT(serieActual))+'". Deja "Periodo" vacio si es el torneo unico anual (segun el acta del 29-03-2026).')
     +'</p></div>';
   return h;
 }
@@ -961,7 +1001,7 @@ async function guardarNombreTorneo(){
 function renderTorneoAbierto(){
   var t=torneoAbierto;
   var h='<button class="backbtn" onclick="volverListado()">&larr; Volver al listado</button>';
-  var subInfo=(t.serie?('Serie '+esc(t.serie)+' &middot; '):'')+'Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'');
+  var subInfo=(t.serie?(esc(serieTxtT(t.serie))+' &middot; '):'')+'Temporada '+esc(t.temporada)+(t.periodo?(' &middot; '+esc(t.periodo)):'');
   h+='<div class="card">';
   if(editandoNombreTorneo){
     h+='<div class="row" style="margin-bottom:.5rem">'
@@ -971,7 +1011,7 @@ function renderTorneoAbierto(){
       +'</div><p class="sub" style="margin:0 0 .5rem">'+subInfo+'</p>';
   }else{
     h+='<div class="row" style="justify-content:space-between;align-items:flex-start">'
-      +'<div><b style="font-size:1rem">'+(t.nombre?esc(t.nombre):(t.serie?('Serie '+esc(t.serie)):'Torneo Abierto'))+'</b>'
+      +'<div><b style="font-size:1rem">'+(t.nombre?esc(t.nombre):(t.serie?esc(serieTxtT(t.serie)):'Torneo Abierto'))+'</b>'
       +'<button class="iconbtn" style="margin-left:.5rem;vertical-align:middle" title="Editar nombre" onclick="toggleEditarNombreTorneo()">&#9998;</button>'
       +'<p class="sub" style="margin:.2rem 0 0">'+subInfo+'</p></div>'
       +'<span class="estado-pill '+esc(t.estado)+'">'+esc(t.estado)+'</span></div>';
@@ -999,7 +1039,7 @@ function renderSeeding(){
     +'<p class="sub">'+(esPlataforma
       ?'Lista alfabetica de jugadores activos de todos los clubes. Ordena con las flechas segun el criterio que uses (ranking, sorteo, etc.) y desmarca a quien no vaya a jugar.'
       :esAbierto
-        ?'Ranking unico: Serie A, luego B, luego C (por puntos base de la Escalerilla), y los invitados de la escuelita al final. Reordena con las flechas si el nivel real de alguien no calza, y desmarca a quien no vaya a jugar.'
+        ?'Ranking unico: de la serie mas alta a la mas baja (por puntos base de la Escalerilla), y los invitados de la escuelita al final. Reordena con las flechas si el nivel real de alguien no calza, y desmarca a quien no vaya a jugar.'
         :'Orden sugerido por puntos base de la Escalerilla (sin bonos). Ajusta con las flechas si hace falta, y desmarca a quien no vaya a jugar el interno.')
     +(usarATP
       ?' El cuadro se arma con siembra estilo ATP: los byes necesarios los reciben automaticamente los mejores sembrados, y quedan lo mas separados posible entre si.'
