@@ -1,7 +1,7 @@
 {
   "id": "./chiletenis-pro.html",
   "name": "ChileTenis Pro",
-  "short_name": "Santiago",
+  "short_name": "ChileTenis P",
   "description": "Ranking en vivo, resultados y estadisticas de ChileTenis Pro",
   "start_url": "./chiletenis-pro.html?utm_source=pwa",
   "scope": "./",
