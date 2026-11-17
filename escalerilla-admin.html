@@ -1836,7 +1836,7 @@ async function loadLookups(){
     (selectedClubId
       ? sb.from('jugadores').select('id,nombre,serie').eq('club_id', selectedClubId).order('nombre')
       : sb.from('jugadores').select('id,nombre,serie').order('nombre')),
-    sb.from('clubes').select('id,nombre,logo_url,color_tema,tema').order('nombre'),
+    sb.from('clubes').select('id,nombre,slug,logo_url,color_tema,tema').order('nombre'),
     sb.from('temporadas').select('id,nombre').order('nombre'),
     sb.from('competiciones').select('id,serie,temporada,periodo,tipo').order('temporada',{ascending:false}),
     sb.from('membresias').select('id,tipo,estado,jugador_id,jugadores(nombre)'),
@@ -1882,6 +1882,40 @@ function toggleSidebar(force){
 /* =========================================================================
    DASHBOARD
    ========================================================================= */
+/* ---- Enlace publico de cada club (para compartir y entrar a la web de la escalerilla) ---- */
+function urlPublicaClub(slug){
+  // El club base vive en index.html; los demas tienen su propia pagina <slug>.html
+  return new URL(slug==='quilicura' ? 'index.html' : slug+'.html', location.href).href;
+}
+function urlRespaldoClub(slug){
+  return new URL('index.html?club='+encodeURIComponent(slug), location.href).href;
+}
+function renderPanelEnlaceClub(){
+  const box = document.getElementById('panelEnlaceClub'); if(!box) return;
+  const todos = (lookups.clubesFull||[]).filter(c=>c.slug);
+  const uno = adminClubIdActual || selectedClubId;
+  const lista = uno ? todos.filter(c=>c.id===uno) : todos;
+  if(!lista.length){ box.innerHTML = ''; return; }
+  const filas = lista.map(c=>{
+    const u = urlPublicaClub(c.slug);
+    const extra = c.slug==='quilicura' ? '' : `<div class="hint" style="margin-top:3px">Si aún no abre, usa este enlace que funciona al instante: <a href="${escAttr(urlRespaldoClub(c.slug))}" target="_blank" rel="noopener">${bdEsc(urlRespaldoClub(c.slug))}</a></div>`;
+    return `<div style="padding:12px 18px;border-top:1px solid var(--line)">
+      ${lista.length>1?`<div style="font-weight:600;margin-bottom:4px">${bdEsc(c.nombre)}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input readonly value="${escAttr(u)}" onclick="this.select()" style="flex:1 1 260px;min-width:0">
+        <button class="btn btn-primary" onclick="copiarEnlaceClub('${escAttr(u)}')">📋 Copiar</button>
+        <a class="btn" href="${escAttr(u)}" target="_blank" rel="noopener">Abrir ↗</a>
+        <a class="btn" href="https://wa.me/?text=${encodeURIComponent((c.nombre||'')+' - ranking y resultados: '+u)}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>${extra}</div>`;
+  }).join('');
+  box.innerHTML = `<div class="panel-head"><h3>🔗 Enlace para compartir${lista.length>1?' (de cada club)':''}</h3></div>
+    <div class="hint" style="padding:0 18px 10px">Este es el enlace de la web de la escalerilla: compártelo con los jugadores para que entren a ver el ranking y los resultados.</div>${filas}`;
+}
+async function copiarEnlaceClub(u){
+  try{ await navigator.clipboard.writeText(u); toast('Enlace copiado.'); }
+  catch(e){ window.prompt('Copia el enlace:', u); }
+}
+
 let dashTab = 'resumen';
 function dashTabsHtml(){
   const tabs = [['resumen','📊 Resumen'],['bonos_disp','⭐ Bonos de disponibilidad'],['cierre','🏁 Cierre de temporada'],['config','⚙️ Series y puntos']];
@@ -1922,7 +1956,8 @@ async function showDashboard(tab){
     await renderCierre();
     return;
   }
-  content.innerHTML = dashTabsHtml() + '<div class="panel" id="panelAfichePortada"></div><div class="stat-grid" id="statGrid"></div><div class="panel" id="panelDisponibilidad"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
+  content.innerHTML = dashTabsHtml() + '<div class="panel" id="panelEnlaceClub"></div><div class="panel" id="panelAfichePortada"></div><div class="stat-grid" id="statGrid"></div><div class="panel" id="panelDisponibilidad"></div><div class="three-col"><div class="panel" id="panelPendientes"></div><div class="panel panel-fixture" id="panelFixture"></div><div class="panel" id="panelUltimos"></div></div>';
+  renderPanelEnlaceClub();
   renderPanelAfichePortada();
   renderPanelDisponibilidad();
 
