@@ -1989,11 +1989,10 @@ function refrescarAvisoAporte(){
   }else{
     var j=jugadorVinculado;
     var alDia=j.aporte_exento||(j.aporte_mes&&String(j.aporte_mes)>=mesActualSantiago());
-    if(alDia||aporteCerradoEstaSesion()){el.hidden=true;el.innerHTML='';return;}
+    if(alDia){el.hidden=true;el.innerHTML='';return;}
     html='<span><b>💙 Aporte voluntario del mes:</b> ¿quieres aportar <b>'+APORTE_MONTO_TXT+'</b> mensuales para el buen funcionamiento de la página? '
       +'Quien la hizo paga costos fijos de producción, por eso te lo recordaremos cada mes.</span>'
-      +'<button type="button" class="aporte-btn" onclick="abrirAporteSocio()">Aporte socio</button>'
-      +'<button type="button" class="aporte-x" onclick="cerrarAvisoAporte()" title="Ahora no" aria-label="Cerrar">×</button>';
+      +'<button type="button" class="aporte-btn" onclick="abrirAporteSocio()">Aporte socio</button>';
   }
   el.className='avisopago ambar';
   el.innerHTML=html;
