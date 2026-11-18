@@ -1209,6 +1209,17 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 .offpill.show{opacity:1;transform:translate(-50%,0)}
 @media(min-width:900px){.offpill{bottom:1.2rem}}
 
+/* Bloqueo por membresia: luz roja que late + rankings en 0 */
+.avisobloqueo{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 16px;font-size:.9rem;line-height:1.45;text-align:left;background:#3d1313;color:#ffd0ca;border-bottom:1px solid #b32a2a;position:sticky;top:0;z-index:900}
+.avisobloqueo[hidden]{display:none}
+.avisobloqueo b{color:#fff}
+.bloq-txt{max-width:760px}
+.bloq-luz{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:#ff3b30;box-shadow:0 0 0 0 rgba(255,59,48,.75);animation:latidoLuz 1.3s ease-out infinite}
+.bloq-btn{flex:0 0 auto;background:#ff3b30;color:#fff;border:none;border-radius:6px;padding:.5rem .9rem;font-weight:700;cursor:pointer;font-family:inherit}
+@keyframes latidoLuz{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,59,48,.8)}18%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(255,59,48,.35)}30%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,59,48,.6)}46%{transform:scale(1.25);box-shadow:0 0 0 10px rgba(255,59,48,.3)}100%{transform:scale(1);box-shadow:0 0 0 14px rgba(255,59,48,0)}}
+@keyframes latidoMarco{0%,100%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.35),0 0 10px rgba(255,59,48,.15)}18%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.9),0 0 26px rgba(255,59,48,.55)}30%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.5),0 0 14px rgba(255,59,48,.25)}46%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.9),0 0 26px rgba(255,59,48,.5)}}
+html.bloqueo-pago #ranking,html.bloqueo-pago #perfil,html.bloqueo-pago #estadisticas{animation:latidoMarco 1.3s ease-out infinite;border-radius:10px}
+@media (prefers-reduced-motion:reduce){.bloq-luz,html.bloqueo-pago #ranking,html.bloqueo-pago #perfil,html.bloqueo-pago #estadisticas{animation:none}}
 /* Desafios amistosos: aviso de membresia y nota del formulario */
 .dfpaywall{border-color:rgba(212,230,10,.45)}
 .dfpaytxt{font-size:.86rem;line-height:1.5;color:#d7d7d0;margin:.35rem 0 .7rem}
@@ -1284,6 +1295,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
   <div class="authbox" id="authBox"></div>
 </header>
 <div id="avisoPago" class="avisopago" role="status" aria-live="polite" hidden></div>
+<div id="avisoBloqueo" class="avisobloqueo" role="alert" hidden></div>
 
 <section id="hero">
   <div class="hbg"></div><div class="hl"></div><div class="htex"></div><div class="hd"></div>
@@ -1836,6 +1848,71 @@ function logout(){
 }
 
 // ============================================================
+// BLOQUEO POR MEMBRESIA (rankings en 0 + luces rojas + avisos)
+// ============================================================
+// Quien NO es un jugador vinculado con perfil activo ve todos los
+// rankings en 0, una luz roja latiendo y un aviso que le dice como
+// regularizar su situacion. Aplica a: visitas sin sesion, personas con
+// sesion que aun no vinculan su perfil y jugadores con perfil desactivado.
+// Los administradores quedan exentos. Es un bloqueo VISUAL del sitio:
+// no reemplaza permisos de la base de datos.
+var MENSUALIDAD_TXT='$10.000';
+var accesoResuelto=false;   // false hasta saber si hay sesion / perfil vinculado
+var esAdminSesion=false;
+var datosEnCero=false;      // true si DATA.players quedo en 0 y hay que recargar al desbloquear
+function estadoBloqueo(){
+  if(!accesoResuelto||!usuarioActual)return 'visita';
+  if(esAdminSesion)return null;
+  if(!jugadorVinculado)return 'sinvincular';
+  if(jugadorVinculado.pausado)return 'pausado';
+  return null;
+}
+function aplicarBloqueoMembresia(){
+  var est=estadoBloqueo();
+  var root=document.documentElement;
+  var el=document.getElementById('avisoBloqueo');
+  if(!est){
+    root.classList.remove('bloqueo-pago');
+    if(el){el.hidden=true;el.innerHTML='';}
+    return;
+  }
+  root.classList.add('bloqueo-pago');
+  // Rankings en 0 (puntos, partidos jugados/ganados/perdidos y tendencia).
+  ((typeof DATA!=='undefined'&&DATA&&DATA.players)||[]).forEach(function(p){p.pts=0;p.ptsEsc=0;p.pj=0;p.pg=0;p.pp=0;p.trend=0;});
+  datosEnCero=true;
+  if(!el)return;
+  var titulo,texto,botones='';
+  if(est==='pausado'){
+    titulo='Tu perfil esta desactivado';
+    texto='Tus rankings aparecen en 0 hasta que regularices tu situacion. Paga tu membresia mensual de <b>'+MENSUALIDAD_TXT+'</b> y cuando el administrador registre el pago, todo volvera a la normalidad.';
+  }else if(est==='sinvincular'){
+    titulo='Aun no tienes un perfil activo';
+    texto='Mientras tu perfil no este vinculado y con la membresia mensual de <b>'+MENSUALIDAD_TXT+'</b> al dia, los rankings se muestran en 0. Vincula tu perfil y regulariza tu situacion para volver a verlos.';
+    botones='<button type="button" class="bloq-btn" onclick="toggleReclamarPanel()">Vincular mi perfil</button>';
+  }else{
+    titulo='Estas viendo el sitio como visita';
+    texto='Los rankings se muestran en 0 para visitas. Hazte socio con la membresia mensual de <b>'+MENSUALIDAD_TXT+'</b>, inicia sesion y vincula tu perfil para verlos.';
+    botones='<button type="button" class="bloq-btn" onclick="loginConGoogle()">Iniciar sesion</button>';
+  }
+  el.className='avisobloqueo';
+  el.innerHTML='<span class="bloq-luz" aria-hidden="true"></span><div class="bloq-txt"><b>'+titulo+'.</b> '+texto+'</div>'+botones;
+  el.hidden=false;
+}
+// Se llama cuando cambia la sesion / el perfil vinculado: repinta y, si la
+// persona quedo habilitada tras haber visto datos en 0, recarga los reales.
+function actualizarAcceso(){
+  var est=estadoBloqueo();
+  if(!est&&datosEnCero){
+    datosEnCero=false;
+    aplicarBloqueoMembresia();
+    refrescarTodo();
+    return;
+  }
+  rAllFirmaPrev=null;
+  rAll();
+}
+
+// ============================================================
 // AVISO DE PAGO MENSUAL (solo clubes con requiere_pago_mensual)
 // ============================================================
 // Del dia 1 al dia limite de cada mes, los jugadores que aun no estan
@@ -1854,7 +1931,7 @@ async function refrescarAvisoPago(){
     var limite=parseInt(d.dia_limite,10)||7;
     if(d.pausado){
       el.className='avisopago rojo';
-      el.innerHTML='<b>Tu perfil esta desactivado.</b> Regulariza el pago de tu membresia para volver a jugar la escalerilla. Cuando el administrador registre tu pago, tu perfil se activa de nuevo.';
+      el.innerHTML='<b>Tu perfil esta desactivado.</b> Regulariza el pago de tu membresia mensual ('+MENSUALIDAD_TXT+') para volver a jugar la escalerilla. Cuando el administrador registre tu pago, tu perfil se activa de nuevo.';
       el.hidden=false;return;
     }
     if(d.mostrar_recordatorio){
@@ -1862,7 +1939,7 @@ async function refrescarAvisoPago(){
       var cerrado=false;try{cerrado=sessionStorage.getItem(clave)==='1';}catch(e){}
       if(cerrado)return;
       el.className='avisopago ambar';
-      el.innerHTML='<span><b>Recordatorio de pago:</b> regulariza tu membresia mensual antes del dia '+limite+' para que tu perfil no se desactive y puedas seguir jugando la escalerilla.</span>'
+      el.innerHTML='<span><b>Recordatorio de pago:</b> regulariza tu membresia mensual ('+MENSUALIDAD_TXT+') antes del dia '+limite+' para que tu perfil no se desactive y puedas seguir jugando la escalerilla.</span>'
         +'<button type="button" class="avisopago-x" aria-label="Cerrar aviso" onclick="cerrarAvisoPago()">&times;</button>';
       el.hidden=false;
     }
@@ -1878,18 +1955,18 @@ function cerrarAvisoPago(){
 // uid). Si lo encuentra, listo. Si no, deja jugadorVinculado en null
 // para que se muestre el panel de "Reclama tu perfil".
 async function sincronizarJugadorVinculado(){
-  if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;rAuthBox();refrescarAvisoPago();return;}
+  if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;esAdminSesion=false;accesoResuelto=true;rAuthBox();refrescarAvisoPago();actualizarAcceso();return;}
   try{
-    var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie').eq('user_id',usuarioActual.uid).maybeSingle();
+    var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado').eq('user_id',usuarioActual.uid).maybeSingle();
     jugadorVinculado=(!res.error&&res.data)?res.data:null;
     // Si el administrador ya registro el correo de Google de esta persona en su ficha,
     // el perfil se vincula solo (sin tener que buscarse en la lista).
     if(!jugadorVinculado&&usuarioActual.email&&CLUB_ACTUAL_ID){
-      var cand=await window.supabaseClient.from('jugadores').select('id,nombre,serie')
+      var cand=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado')
         .is('user_id',null).eq('club_id',CLUB_ACTUAL_ID).ilike('email',usuarioActual.email);
       if(!cand.error&&cand.data&&cand.data.length===1){
         var up=await window.supabaseClient.from('jugadores')
-          .update({user_id:usuarioActual.uid}).eq('id',cand.data[0].id).is('user_id',null).select('id,nombre,serie').maybeSingle();
+          .update({user_id:usuarioActual.uid}).eq('id',cand.data[0].id).is('user_id',null).select('id,nombre,serie,pausado').maybeSingle();
         if(!up.error&&up.data)jugadorVinculado=up.data;
       }
     }
@@ -1897,8 +1974,17 @@ async function sincronizarJugadorVinculado(){
     console.warn('No se pudo verificar el perfil vinculado.',err);
     jugadorVinculado=null;
   }
+  esAdminSesion=false;
+  if(usuarioActual&&!jugadorVinculado){
+    try{
+      var ad=await window.supabaseClient.from('admins').select('user_id').eq('user_id',usuarioActual.uid).limit(1);
+      esAdminSesion=!ad.error&&!!(ad.data&&ad.data.length);
+    }catch(e){esAdminSesion=false;}
+  }
+  accesoResuelto=true;
   rAuthBox();
   refrescarAvisoPago();
+  actualizarAcceso();
   // Sin esto, si entrabas a tu propio perfil ANTES de que el login
   // terminara de confirmarse, el boton de disponibilidad y "Editar
   // ficha" quedaban calculados con jugadorVinculado en null para
@@ -1993,6 +2079,7 @@ async function confirmarReclamo(){
     reclamandoPerfil=false;
     rAuthBox();
     refrescarAvisoPago();
+    actualizarAcceso();
     cargarJugadoresYResultadosSupabase(); // refresca por si el nombre/estado cambio
   }catch(err){
     console.warn('No se pudo reclamar el perfil.',err);
@@ -3998,6 +4085,7 @@ function rHeroStats(){
 
 var perfilInicialRenderizado=false;
 function rAll(){
+  aplicarBloqueoMembresia();
   rHeroStats();
   rRanking();rMatches();rProximosPartidos();rResults();rStore();populateH2H();rTopMatagigantes();rAfichesGrandes();
   var nombreAMostrar=null;
@@ -4147,7 +4235,7 @@ function rRanking(){
 
     // --- racha inline (solo si es 2+, para no saturar la tabla con ruido de 1 partido) ---
     var rachaMini="",formaH="";
-    if(!p.retirado){
+    if(!p.retirado&&!document.documentElement.classList.contains('bloqueo-pago')){ // con el bloqueo por membresia no se muestran rachas ni forma
       var racha=calcularRachaActual(historialTodos[p.nombre]||[]);
       if(racha.tipo&&racha.cantidad>=2){
         rachaMini="<span class=\"rchamini "+racha.tipo+"\">"+(racha.tipo==='W'?"🔥":"❄️")+racha.cantidad+"</span>";
@@ -4156,7 +4244,7 @@ function rRanking(){
     }
 
     // --- delta de posicion (reemplaza el trend estatico que nunca cambiaba) ---
-    var d=p.retirado?null:deltaSemanal[p.nombre];
+    var d=(p.retirado||document.documentElement.classList.contains('bloqueo-pago'))?null:deltaSemanal[p.nombre];
     var trH;
     if(d>0)trH="<span class=\"tu\">▲"+d+"</span>";
     else if(d<0)trH="<span class=\"td\">▼"+Math.abs(d)+"</span>";
