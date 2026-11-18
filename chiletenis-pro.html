@@ -1221,6 +1221,20 @@ footer{background:var(--ng);border-top:2px solid var(--v);padding:1.8rem 1.5rem;
 @keyframes latidoMarco{0%,100%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.35),0 0 10px rgba(255,59,48,.15)}18%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.9),0 0 26px rgba(255,59,48,.55)}30%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.5),0 0 14px rgba(255,59,48,.25)}46%{box-shadow:inset 0 0 0 2px rgba(255,59,48,.9),0 0 26px rgba(255,59,48,.5)}}
 html.bloqueo-pago #ranking,html.bloqueo-pago #perfil,html.bloqueo-pago #estadisticas{animation:latidoMarco 1.3s ease-out infinite;border-radius:10px}
 @media (prefers-reduced-motion:reduce){.bloq-luz,html.bloqueo-pago #ranking,html.bloqueo-pago #perfil,html.bloqueo-pago #estadisticas{animation:none}}
+/* Aporte voluntario (Quilicura) */
+.aporte-btn{flex:0 0 auto;background:#ffe08a;color:#3a2e08;border:none;border-radius:6px;padding:.45rem .9rem;font-weight:700;cursor:pointer;font-family:inherit}
+.aporte-x{background:none;border:none;color:inherit;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 4px}
+#avisoAporte{flex-wrap:wrap}
+.aporte-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.aporte-card{position:relative;background:#16181d;color:#f1f1ec;border:1px solid #3a3d46;border-radius:14px;max-width:420px;width:100%;padding:22px 20px;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:92vh;overflow:auto}
+.aporte-card h3{margin:0 0 8px;font-size:1.25rem}
+.aporte-card p{margin:8px 0;font-size:.92rem;line-height:1.5;color:#d7d7d0}
+.aporte-cerrar{position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer}
+.aporte-dato{display:flex;flex-direction:column;background:#20232b;border-radius:8px;padding:8px 12px;margin:8px 0}
+.aporte-dato span{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:#9aa}
+.aporte-pagar{display:block;text-align:center;background:#4ade80;color:#0b1f12;font-weight:800;text-decoration:none;border-radius:8px;padding:.75rem;margin:12px 0 6px}
+.aporte-ya{width:100%;background:transparent;border:1px solid #4a4e59;color:#e5e5e0;border-radius:8px;padding:.6rem;cursor:pointer;font-family:inherit}
+.aporte-nota{font-size:.8rem!important;color:#9aa!important}
 /* Desafios amistosos: aviso de membresia y nota del formulario */
 .dfpaywall{border-color:rgba(212,230,10,.45)}
 .dfpaytxt{font-size:.86rem;line-height:1.5;color:#d7d7d0;margin:.35rem 0 .7rem}
@@ -1297,6 +1311,7 @@ html.club-otro:not(.club-listo) #serieTabsDyn{display:none!important}
 </header>
 <div id="avisoPago" class="avisopago" role="status" aria-live="polite" hidden></div>
 <div id="avisoBloqueo" class="avisobloqueo" role="alert" hidden></div>
+<div id="avisoAporte" class="avisopago ambar" role="status" aria-live="polite" hidden></div>
 
 <section id="hero">
   <div class="hbg"></div><div class="hl"></div><div class="htex"></div><div class="hd"></div>
@@ -1876,7 +1891,9 @@ function contactarSocios(est){
 var accesoResuelto=false;   // false hasta saber si hay sesion / perfil vinculado
 var esAdminSesion=false;
 var datosEnCero=false;      // true si DATA.players quedo en 0 y hay que recargar al desbloquear
+function esClubQuilicura(){return !window.CLUB_SLUG_INICIAL||window.CLUB_SLUG_INICIAL==='quilicura';}
 function estadoBloqueo(){
+  if(esClubQuilicura())return null; // Quilicura: sin bloqueo, solo aviso de vinculacion y aporte voluntario
   if(!accesoResuelto||!usuarioActual)return 'visita';
   if(esAdminSesion)return null;
   if(!jugadorVinculado)return 'sinvincular';
@@ -1920,6 +1937,7 @@ function aplicarBloqueoMembresia(){
 // Se llama cuando cambia la sesion / el perfil vinculado: repinta y, si la
 // persona quedo habilitada tras haber visto datos en 0, recarga los reales.
 function actualizarAcceso(){
+  refrescarAvisoAporte();
   var est=estadoBloqueo();
   if(!est&&datosEnCero){
     datosEnCero=false;
@@ -1929,6 +1947,77 @@ function actualizarAcceso(){
   }
   rAllFirmaPrev=null;
   rAll();
+}
+
+// ============================================================
+// QUILICURA: vincular cuenta Google + aporte voluntario mensual
+// ============================================================
+// Solo para el club de Quilicura (sin bloqueo): se le pide al jugador que
+// vincule su cuenta de Google y se le recuerda, cada mes y mientras no
+// aporte, el aporte voluntario para el funcionamiento de la pagina.
+// El administrador apaga el recordatorio de un jugador desde
+// escalerilla-admin (Jugadores > "Aporte del mes").
+var APORTE_MONTO_TXT='$1.500';
+var APORTE_LINK='https://app.soymach.com/rF2V/g74nd2uy';
+var APORTE_GLOSA='Aporte mensual funcionamiento página';
+function mesActualSantiago(){
+  try{return new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'}).slice(0,7);}
+  catch(e){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);}
+}
+function aporteCerradoEstaSesion(){try{return sessionStorage.getItem('aporte_cerrado_'+mesActualSantiago())==='1';}catch(e){return false;}}
+function cerrarAvisoAporte(){
+  try{sessionStorage.setItem('aporte_cerrado_'+mesActualSantiago(),'1');}catch(e){}
+  var el=document.getElementById('avisoAporte');if(el){el.hidden=true;}
+}
+function refrescarAvisoAporte(){
+  var el=document.getElementById('avisoAporte');
+  if(!el)return;
+  if(!esClubQuilicura()||!accesoResuelto){el.hidden=true;el.innerHTML='';return;}
+  var html='';
+  if(!usuarioActual){
+    html='<span><b>¿Eres jugador del club?</b> Inicia sesión con tu cuenta de Google y vincula tu perfil.</span>'
+      +'<button type="button" class="aporte-btn" onclick="loginConGoogle()">Iniciar sesión</button>';
+  }else if(!jugadorVinculado){
+    if(esAdminSesion){el.hidden=true;el.innerHTML='';return;}
+    html='<span><b>Vincula tu cuenta de Google con tu perfil de jugador</b> para activar tus desafíos, notificaciones y tu ficha.</span>'
+      +'<button type="button" class="aporte-btn" onclick="toggleReclamarPanel()">Vincular mi perfil</button>';
+  }else{
+    var j=jugadorVinculado;
+    var alDia=j.aporte_exento||(j.aporte_mes&&String(j.aporte_mes)>=mesActualSantiago());
+    if(alDia||aporteCerradoEstaSesion()){el.hidden=true;el.innerHTML='';return;}
+    html='<span><b>💙 Aporte voluntario del mes:</b> ¿quieres aportar <b>'+APORTE_MONTO_TXT+'</b> mensuales para el buen funcionamiento de la página? '
+      +'Quien la hizo paga costos fijos de producción, por eso te lo recordaremos cada mes.</span>'
+      +'<button type="button" class="aporte-btn" onclick="abrirAporteSocio()">Aporte socio</button>'
+      +'<button type="button" class="aporte-x" onclick="cerrarAvisoAporte()" title="Ahora no" aria-label="Cerrar">×</button>';
+  }
+  el.className='avisopago ambar';
+  el.innerHTML=html;
+  el.hidden=false;
+}
+function abrirAporteSocio(){
+  cerrarModalAporte();
+  var ov=document.createElement('div');
+  ov.id='aporteModal';ov.className='aporte-ov';
+  ov.onclick=function(e){if(e.target===ov)cerrarModalAporte();};
+  ov.innerHTML='<div class="aporte-card" role="dialog" aria-modal="true" aria-label="Aporte socio">'
+    +'<button type="button" class="aporte-cerrar" onclick="cerrarModalAporte()" aria-label="Cerrar">×</button>'
+    +'<h3>💙 Aporte socio</h3>'
+    +'<p>Tu aporte de <b>'+APORTE_MONTO_TXT+' mensuales</b> es voluntario y ayuda al buen funcionamiento de la página. Quien la creó debe pagar costos fijos de producción.</p>'
+    +'<div class="aporte-dato"><span>Link de Cobro</span><b>Depósito directo cuenta MachBank</b></div>'
+    +'<div class="aporte-dato"><span>Para</span><b>RICARDO</b></div>'
+    +'<div class="aporte-dato"><span>Concepto</span><b>'+APORTE_GLOSA+'</b></div>'
+    +'<a class="aporte-pagar" href="'+APORTE_LINK+'" target="_blank" rel="noopener">Ir al Link de Cobro</a>'
+    +'<p class="aporte-nota">Cuando hayas aportado, avísale a Ricardo para que registre tu aporte y se apague el recordatorio de este mes.</p>'
+    +'<button type="button" class="aporte-ya" onclick="avisarAporteRealizado()">Ya aporté · avisar por WhatsApp</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+}
+function cerrarModalAporte(){var o=document.getElementById('aporteModal');if(o)o.remove();}
+function avisarAporteRealizado(){
+  var num=String((typeof TIENDA_WA!=='undefined'&&TIENDA_WA)||WA_SOCIOS_DEFECTO).replace(/\D/g,'');
+  var nom=(jugadorVinculado&&jugadorVinculado.nombre)||(usuarioActual&&usuarioActual.nombre)||'';
+  var txt='Hola Ricardo, soy '+nom+' del Club de Tenis Estadio Quilicura. Ya hice mi aporte mensual de '+APORTE_MONTO_TXT+' para el funcionamiento de la página.';
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(txt),'_blank','noopener');
 }
 
 // ============================================================
@@ -1976,16 +2065,16 @@ function cerrarAvisoPago(){
 async function sincronizarJugadorVinculado(){
   if(!usuarioActual||!window.supabaseClient){jugadorVinculado=null;esAdminSesion=false;accesoResuelto=true;rAuthBox();refrescarAvisoPago();actualizarAcceso();return;}
   try{
-    var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado').eq('user_id',usuarioActual.uid).maybeSingle();
+    var res=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado,aporte_mes,aporte_exento').eq('user_id',usuarioActual.uid).maybeSingle();
     jugadorVinculado=(!res.error&&res.data)?res.data:null;
     // Si el administrador ya registro el correo de Google de esta persona en su ficha,
     // el perfil se vincula solo (sin tener que buscarse en la lista).
     if(!jugadorVinculado&&usuarioActual.email&&CLUB_ACTUAL_ID){
-      var cand=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado')
+      var cand=await window.supabaseClient.from('jugadores').select('id,nombre,serie,pausado,aporte_mes,aporte_exento')
         .is('user_id',null).eq('club_id',CLUB_ACTUAL_ID).ilike('email',usuarioActual.email);
       if(!cand.error&&cand.data&&cand.data.length===1){
         var up=await window.supabaseClient.from('jugadores')
-          .update({user_id:usuarioActual.uid}).eq('id',cand.data[0].id).is('user_id',null).select('id,nombre,serie,pausado').maybeSingle();
+          .update({user_id:usuarioActual.uid}).eq('id',cand.data[0].id).is('user_id',null).select('id,nombre,serie,pausado,aporte_mes,aporte_exento').maybeSingle();
         if(!up.error&&up.data)jugadorVinculado=up.data;
       }
     }
@@ -2119,6 +2208,7 @@ var pill='<div class="authuser">'
     +(usuarioActual.foto?'<img class="authavatar" src="'+esc(usuarioActual.foto)+'" alt="">':'<span class="authavatar authavatar-i"'+styleIniciales(usuarioActual.nombre||'?')+'>'+esc((usuarioActual.nombre||'?')[0])+'</span>')
     +'<span class="authnombre">'+esc(jugadorVinculado?jugadorVinculado.nombre:(usuarioActual.nombre||usuarioActual.email||'Sesion activa'))+'</span>'
     +'<button class="authlogout" style="border-color:#3b82f6;color:#60a5fa" onclick="suscribirANotificaciones(\''+jsAttr(jugadorVinculado?jugadorVinculado.id:usuarioActual.uid)+'\')" title="Activar Notificaciones">🔔</button>';
+  if(jugadorVinculado&&esClubQuilicura())pill+='<button class="authlogout" style="border-color:#4ade80;color:#4ade80" onclick="abrirAporteSocio()" title="Aporte socio">💙</button>';
   if(!jugadorVinculado)pill+='<button class="authlogout" style="border-color:var(--am);color:var(--am)" onclick="toggleReclamarPanel()">Vincular</button>';
   pill+='<button class="authlogout" onclick="logout()" title="Cerrar sesion">Salir</button></div>';
   if(reclamandoPerfil){
