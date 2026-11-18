@@ -20,9 +20,9 @@
   ],
   "icons": [
     {
-      "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
+      "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794968833870-9wxxny.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
@@ -33,7 +33,7 @@
       "url": "./chiletenis-pro.html#ranking",
       "icons": [
         {
-          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794968833870-9wxxny.png",
           "sizes": "192x192"
         }
       ]
@@ -44,7 +44,7 @@
       "url": "./chiletenis-pro.html#resultados",
       "icons": [
         {
-          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794968833870-9wxxny.png",
           "sizes": "192x192"
         }
       ]
@@ -55,7 +55,7 @@
       "url": "./chiletenis-pro.html#perfil",
       "icons": [
         {
-          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794783280210-96weyx.svg",
+          "src": "https://hjqzpxsqdbjcidmlvgkv.supabase.co/storage/v1/object/public/afiches/4ee05dc2-6b20-4030-ae4f-bf6c96540852/1794968833870-9wxxny.png",
           "sizes": "192x192"
         }
       ]
