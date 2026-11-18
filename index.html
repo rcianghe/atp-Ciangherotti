@@ -1223,7 +1223,12 @@ html.bloqueo-pago #ranking,html.bloqueo-pago #perfil,html.bloqueo-pago #estadist
 /* Aporte voluntario (Quilicura) */
 .aporte-btn{flex:0 0 auto;background:#ffe08a;color:#3a2e08;border:none;border-radius:6px;padding:.45rem .9rem;font-weight:700;cursor:pointer;font-family:inherit}
 .aporte-x{background:none;border:none;color:inherit;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 4px}
-#avisoAporte{flex-wrap:wrap}
+#avisoAporte{flex-wrap:wrap;position:fixed;top:58px;left:0;right:0;z-index:99;padding:8px 12px;font-size:.82rem;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:latidoAporte 1.6s ease-in-out infinite}
+@media(max-width:900px){#avisoAporte{top:54px}}
+.aporte-btn{animation:latidoBoton 1.6s ease-in-out infinite}
+@keyframes latidoAporte{0%,100%{background:#3a2e08;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 0 rgba(255,200,40,0)}18%{background:#5a4510;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 22px 3px rgba(255,200,40,.65)}30%{background:#43340a;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 8px 0 rgba(255,200,40,.25)}46%{background:#5a4510;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 22px 3px rgba(255,200,40,.6)}}
+@keyframes latidoBoton{0%,100%{transform:scale(1)}18%{transform:scale(1.12)}30%{transform:scale(1)}46%{transform:scale(1.1)}}
+@media (prefers-reduced-motion:reduce){#avisoAporte,.aporte-btn{animation:none}}
 .aporte-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
 .aporte-card{position:relative;background:#16181d;color:#f1f1ec;border:1px solid #3a3d46;border-radius:14px;max-width:420px;width:100%;padding:22px 20px;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:92vh;overflow:auto}
 .aporte-card h3{margin:0 0 8px;font-size:1.25rem}
