@@ -481,9 +481,27 @@ function carpetaClubParaSubida(){
   return adminClubIdActual || selectedClubId || null;
 }
 
+// iOS y WhatsApp no muestran SVG como icono/imagen: se convierte a PNG antes de subirlo.
+function svgAPng(file){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      const S = 512, c = document.createElement('canvas'); c.width = S; c.height = S;
+      const ctx = c.getContext('2d');
+      const w = img.naturalWidth || S, h = img.naturalHeight || S, k = Math.min(S/w, S/h);
+      ctx.drawImage(img, (S-w*k)/2, (S-h*k)/2, w*k, h*k);
+      URL.revokeObjectURL(url);
+      c.toBlob(bl=> bl ? resolve(new File([bl], file.name.replace(/\.svg$/i,'')+'.png', {type:'image/png'})) : reject(new Error('No se pudo convertir el SVG')), 'image/png');
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('No se pudo leer el SVG')); };
+    img.src = url;
+  });
+}
+
 async function subirArchivoFileUrl(fieldKey, inputFileEl, bucket){
   bucket = bucket || 'afiches';
-  const file = inputFileEl.files && inputFileEl.files[0];
+  let file = inputFileEl.files && inputFileEl.files[0];
   if(!file) return;
   const folder = carpetaClubParaSubida();
   if(!folder){
@@ -495,6 +513,7 @@ async function subirArchivoFileUrl(fieldKey, inputFileEl, bucket){
   const textInput = document.getElementById('f_'+fieldKey);
   if(btn){ btn.disabled = true; btn.textContent = 'Subiendo…'; }
   try{
+    if(file.type === 'image/svg+xml' || /\.svg$/i.test(file.name)) file = await svgAPng(file);
     const ext = (file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
     const path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
     const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type || undefined, upsert:false });
@@ -634,10 +653,25 @@ async function quitarAfichePortada(){
 /* =========================================================================
    ENTIDADES — un solo motor genérico de CRUD para las 16 tablas
    ========================================================================= */
+// ---- Aporte voluntario mensual (recordatorio en el sitio de Quilicura) ----
+function mesActualAdm(){try{return new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'}).slice(0,7);}catch(e){return new Date().toISOString().slice(0,7);}}
+function etiquetaMesAdm(ym){const n=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];const [y,m]=String(ym).split('-');return (n[(+m||1)-1]||ym)+' '+y;}
+function sumarMesesAdm(ym,k){let [y,m]=ym.split('-').map(Number);m+=k;while(m>12){m-=12;y++;}return y+'-'+String(m).padStart(2,'0');}
+function opcionesAporteAdm(){
+  const hoy=mesActualAdm();
+  const o=[{v:'',l:'— Sin aporte (se le recuerda) —'}];
+  for(let k=0;k<3;k++){const ym=sumarMesesAdm(hoy,k);o.push({v:ym,l:'Aportó '+etiquetaMesAdm(ym)+(k===0?' (este mes)':'')+' · recordatorio apagado hasta el mes siguiente'});}
+  return o;
+}
+function aporteBadgeAdm(v,r){
+  if(r&&r.aporte_exento)return '<span class="badge badge-gray">Exento</span>';
+  if(v&&String(v)>=mesActualAdm())return '<span class="badge badge-green">Al día · '+escAttr(etiquetaMesAdm(v))+'</span>';
+  return '<span class="badge badge-warn">Pendiente</span>';
+}
 const ENTITIES = {
 
   jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
-    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,clubes(nombre)',
+    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,aporte_mes,aporte_exento,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
       {key:'avatar_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:'<span class="hint">—</span>'},
@@ -647,6 +681,7 @@ const ENTITIES = {
       {key:'clubes',label:'Club',render:v=>v?.nombre||'<span class="hint">—</span>'},
       {key:'pais',label:'País',render:(v,r)=>v?`${r.bandera_iso?banderaEmoji(r.bandera_iso)+' ':''}${v}`:'<span class="hint">—</span>'},
       {key:'encargado',label:'Encargado'},
+      {key:'aporte_mes',label:'Aporte',render:(v,r)=>aporteBadgeAdm(v,r)},
       {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
     ],
     fields:[
@@ -665,6 +700,8 @@ const ENTITIES = {
       {key:'bandera_iso',label:'Código país ISO (2 letras, ej: CL, AR, IT)',type:'text'},
       {key:'activo',label:'Jugador activo',type:'bool',default:true},
       {key:'es_invitado',label:'Invitado (escuelita/externo, sin escalerilla propia)',type:'bool',default:false},
+      {key:'aporte_mes',label:'Aporte voluntario del mes (apaga el recordatorio hasta el mes siguiente)',type:'select',get options(){return opcionesAporteAdm();}},
+      {key:'aporte_exento',label:'No recordarle nunca el aporte (exento)',type:'bool',default:false},
     ]},
 
   fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id', clubFilter:'direct',
