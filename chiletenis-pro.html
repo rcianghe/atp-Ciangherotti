@@ -1932,6 +1932,9 @@ function aplicarBloqueoMembresia(){
   }else{
     titulo='Estas viendo el sitio como visita';
     texto='Los rankings se muestran en 0 para visitas. Hazte socio con la membresia mensual de <b>'+MENSUALIDAD_TXT+'</b>, inicia sesion y vincula tu perfil para verlos.';
+    if(window.CLUB_SLUG_INICIAL==='chiletenis-pro'){
+      texto='Los rankings se muestran en 0 para visitas. Hazte socio con la membresia mensual de <b>'+MENSUALIDAD_TXT+'</b> y juega tu escalerilla en canchas gratuitas o de pago: tu y tu partner la buscan, me mandan el resultado y yo lo digitalizo en la web. Partimos cuando alcancemos el minimo de jugadores. Inicia sesion y vincula tu perfil para verlos.';
+    }
     botones='<button type="button" class="bloq-btn" onclick="contactarSocios(\'socio\')">Quiero ser socio</button>'
       +'<button type="button" class="bloq-btn alt" onclick="loginConGoogle()">Ya soy socio: iniciar sesion</button>';
   }
