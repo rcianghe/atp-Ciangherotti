@@ -1876,6 +1876,7 @@ async function enterApp(){
    LOOKUPS (para selects tipo FK)
    ========================================================================= */
 async function loadLookups(){
+  if(selectedClubId){ const ex = await sb.from('clubes').select('id').eq('id', selectedClubId).maybeSingle(); if(!ex.data){ selectedClubId=''; localStorage.setItem('escalerilla_admin_club',''); } }
   await cargarSeriesClub();
   const [j,c,t,comp,mem,org] = await Promise.all([
     (selectedClubId
@@ -3351,6 +3352,18 @@ async function inscribirJugadorEnTemporadaActiva(payload, idEditado){
 
 async function confirmDelete(id){
   const e = ENTITIES[currentEntity];
+  if(currentEntity==='clubes'){
+    const c = rowsCache.find(r=>String(r.id)===String(id));
+    if(!confirm('¿Eliminar el club "'+(c?c.nombre:'')+'" con TODOS sus datos (jugadores, resultados, temporadas, torneos, configuración)?\n\nEsta acción no se puede deshacer.')) return;
+    const r = await sb.rpc('eliminar_club_completo', { p_club_id: id });
+    if(r.error){ toast('Error al eliminar el club: '+r.error.message, true); return; }
+    if(selectedClubId===id){ selectedClubId=''; localStorage.setItem('escalerilla_admin_club',''); }
+    clubJugadorIdsCache = {};
+    toast('Club eliminado con todos sus datos.');
+    await loadLookups(); populateClubFilterSelect();
+    fetchAndRenderRows();
+    return;
+  }
   if(!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
   const { error } = await sb.from(e.table).delete().eq(e.pk, id);
   if(error){ toast('Error al eliminar: '+error.message, true); return; }
