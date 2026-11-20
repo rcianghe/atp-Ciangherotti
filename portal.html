@@ -636,6 +636,17 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
   .recruit-actions .btn{height:4rem;padding:0 2.6rem;border-radius:2rem;font-size:1.2rem}
   .recruit-msg{font-size:1.2rem}
 }
+
+/* ---- Clubes (lista de clubes activos) ---- */
+.clubs-card{padding:0 12px 12px}
+.clubs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.club-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-2);transition:border-color .15s,transform .15s}
+.club-chip:hover{border-color:var(--lime);transform:translateY(-1px)}
+.club-chip-txt{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.club-chip-txt b{font-family:var(--display);font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.club-chip-txt small{font-size:11.5px;color:var(--ink-dim)}
+.clubs-card .list-card-head{padding-left:0}
+section[id]{scroll-margin-top:64px}
 </style>
 </head>
 <body>
@@ -653,11 +664,11 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
 
     <nav class="primary-nav" aria-label="Navegación principal">
       <a href="#" class="active" data-i18n="navigation.home">Inicio</a>
-      <a href="#" data-i18n="navigation.clubs">Clubes</a>
-      <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
-      <a href="#" data-i18n="navigation.tournaments">Torneos</a>
-      <a href="#" data-i18n="navigation.challenges">Desafíos</a>
-      <a href="#" data-i18n="navigation.rankings">Rankings</a>
+      <a href="#clubes" data-i18n="navigation.clubs">Clubes</a>
+      <a href="#escalerillas" data-i18n="navigation.ladders">Escalerillas</a>
+      <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
+      <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
+      <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
       <a href="#" data-i18n="navigation.news">Noticias</a>
     </nav>
 
@@ -669,8 +680,8 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
         <button class="lang-btn" aria-pressed="true" data-lang="es">ES</button>
         <button class="lang-btn" aria-pressed="false" data-lang="en">EN</button>
       </div>
-      <a href="#" class="btn btn-ghost" data-i18n="auth.signIn">Iniciar sesión</a>
-      <a href="#" class="btn btn-primary" data-i18n="auth.signUp">Registrarse</a>
+      <a href="chiletenis-pro.html" class="btn btn-ghost" data-i18n="auth.signIn">Iniciar sesión</a>
+      <a href="chiletenis-pro.html" class="btn btn-primary" data-i18n="auth.signUp">Registrarse</a>
       <button class="menu-toggle" id="menuToggle" data-i18n-aria-label="navigation.openMenu" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobilePanel">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" id="menuIcon"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
       </button>
@@ -687,16 +698,16 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
     </div>
     <nav aria-label="Navegación móvil">
       <a href="#" data-i18n="navigation.home">Inicio</a>
-      <a href="#" data-i18n="navigation.clubs">Clubes</a>
-      <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
-      <a href="#" data-i18n="navigation.tournaments">Torneos</a>
-      <a href="#" data-i18n="navigation.challenges">Desafíos</a>
-      <a href="#" data-i18n="navigation.rankings">Rankings</a>
+      <a href="#clubes" data-i18n="navigation.clubs">Clubes</a>
+      <a href="#escalerillas" data-i18n="navigation.ladders">Escalerillas</a>
+      <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
+      <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
+      <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
       <a href="#" data-i18n="navigation.news">Noticias</a>
     </nav>
     <div class="mobile-actions">
-      <a href="#" class="btn btn-outline btn-block" data-i18n="auth.signIn">Iniciar sesión</a>
-      <a href="#" class="btn btn-primary btn-block" data-i18n="auth.signUp">Registrarse</a>
+      <a href="chiletenis-pro.html" class="btn btn-outline btn-block" data-i18n="auth.signIn">Iniciar sesión</a>
+      <a href="chiletenis-pro.html" class="btn btn-primary btn-block" data-i18n="auth.signUp">Registrarse</a>
     </div>
   </div>
 </header>
@@ -723,8 +734,8 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
           <span data-i18n="home.hero.communityLabel">Comunidad</span>
         </div>
         <div class="hero-cta">
-          <a href="#" class="btn btn-primary btn-arrow" data-i18n="actions.joinNow">Únete ahora</a>
-          <a href="#" class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</a>
+          <a href="#reclutamiento" class="btn btn-primary btn-arrow" data-i18n="actions.joinNow">Únete ahora</a>
+          <a href="#clubes" class="btn btn-outline" data-i18n="actions.exploreClubs">Explorar clubes</a>
         </div>
       </div>
     </div>
@@ -770,22 +781,22 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
        Activas y Proximos Torneos, con datos reales de Supabase.
        ============================================================ -->
   <div class="home-body">
-  <section class="wrap">
-    <div class="home-cols">
+  <section class="wrap" id="escalerillas">
+    <div class="home-cols" id="torneos">
       <div class="col-featured">
         <div id="featuredClubCard"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
       </div>
       <div class="list-card">
         <div class="list-card-head">
           <h2 class="list-card-title"><span class="list-card-ic ic-sky"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4.500" height="9" rx="1"/><rect x="9.800" y="7" width="4.500" height="14" rx="1"/><rect x="16.500" y="3" width="4.500" height="18" rx="1"/></svg></span><span data-i18n="home.sections.activeLadders">Escalerillas Activas</span></h2>
-          <a href="#" class="section-link"><span data-i18n="home.sections.viewAllLadders">Ver todas</span> →</a>
+          <a href="#escalerillas" class="section-link"><span data-i18n="home.sections.viewAllLadders">Ver todas</span> →</a>
         </div>
         <div id="activeLaddersList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
       </div>
       <div class="list-card">
         <div class="list-card-head">
           <h2 class="list-card-title"><span class="list-card-ic ic-lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 5.500H4.200a2.200 2.200 0 002.600 3.800M17 5.500h2.800a2.200 2.200 0 01-2.600 3.800M12 14v3M8.500 20h7"/></svg></span><span data-i18n="home.sections.upcomingTournaments">Próximos Torneos</span></h2>
-          <a href="#" class="section-link"><span data-i18n="home.sections.viewAllTournaments">Ver todos</span> →</a>
+          <a href="#torneos" class="section-link"><span data-i18n="home.sections.viewAllTournaments">Ver todos</span> →</a>
         </div>
         <div id="upcomingTournamentsList" class="home-col-list"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
       </div>
@@ -795,7 +806,16 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
   <!-- ============================================================
        BANNER DE DESAFIOS — Fase 6
        ============================================================ -->
-  <section class="wrap">
+  <section class="wrap" id="clubes">
+    <div class="list-card clubs-card">
+      <div class="list-card-head">
+        <h2 class="list-card-title"><span class="list-card-ic ic-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg></span><span data-i18n="navigation.clubs">Clubes</span></h2>
+      </div>
+      <div id="clubsGrid" class="clubs-grid"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="desafios">
     <div class="challenge-banner">
       <div class="challenge-banner-bg" aria-hidden="true"></div>
       <div class="challenge-banner-scrim" aria-hidden="true"></div>
@@ -856,7 +876,7 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
       <div class="ranking-block ranking-card">
         <div class="list-card-head">
           <h2 class="list-card-title"><span class="list-card-ic ic-lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 5.500H4.200a2.200 2.200 0 002.600 3.800M17 5.500h2.800a2.200 2.200 0 01-2.600 3.800M12 14v3M8.500 20h7"/></svg></span><span data-i18n="home.ranking.title">Ranking ChileTenis PRO</span></h2>
-          <a href="#" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
+          <a href="#ranking" class="section-link" data-i18n="actions.viewFullRanking">Ver ranking completo</a>
         </div>
         <div id="rankingCard"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
         <p class="ranking-note" data-i18n="home.ranking.note">Suma los puntos reales de la escalerilla de cada club.</p>
@@ -887,13 +907,13 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
     </a>
     <nav class="foot-links" aria-label="Pie de página">
       <a href="#" data-i18n="navigation.home">Inicio</a>
-      <a href="#" data-i18n="navigation.clubs">Clubes</a>
-      <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
-      <a href="#" data-i18n="navigation.tournaments">Torneos</a>
-      <a href="#" data-i18n="navigation.challenges">Desafíos</a>
-      <a href="#" data-i18n="navigation.rankings">Rankings</a>
+      <a href="#clubes" data-i18n="navigation.clubs">Clubes</a>
+      <a href="#escalerillas" data-i18n="navigation.ladders">Escalerillas</a>
+      <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
+      <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
+      <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
       <a href="#" data-i18n="navigation.news">Noticias</a>
-      <a href="#" data-i18n="footer.contact">Contacto</a>
+      <a href="https://wa.me/56974723654" target="_blank" rel="noopener" data-i18n="footer.contact">Contacto</a>
     </nav>
     <div class="foot-social">
       <a class="icon-btn" href="#" aria-label="Instagram"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="4"/><circle cx="10" cy="10" r="3.2"/><circle cx="14.3" cy="5.7" r=".6" fill="currentColor" stroke="none"/></svg></a>
@@ -916,21 +936,21 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
       <div class="foot-cols">
         <div class="foot-col">
           <h4 data-i18n="footer.platformHeading">Plataforma</h4>
-          <a href="#" data-i18n="navigation.clubs">Clubes</a>
-          <a href="#" data-i18n="navigation.ladders">Escalerillas</a>
-          <a href="#" data-i18n="navigation.tournaments">Torneos</a>
-          <a href="#" data-i18n="navigation.rankings">Rankings</a>
+          <a href="#clubes" data-i18n="navigation.clubs">Clubes</a>
+          <a href="#escalerillas" data-i18n="navigation.ladders">Escalerillas</a>
+          <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
+          <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
         </div>
         <div class="foot-col">
           <h4 data-i18n="footer.communityHeading">Comunidad</h4>
-          <a href="#" data-i18n="navigation.challenges">Desafíos</a>
+          <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
           <a href="#" data-i18n="footer.players">Jugadores</a>
           <a href="#" data-i18n="navigation.news">Noticias</a>
         </div>
         <div class="foot-col">
           <h4 data-i18n="footer.chiletenisHeading">ChileTenis PRO</h4>
-          <a href="#" data-i18n="footer.hasClub">¿Tienes un club?</a>
-          <a href="#" data-i18n="footer.contact">Contacto</a>
+          <a href="#" onclick="document.getElementById('clubCtaLink').click();return false" data-i18n="footer.hasClub">¿Tienes un club?</a>
+          <a href="https://wa.me/56974723654" target="_blank" rel="noopener" data-i18n="footer.contact">Contacto</a>
         </div>
       </div>
     </div>
@@ -1137,22 +1157,49 @@ function formatFecha(iso){
   }catch(e){return iso;}
 }
 
-var HOME_DATA={club:null,escalerillas:[],torneos:[],ranking:[],reclutamiento:null};
+// Destino de cada club: sitio propio (si el admin lo definio) > index.html (Quilicura, club base) > <slug>.html (pagina propia con su icono/PWA).
+function urlClub(c){
+  if(!c)return '#';
+  if(c.sitio_web_externo&&/^https?:\/\//i.test(c.sitio_web_externo))return c.sitio_web_externo;
+  if(!c.slug)return '#';
+  return c.slug==='quilicura'?'index.html':encodeURIComponent(c.slug)+'.html';
+}
+var PORTAL_LOGIN_URL='chiletenis-pro.html'; // el inicio de sesion / vinculo de perfil vive en la web de cada club
+var HOME_DATA={clubes:[],club:null,escalerillas:[],torneos:[],ranking:[],reclutamiento:null};
 
 async function fetchClubDestacado(){
   if(!sbClient)return null;
   try{
     var res=await sbClient.from('clubes')
-      .select('id,nombre,nombre_corto,slug,comuna,logo_url,hero_tagline,foto_portada_url')
+      .select('id,nombre,nombre_corto,slug,comuna,logo_url,hero_tagline,foto_portada_url,sitio_web_externo')
       .eq('destacado',true).eq('activo',true).limit(1).maybeSingle();
     return res.error?null:res.data;
   }catch(err){console.warn('[portal] club destacado',err);return null;}
+}
+async function fetchClubes(){
+  if(!sbClient)return [];
+  try{
+    var res=await sbClient.from('clubes')
+      .select('id,nombre,nombre_corto,slug,comuna,logo_url,sitio_web_externo')
+      .eq('activo',true).not('slug','is',null).order('nombre');
+    return res.error?[]:res.data;
+  }catch(err){console.warn('[portal] clubes',err);return [];}
+}
+function renderClubes(list){
+  var el=document.getElementById('clubsGrid');
+  if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div class="empty-note">'+esc(I18N.t('home.states.emptyClub'))+'</div>';return;}
+  el.innerHTML=list.map(function(c){
+    var av=c.logo_url?'<img class="list-row-avatar" src="'+esc(c.logo_url)+'" alt="">':'<span class="list-row-avatar">'+esc(inicialesDe(c.nombre_corto||c.nombre))+'</span>';
+    return '<a class="club-chip" href="'+esc(urlClub(c))+'">'+av
+      +'<span class="club-chip-txt"><b>'+esc(c.nombre)+'</b>'+(c.comuna?'<small>'+esc(c.comuna)+'</small>':'')+'</span></a>';
+  }).join('');
 }
 async function fetchEscalerillasActivas(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('temporadas')
-      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug,logo_url)')
+      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug,logo_url,sitio_web_externo)')
       .eq('activa',true).eq('tipo','escalerilla')
       .order('fecha_inicio',{ascending:false}).limit(3);
     return res.error?[]:res.data;
@@ -1162,7 +1209,7 @@ async function fetchProximosTorneos(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('competiciones')
-      .select('id,nombre,tipo,serie,periodo,estado,fecha_inicio,clubes(nombre,slug,logo_url)')
+      .select('id,nombre,tipo,serie,periodo,estado,fecha_inicio,clubes(nombre,slug,logo_url,sitio_web_externo)')
       .neq('tipo','escalerilla').in('estado',['armado','en_curso'])
       .order('fecha_inicio',{ascending:true,nullsFirst:false}).limit(3);
     return res.error?[]:res.data;
@@ -1219,7 +1266,7 @@ function renderClubDestacado(club){
           +'<div class="featured-club-sub">'+esc(sub)+'</div>'
         +'</div>'
       +'</div>'
-      +'<div class="featured-club-actions"><a class="btn btn-outline btn-sm btn-arrow" href="index.html?club='+encodeURIComponent(club.slug)+'">'+esc(I18N.t('home.club.viewClub'))+'</a></div>'
+      +'<div class="featured-club-actions"><a class="btn btn-outline btn-sm btn-arrow" href="'+esc(urlClub(club))+'">'+esc(I18N.t('home.club.viewClub'))+'</a></div>'
     +'</div>'
     +'</div>';
 }
@@ -1232,7 +1279,7 @@ function renderEscalerillasActivas(list){
     var avatarHtml=club.logo_url
       ?'<img class="list-row-avatar" src="'+esc(club.logo_url)+'" alt="">'
       :'<span class="list-row-avatar">'+esc(inicialesDe(club.nombre))+'</span>';
-    return '<a class="list-row" href="index.html?club='+encodeURIComponent(club.slug||'')+'" style="text-decoration:none;cursor:pointer">'
+    return '<a class="list-row" href="'+esc(urlClub(club))+'" style="text-decoration:none;cursor:pointer">'
       +avatarHtml
       +'<div class="list-row-main"><div class="list-row-title">'+esc(club.nombre||'—')+'</div><div class="list-row-sub">'+esc(t.nombre||'')+'</div></div>'
       +'<span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span>'
@@ -1254,7 +1301,7 @@ function renderProximosTorneos(list){
     var miniHtml=club.logo_url
       ?'<img class="list-row-mini" src="'+esc(club.logo_url)+'" alt="">'
       :pinIc;
-    return '<div class="list-row">'
+    return '<a class="list-row" href="'+esc(urlClub(club))+'" style="text-decoration:none;cursor:pointer">'
       +'<span class="list-row-court '+canchas[i%3]+'" aria-hidden="true"></span>'
       +'<div class="list-row-main">'
         +'<div class="list-row-title">'+esc(titulo)+'</div>'
@@ -1262,7 +1309,7 @@ function renderProximosTorneos(list){
         +(club.nombre?'<div class="list-row-club">'+miniHtml+'<span>'+esc(club.nombre)+'</span></div>':'')
       +'</div>'
       +'<span class="pill '+(enCurso?'pill-live':'pill-soon')+'">'+esc(estadoTxt)+'</span>'
-      +'</div>';
+      +'</a>';
   }).join('');
 }
 
@@ -1320,6 +1367,7 @@ function renderReclutamiento(){
     +'<div class="recruit-status">'+esc(I18N.t(lograda?'home.recruit.statusReached':'home.recruit.statusOpen'))+'</div>';
 }
 function renderHomeSections(){
+  renderClubes(HOME_DATA.clubes);
   renderReclutamiento();
   renderClubDestacado(HOME_DATA.club);
   renderEscalerillasActivas(HOME_DATA.escalerillas);
@@ -1327,8 +1375,8 @@ function renderHomeSections(){
   renderRankingChileTenisPro(HOME_DATA.ranking);
 }
 async function loadHomeSections(){
-  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro(),fetchReclutamiento()]);
-  HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];HOME_DATA.reclutamiento=r[4];
+  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro(),fetchReclutamiento(),fetchClubes()]);
+  HOME_DATA.clubes=r[5];HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];HOME_DATA.reclutamiento=r[4];
   renderHomeSections();
 }
 
@@ -1456,6 +1504,9 @@ async function loadHomeSections(){
     btn.addEventListener('click',function(){
       I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
     });
+  });
+  document.querySelectorAll('a[href="#reclutamiento"]').forEach(function(a){
+    a.addEventListener('click',function(){setTimeout(function(){var b=document.getElementById('recruitOpen');var f=document.getElementById('recruitForm');if(b&&f&&f.hidden)b.click();},350);});
   });
   I18N.init().then(loadHomeSections); // espera el idioma antes de traducir el contenido dinamico
 })();
