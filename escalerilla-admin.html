@@ -1941,7 +1941,7 @@ function renderPanelEnlaceClub(){
   const todos = (lookups.clubesFull||[]).filter(c=>c.slug);
   const uno = adminClubIdActual || selectedClubId;
   const lista = uno ? todos.filter(c=>c.id===uno) : todos;
-  const uPortal = urlPublicaClub('chiletenis-pro');
+  const uPortal = new URL('portal.html', location.href).href;
   const filaPortal = `<div style="padding:12px 18px;border-top:1px solid var(--line);background:#F3F8EE">
       <div style="font-weight:600;margin-bottom:4px">🌐 Portal ChileTenis PRO</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
