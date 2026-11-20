@@ -1941,7 +1941,16 @@ function renderPanelEnlaceClub(){
   const todos = (lookups.clubesFull||[]).filter(c=>c.slug);
   const uno = adminClubIdActual || selectedClubId;
   const lista = uno ? todos.filter(c=>c.id===uno) : todos;
-  if(!lista.length){ box.innerHTML = ''; return; }
+  const uPortal = urlPublicaClub('chiletenis-pro');
+  const filaPortal = `<div style="padding:12px 18px;border-top:1px solid var(--line);background:#F3F8EE">
+      <div style="font-weight:600;margin-bottom:4px">🌐 Portal ChileTenis PRO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input readonly value="${escAttr(uPortal)}" onclick="this.select()" style="flex:1 1 260px;min-width:0">
+        <button class="btn btn-primary" onclick="copiarEnlaceClub('${escAttr(uPortal)}')">📋 Copiar</button>
+        <a class="btn" href="${escAttr(uPortal)}" target="_blank" rel="noopener">Abrir ↗</a>
+        <a class="btn" href="https://wa.me/?text=${encodeURIComponent('ChileTenis PRO: '+uPortal)}" target="_blank" rel="noopener">WhatsApp</a>
+      </div></div>`;
+  if(!lista.length){ box.innerHTML = `<div class="panel-head"><h3>🔗 Enlace para compartir</h3></div>${filaPortal}`; return; }
   const filas = lista.map(c=>{
     const u = urlPublicaClub(c.slug);
     const extra = c.slug==='quilicura' ? '' : `<div class="hint" style="margin-top:3px">Si aún no abre, usa este enlace que funciona al instante: <a href="${escAttr(urlRespaldoClub(c.slug))}" target="_blank" rel="noopener">${bdEsc(urlRespaldoClub(c.slug))}</a></div>`;
@@ -1955,7 +1964,7 @@ function renderPanelEnlaceClub(){
       </div>${extra}</div>`;
   }).join('');
   box.innerHTML = `<div class="panel-head"><h3>🔗 Enlace para compartir${lista.length>1?' (de cada club)':''}</h3></div>
-    <div class="hint" style="padding:0 18px 10px">Este es el enlace de la web de la escalerilla: compártelo con los jugadores para que entren a ver el ranking y los resultados.</div>${filas}`;
+    <div class="hint" style="padding:0 18px 10px">Este es el enlace de la web de la escalerilla: compártelo con los jugadores para que entren a ver el ranking y los resultados.</div>${filas}${filaPortal}`;
 }
 async function copiarEnlaceClub(u){
   try{ await navigator.clipboard.writeText(u); toast('Enlace copiado.'); }
