@@ -664,10 +664,15 @@ section[id]{scroll-margin-top:64px}
 .service-step .n{font-family:var(--mono);font-size:11px;color:var(--lime);letter-spacing:.1em}
 .service-step b{display:block;font-family:var(--display);font-size:14.5px;margin:4px 0 4px}
 .service-step span{display:block;font-size:12.8px;line-height:1.45;color:var(--ink-dim)}
+.service-prices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:760px){.service-prices{grid-template-columns:1fr}}
+.price-tag{flex:1 0 100%;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
+.club-price{background:rgba(63,169,245,.07);border-color:rgba(63,169,245,.3)}
+.club-price .amt{color:var(--sky)}
 .service-price{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;background:rgba(198,241,53,.07);border:1px solid rgba(198,241,53,.28);border-radius:var(--radius);padding:14px 16px}
 .service-price .amt{font-family:var(--display);font-weight:700;font-size:26px;color:var(--lime);line-height:1}
 .service-price .amt small{font-size:12px;color:var(--ink-dim);font-weight:500;margin-left:3px}
-.service-price p{margin:0;flex:1 1 320px;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.service-price p{margin:0;flex:1 1 220px;font-size:13.5px;line-height:1.5;color:var(--ink)}
 .service-price .acts{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:920px){.service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.service-grid{grid-template-columns:1fr}.service-price .acts{width:100%}.service-price .acts .btn{flex:1}}
@@ -826,12 +831,23 @@ section[id]{scroll-margin-top:64px}
         <div class="service-step"><div class="n">03</div><b data-pt="st3t"></b><span data-pt="st3d"></span></div>
         <div class="service-step"><div class="n">04</div><b data-pt="st4t"></b><span data-pt="st4d"></span></div>
       </div>
-      <div class="service-price">
-        <div class="amt"><span id="svcAmt">$10.000</span><small data-pt="perMonth"></small></div>
-        <p data-pt="priceTxt"></p>
-        <div class="acts">
-          <a href="#reclutamiento" class="btn btn-primary" data-pt="ctaMember"></a>
-          <button type="button" class="btn btn-outline" id="installOpen" data-pt="ctaInstall"></button>
+      <div class="service-prices">
+        <div class="service-price">
+          <div class="price-tag" data-pt="forPlayers"></div>
+          <div class="amt"><span id="svcAmt">$10.000</span><small data-pt="perMonth"></small></div>
+          <p data-pt="priceTxt"></p>
+          <div class="acts">
+            <a href="#reclutamiento" class="btn btn-primary" data-pt="ctaMember"></a>
+            <button type="button" class="btn btn-outline" id="installOpen" data-pt="ctaInstall"></button>
+          </div>
+        </div>
+        <div class="service-price club-price">
+          <div class="price-tag" data-pt="forClubs"></div>
+          <div class="amt"><span id="svcAmtClub">$3.000</span><small data-pt="perPlayerMonth"></small></div>
+          <p data-pt="clubPriceTxt"></p>
+          <div class="acts">
+            <a href="#" class="btn btn-primary" id="clubQuote" target="_blank" rel="noopener" data-pt="ctaClub"></a>
+          </div>
         </div>
       </div>
     </div>
@@ -1249,8 +1265,10 @@ var PT_DICT={
   st2t:'Mandas el resultado',st2d:'Me envías el marcador por WhatsApp.',
   st3t:'Yo lo digitalizo',st3d:'Se actualiza el ranking y tus estadísticas en la web.',
   st4t:'Ves tu progreso',st4d:'Puntos, rachas, historial y rivales, desde tu celular.',
-  perMonth:'/ mes',
-  priceTxt:'Membresía mensual de la escalerilla ChileTenis PRO, abierta a jugadores de todo Chile. Partimos cuando alcancemos el mínimo de jugadores. ¿Tienes un club? Digitalizamos su escalerilla.',
+  perMonth:'/ mes',perPlayerMonth:'/ mes por jugador',forPlayers:'Para jugadores',forClubs:'Para clubes',
+  priceTxt:'Membresía mensual para jugar la escalerilla ChileTenis PRO, abierta a jugadores de todo Chile. Partimos cuando alcancemos el mínimo de jugadores.',
+  clubPriceTxt:'Digitalizamos la escalerilla de tu club: ranking, resultados y estadísticas para tus jugadores. Pagas solo por los jugadores que participan.',
+  ctaClub:'Quiero digitalizar mi club',clubMsg:'Hola, quiero información para digitalizar la escalerilla de mi club en ChileTenis PRO.',
   ctaMember:'Hazte socio',ctaInstall:'📲 Instalar la app',
   instTitle:'Instala ChileTenis PRO en tu celular',
   instNote:'Queda como un ícono en tu pantalla de inicio, sin ir a la tienda de apps.',
@@ -1264,8 +1282,10 @@ var PT_DICT={
   st2t:'Send the result',st2d:'Send me the score on WhatsApp.',
   st3t:'I digitize it',st3d:'The ranking and your stats update on the site.',
   st4t:'See your progress',st4d:'Points, streaks, history and opponents, from your phone.',
-  perMonth:'/ month',
-  priceTxt:'Monthly membership for the ChileTenis PRO ladder, open to players across Chile. We start once we reach the minimum number of players. Have a club? We digitize its ladder.',
+  perMonth:'/ month',perPlayerMonth:'/ month per player',forPlayers:'For players',forClubs:'For clubs',
+  priceTxt:'Monthly membership to play the ChileTenis PRO ladder, open to players across Chile. We start once we reach the minimum number of players.',
+  clubPriceTxt:'We digitize your club\'s ladder: rankings, results and stats for your players. You only pay for the players who take part.',
+  ctaClub:'I want to digitize my club',clubMsg:'Hi, I would like information about digitizing my club\'s ladder with ChileTenis PRO.',
   ctaMember:'Become a member',ctaInstall:'📲 Install the app',
   instTitle:'Install ChileTenis PRO on your phone',
   instNote:'It appears as an icon on your home screen, no app store needed.',
@@ -1273,6 +1293,7 @@ var PT_DICT={
   ios:['Open this page in <b>Safari</b> (not the WhatsApp or Instagram browser).','Tap the <b>Share</b> button (square with an up arrow).','Scroll and choose <b>Add to Home Screen</b>.','Confirm the name <b>ChileTenis PRO</b> and tap <b>Add</b>.'],
   android:['Open this page in <b>Chrome</b>.','Tap the <b>⋮</b> menu at the top right.','Choose <b>Install app</b> or <b>Add to Home screen</b>.','Confirm with <b>Install</b>.']}
 };
+var PRECIO_CLUB_POR_JUGADOR=3000; // CLP al mes por jugador, cuando un club digitaliza su escalerilla
 function PT(k){var d=PT_DICT[I18N.current==='en'?'en':'es'];return d[k]!==undefined?d[k]:PT_DICT.es[k];}
 function aplicarPT(){
   document.querySelectorAll('[data-pt]').forEach(function(el){el.textContent=PT(el.getAttribute('data-pt'));});
@@ -1281,6 +1302,8 @@ function aplicarPT(){
   var rec=HOME_DATA&&HOME_DATA.reclutamiento;
   var precio=(rec&&parseInt(rec.precio_mensual,10))||10000;
   if(amt)amt.textContent='$'+precio.toLocaleString('es-CL');
+  var ac=document.getElementById('svcAmtClub');if(ac)ac.textContent='$'+PRECIO_CLUB_POR_JUGADOR.toLocaleString('es-CL');
+  var cq=document.getElementById('clubQuote');if(cq)cq.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('clubMsg'));
   pintarPasosInstalar();
 }
 var INSTALL_OS=/android/i.test(navigator.userAgent)?'android':'ios';
