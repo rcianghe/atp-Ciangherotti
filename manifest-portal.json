@@ -1,0 +1,33 @@
+{
+  "id": "./portal.html",
+  "name": "ChileTenis PRO",
+  "short_name": "ChileTenis PRO",
+  "description": "Escalerillas, torneos y estadísticas de tenis en Chile",
+  "start_url": "./portal.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
+  "lang": "es-CL",
+  "icons": [
+    {
+      "src": "pelota-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pelota-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pelota-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
