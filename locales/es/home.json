@@ -2,7 +2,7 @@
   "home": {
     "hero": {
       "eyebrow": "Bienvenido a",
-      "description": "La plataforma que conecta clubes, jugadores y amantes del tenis en todo Chile.",
+      "description": "La plataforma que digitaliza escalerillas y torneos de tenis en todo Chile: tu ranking y tu progreso, en un solo lugar.",
       "communityLabel": "Comunidad",
       "taglineLine1": "Más tenis,",
       "taglineLine2": "más comunidad"
@@ -15,8 +15,8 @@
       },
       "ladders": {
         "title": "Escalerillas y torneos",
-        "description": "Compite en tu club o en toda la comunidad.",
-        "modalBody": "Las escalerillas te permiten competir dentro de tu club: a medida que juegas, ganas puntos que definen tu posición en el ranking. Los torneos son eventos de cada club, con fechas y cuadros definidos por ellos mismos."
+        "description": "Compite en la escalerilla de tu club o en la de ChileTenis Pro.",
+        "modalBody": "Las escalerillas te permiten competir: a medida que juegas, ganas puntos que definen tu posición en el ranking. ChileTenis Pro digitaliza la escalerilla de cada club y organiza algunos torneos al año."
       },
       "challenges": {
         "title": "Desafíos",
@@ -26,12 +26,12 @@
       "rankings": {
         "title": "Rankings automáticos",
         "description": "Tu progreso, en tiempo real.",
-        "modalBody": "Cada partido de tu escalerilla suma puntos a tu ranking. El encargado de tu club carga el resultado y el sistema calcula todo automáticamente, sin actualizaciones manuales. Así tu ranking se actualiza en la página apenas se registra el partido y puedes disfrutar tu avance en este lindo deporte."
+        "modalBody": "Cada partido de tu escalerilla suma puntos a tu ranking. El resultado lo carga el encargado de la escalerilla (en ChileTenis Pro, nos envías el marcador y lo digitalizamos) y el sistema calcula todo automáticamente. Así tu ranking se actualiza en la página apenas se registra el partido y puedes ver tu avance en este lindo deporte."
       },
       "clubs": {
         "title": "Clubes",
         "description": "Cada club con su propia escalerilla y torneos.",
-        "modalBody": "Cada club tiene su propio espacio independiente dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores."
+        "modalBody": "Cada club tiene su propio espacio independiente dentro de ChileTenis PRO, con su escalerilla, sus torneos y su comunidad de jugadores. ChileTenis Pro no es un club: es el servicio que digitaliza la escalerilla y las estadísticas de cada club."
       }
     },
     "sections": {
@@ -81,7 +81,7 @@
     },
     "clubCta": {
       "title": "¿Tienes un club?",
-      "description": "Lleva tu escalerilla y torneos al siguiente nivel con ChileTenis Pro.",
+      "description": "Digitalizamos la escalerilla de tu club: ranking, resultados y estadísticas para que tus jugadores vean su progreso.",
       "emailSubject": "Quiero sumar mi club a ChileTenis PRO",
       "emailBody": "Hola, quisiera más información para incorporar mi club a ChileTenis PRO."
     },
