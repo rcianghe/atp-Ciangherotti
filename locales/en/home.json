@@ -2,7 +2,7 @@
   "home": {
     "hero": {
       "eyebrow": "Welcome to",
-      "description": "The platform that connects clubs, players and tennis lovers all across Chile.",
+      "description": "The platform that digitizes tennis ladders and tournaments across Chile: your ranking and your progress, all in one place.",
       "communityLabel": "Community",
       "taglineLine1": "More tennis,",
       "taglineLine2": "more community"
@@ -15,8 +15,8 @@
       },
       "ladders": {
         "title": "Ladders and tournaments",
-        "description": "Compete in your club or across the whole community.",
-        "modalBody": "Ladders let you compete inside your club: as you play, you earn points that set your position in the ranking. Tournaments are events run by each club, with dates and brackets defined by the club itself."
+        "description": "Compete in your club's ladder or in the ChileTenis Pro one.",
+        "modalBody": "Ladders let you compete: as you play, you earn points that set your position in the ranking. ChileTenis Pro digitizes each club's ladder and runs a few tournaments a year."
       },
       "challenges": {
         "title": "Challenges",
@@ -26,12 +26,12 @@
       "rankings": {
         "title": "Automatic rankings",
         "description": "Your progress, in real time.",
-        "modalBody": "Every ladder match you play adds points to your ranking. Your club's administrator logs the result and the system calculates everything automatically, with no manual updates. Your ranking updates on the site as soon as the match is recorded, so you can enjoy your progress in this great sport."
+        "modalBody": "Every ladder match you play adds points to your ranking. The result is logged by the ladder administrator (in ChileTenis Pro, you send us the score and we digitize it) and the system calculates everything automatically. Your ranking updates on the site as soon as the match is recorded, so you can follow your progress in this great sport."
       },
       "clubs": {
         "title": "Clubs",
         "description": "Each club with its own ladder and tournaments.",
-        "modalBody": "Each club has its own independent space within ChileTenis PRO, with its ladder, tournaments and player community."
+        "modalBody": "Each club has its own independent space within ChileTenis PRO, with its ladder, tournaments and player community. ChileTenis Pro is not a club: it is the service that digitizes each club's ladder and stats."
       }
     },
     "sections": {
@@ -81,7 +81,7 @@
     },
     "clubCta": {
       "title": "Have a club?",
-      "description": "Take your ladder and tournaments to the next level with ChileTenis Pro.",
+      "description": "We digitize your club's ladder: rankings, results and stats so your players can see their progress.",
       "emailSubject": "I want to add my club to ChileTenis PRO",
       "emailBody": "Hi, I'd like more information about adding my club to ChileTenis PRO."
     },
