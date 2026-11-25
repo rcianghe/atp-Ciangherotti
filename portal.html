@@ -6,6 +6,12 @@
 <title>ChileTenis PRO — Portal</title>
 <meta name="description" content="La plataforma que conecta clubes, escalerillas, torneos, desafíos y jugadores de tenis en todo Chile.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Ccircle cx='17' cy='17' r='15' fill='none' stroke='%23C6F135' stroke-width='2.4'/%3E%3Cpath d='M17 2c-5 4-5 26 0 30M17 2c5 4 5 26 0 30' stroke='%23C6F135' stroke-width='1.8' fill='none' opacity='.75'/%3E%3Cpath d='M2 17h30' stroke='%23C6F135' stroke-width='1.8' opacity='.4'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest-portal.json">
+<link rel="apple-touch-icon" href="pelota-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ChileTenis PRO">
+<meta name="theme-color" content="#0B1220">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <script src="lib/supabase.min.js/supabase.min.js"></script>
@@ -647,6 +653,34 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
 .club-chip-txt small{font-size:11.5px;color:var(--ink-dim)}
 .clubs-card .list-card-head{padding-left:0}
 section[id]{scroll-margin-top:64px}
+/* ---- Que es ChileTenis PRO (servicio, no club) ---- */
+.service-band{background:linear-gradient(180deg,#0E1830,var(--bg));border-bottom:1px solid var(--line);padding:34px 0 30px}
+.service-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
+.service-title{font-family:var(--display);font-weight:700;font-size:clamp(22px,3.2vw,32px);line-height:1.15;margin:0 0 8px;letter-spacing:-.01em}
+.service-title em{font-style:normal;color:var(--lime)}
+.service-lead{color:var(--ink-dim);font-size:15px;line-height:1.55;max-width:760px;margin:0 0 20px}
+.service-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.service-step{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 15px}
+.service-step .n{font-family:var(--mono);font-size:11px;color:var(--lime);letter-spacing:.1em}
+.service-step b{display:block;font-family:var(--display);font-size:14.5px;margin:4px 0 4px}
+.service-step span{display:block;font-size:12.8px;line-height:1.45;color:var(--ink-dim)}
+.service-price{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;background:rgba(198,241,53,.07);border:1px solid rgba(198,241,53,.28);border-radius:var(--radius);padding:14px 16px}
+.service-price .amt{font-family:var(--display);font-weight:700;font-size:26px;color:var(--lime);line-height:1}
+.service-price .amt small{font-size:12px;color:var(--ink-dim);font-weight:500;margin-left:3px}
+.service-price p{margin:0;flex:1 1 320px;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.service-price .acts{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:920px){.service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.service-grid{grid-template-columns:1fr}.service-price .acts{width:100%}.service-price .acts .btn{flex:1}}
+/* ---- Instalar app ---- */
+.install-steps{margin:10px 0 0;padding:0;list-style:none;counter-reset:st;text-align:left}
+.install-steps li{counter-increment:st;position:relative;padding:8px 0 8px 34px;font-size:14px;line-height:1.45;color:var(--ink);border-bottom:1px solid var(--line)}
+.install-steps li:last-child{border-bottom:none}
+.install-steps li::before{content:counter(st);position:absolute;left:0;top:8px;width:23px;height:23px;border-radius:50%;background:var(--lime);color:var(--bg);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.install-tabs{display:flex;gap:6px;margin:6px 0 4px}
+.install-tabs button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink-dim);font-weight:600;font-size:13px}
+.install-tabs button[aria-pressed=true]{background:var(--lime);color:var(--bg);border-color:var(--lime)}
+.install-note{font-size:12px;color:var(--ink-dim);margin:10px 0 0}
+
 </style>
 </head>
 <body>
@@ -777,6 +811,33 @@ section[id]{scroll-margin-top:64px}
   </section>
 
   <!-- ============================================================
+       QUE ES CHILETENIS PRO — aclara que es un SERVICIO de escalerillas
+       (no un club) y presenta la membresia + instalar la app.
+       Textos propios en PT() (es/en) porque no dependen de locales/*.json.
+       ============================================================ -->
+  <section class="service-band" id="servicio">
+    <div class="wrap">
+      <div class="service-eyebrow" data-pt="svcEyebrow"></div>
+      <h2 class="service-title" data-pt-html="svcTitle"></h2>
+      <p class="service-lead" data-pt="svcLead"></p>
+      <div class="service-grid">
+        <div class="service-step"><div class="n">01</div><b data-pt="st1t"></b><span data-pt="st1d"></span></div>
+        <div class="service-step"><div class="n">02</div><b data-pt="st2t"></b><span data-pt="st2d"></span></div>
+        <div class="service-step"><div class="n">03</div><b data-pt="st3t"></b><span data-pt="st3d"></span></div>
+        <div class="service-step"><div class="n">04</div><b data-pt="st4t"></b><span data-pt="st4d"></span></div>
+      </div>
+      <div class="service-price">
+        <div class="amt"><span id="svcAmt">$10.000</span><small data-pt="perMonth"></small></div>
+        <p data-pt="priceTxt"></p>
+        <div class="acts">
+          <a href="#reclutamiento" class="btn btn-primary" data-pt="ctaMember"></a>
+          <button type="button" class="btn btn-outline" id="installOpen" data-pt="ctaInstall"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
        CONTENIDO DINAMICO — Fase 5. Club destacado, Escalerillas
        Activas y Proximos Torneos, con datos reales de Supabase.
        ============================================================ -->
@@ -809,7 +870,7 @@ section[id]{scroll-margin-top:64px}
   <section class="wrap" id="clubes">
     <div class="list-card clubs-card">
       <div class="list-card-head">
-        <h2 class="list-card-title"><span class="list-card-ic ic-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg></span><span data-i18n="navigation.clubs">Clubes</span></h2>
+        <h2 class="list-card-title"><span class="list-card-ic ic-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg></span><span data-i18n="navigation.ladders">Escalerillas</span></h2>
       </div>
       <div id="clubsGrid" class="clubs-grid"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
     </div>
@@ -973,6 +1034,20 @@ section[id]{scroll-margin-top:64px}
     <div class="modal-icon" id="featureModalIcon"></div>
     <h3 class="modal-title" id="featureModalTitle"></h3>
     <p class="modal-body" id="featureModalBody"></p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="installOverlay" data-open="false">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="installTitle" tabindex="-1">
+    <button type="button" class="modal-close" id="installClose" aria-label="Cerrar"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
+    <h3 class="modal-title" id="installTitle" data-pt="instTitle"></h3>
+    <div class="install-tabs" role="group">
+      <button type="button" data-os="ios" aria-pressed="true">iPhone</button>
+      <button type="button" data-os="android" aria-pressed="false">Android</button>
+    </div>
+    <ol class="install-steps" id="installSteps"></ol>
+    <p class="install-note" data-pt="instNote"></p>
+    <button type="button" class="btn btn-primary btn-block" id="installNative" hidden data-pt="instNative" style="margin-top:12px"></button>
   </div>
 </div>
 
@@ -1165,6 +1240,71 @@ function urlClub(c){
   return c.slug==='quilicura'?'index.html':encodeURIComponent(c.slug)+'.html';
 }
 var PORTAL_LOGIN_URL='chiletenis-pro.html'; // el inicio de sesion / vinculo de perfil vive en la web de cada club
+// Textos propios del portal (es/en), fuera de locales/*.json
+var PT_DICT={
+ es:{svcEyebrow:'Qué es ChileTenis PRO',
+  svcTitle:'Un servicio de <em>escalerillas</em>, no un club',
+  svcLead:'ChileTenis PRO digitaliza la escalerilla de tu club y organiza uno que otro torneo al año. No tenemos canchas ni socios de club: ponemos el ranking, los resultados y la estadística para que cada jugador vea su progreso.',
+  st1t:'Juegas tu partido',st1d:'Tú y tu rival coordinan y juegan, en canchas gratuitas o de pago.',
+  st2t:'Mandas el resultado',st2d:'Me envías el marcador por WhatsApp.',
+  st3t:'Yo lo digitalizo',st3d:'Se actualiza el ranking y tus estadísticas en la web.',
+  st4t:'Ves tu progreso',st4d:'Puntos, rachas, historial y rivales, desde tu celular.',
+  perMonth:'/ mes',
+  priceTxt:'Membresía mensual de la escalerilla ChileTenis PRO, abierta a jugadores de todo Chile. Partimos cuando alcancemos el mínimo de jugadores. ¿Tienes un club? Digitalizamos su escalerilla.',
+  ctaMember:'Hazte socio',ctaInstall:'📲 Instalar la app',
+  instTitle:'Instala ChileTenis PRO en tu celular',
+  instNote:'Queda como un ícono en tu pantalla de inicio, sin ir a la tienda de apps.',
+  instNative:'Instalar ahora',openLadder:'Escalerilla abierta a todos',
+  ios:['Abre esta página en <b>Safari</b> (no en el navegador de WhatsApp ni de Instagram).','Toca el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).','Baja y elige <b>Agregar a pantalla de inicio</b>.','Confirma el nombre <b>ChileTenis PRO</b> y toca <b>Agregar</b>.'],
+  android:['Abre esta página en <b>Chrome</b>.','Toca el menú <b>⋮</b> arriba a la derecha.','Elige <b>Instalar aplicación</b> o <b>Agregar a pantalla de inicio</b>.','Confirma con <b>Instalar</b>.']},
+ en:{svcEyebrow:'What is ChileTenis PRO',
+  svcTitle:'A <em>ladder</em> service, not a club',
+  svcLead:'ChileTenis PRO digitizes your club\'s ladder and runs a few tournaments a year. We have no courts or club members: we provide the ranking, results and stats so every player can see their progress.',
+  st1t:'You play your match',st1d:'You and your opponent arrange and play, on free or paid courts.',
+  st2t:'Send the result',st2d:'Send me the score on WhatsApp.',
+  st3t:'I digitize it',st3d:'The ranking and your stats update on the site.',
+  st4t:'See your progress',st4d:'Points, streaks, history and opponents, from your phone.',
+  perMonth:'/ month',
+  priceTxt:'Monthly membership for the ChileTenis PRO ladder, open to players across Chile. We start once we reach the minimum number of players. Have a club? We digitize its ladder.',
+  ctaMember:'Become a member',ctaInstall:'📲 Install the app',
+  instTitle:'Install ChileTenis PRO on your phone',
+  instNote:'It appears as an icon on your home screen, no app store needed.',
+  instNative:'Install now',openLadder:'Ladder open to everyone',
+  ios:['Open this page in <b>Safari</b> (not the WhatsApp or Instagram browser).','Tap the <b>Share</b> button (square with an up arrow).','Scroll and choose <b>Add to Home Screen</b>.','Confirm the name <b>ChileTenis PRO</b> and tap <b>Add</b>.'],
+  android:['Open this page in <b>Chrome</b>.','Tap the <b>⋮</b> menu at the top right.','Choose <b>Install app</b> or <b>Add to Home screen</b>.','Confirm with <b>Install</b>.']}
+};
+function PT(k){var d=PT_DICT[I18N.current==='en'?'en':'es'];return d[k]!==undefined?d[k]:PT_DICT.es[k];}
+function aplicarPT(){
+  document.querySelectorAll('[data-pt]').forEach(function(el){el.textContent=PT(el.getAttribute('data-pt'));});
+  document.querySelectorAll('[data-pt-html]').forEach(function(el){el.innerHTML=PT(el.getAttribute('data-pt-html'));});
+  var amt=document.getElementById('svcAmt');
+  var rec=HOME_DATA&&HOME_DATA.reclutamiento;
+  var precio=(rec&&parseInt(rec.precio_mensual,10))||10000;
+  if(amt)amt.textContent='$'+precio.toLocaleString('es-CL');
+  pintarPasosInstalar();
+}
+var INSTALL_OS=/android/i.test(navigator.userAgent)?'android':'ios';
+function pintarPasosInstalar(){
+  var ol=document.getElementById('installSteps');if(!ol)return;
+  ol.innerHTML=PT(INSTALL_OS).map(function(x){return '<li>'+x+'</li>';}).join('');
+  document.querySelectorAll('.install-tabs button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.os===INSTALL_OS?'true':'false');});
+}
+var DEFERRED_INSTALL=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();DEFERRED_INSTALL=e;var b=document.getElementById('installNative');if(b)b.hidden=false;});
+(function(){
+  var ov=document.getElementById('installOverlay'),box=ov&&ov.querySelector('.modal-box');
+  if(!ov)return;
+  function abrir(){pintarPasosInstalar();ov.setAttribute('data-open','true');document.body.style.overflow='hidden';box.focus();}
+  function cerrar(){ov.setAttribute('data-open','false');document.body.style.overflow='';}
+  document.getElementById('installOpen').addEventListener('click',abrir);
+  document.getElementById('installClose').addEventListener('click',cerrar);
+  ov.addEventListener('click',function(e){if(e.target===ov)cerrar();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.getAttribute('data-open')==='true')cerrar();});
+  document.querySelectorAll('.install-tabs button').forEach(function(b){b.addEventListener('click',function(){INSTALL_OS=b.dataset.os;pintarPasosInstalar();});});
+  document.getElementById('installNative').addEventListener('click',function(){
+    if(!DEFERRED_INSTALL)return;DEFERRED_INSTALL.prompt();DEFERRED_INSTALL.userChoice.finally(function(){DEFERRED_INSTALL=null;document.getElementById('installNative').hidden=true;cerrar();});
+  });
+})();
 var HOME_DATA={clubes:[],club:null,escalerillas:[],torneos:[],ranking:[],reclutamiento:null};
 
 async function fetchClubDestacado(){
@@ -1192,7 +1332,7 @@ function renderClubes(list){
   el.innerHTML=list.map(function(c){
     var av=c.logo_url?'<img class="list-row-avatar" src="'+esc(c.logo_url)+'" alt="">':'<span class="list-row-avatar">'+esc(inicialesDe(c.nombre_corto||c.nombre))+'</span>';
     return '<a class="club-chip" href="'+esc(urlClub(c))+'">'+av
-      +'<span class="club-chip-txt"><b>'+esc(c.nombre)+'</b>'+(c.comuna?'<small>'+esc(c.comuna)+'</small>':'')+'</span></a>';
+      +'<span class="club-chip-txt"><b>'+esc(c.nombre)+'</b>'+((c.slug==='chiletenis-pro')?'<small>'+esc(PT('openLadder'))+'</small>':(c.comuna?'<small>'+esc(c.comuna)+'</small>':''))+'</span></a>';
   }).join('');
 }
 async function fetchEscalerillasActivas(){
@@ -1502,13 +1642,13 @@ async function loadHomeSections(){
   }
   document.querySelectorAll('.lang-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
-      I18N.setLocale(btn.dataset.lang).then(renderHomeSections); // las tarjetas dinamicas tambien se re-traducen
+      I18N.setLocale(btn.dataset.lang).then(function(){renderHomeSections();aplicarPT();}); // las tarjetas dinamicas tambien se re-traducen
     });
   });
   document.querySelectorAll('a[href="#reclutamiento"]').forEach(function(a){
     a.addEventListener('click',function(){setTimeout(function(){var b=document.getElementById('recruitOpen');var f=document.getElementById('recruitForm');if(b&&f&&f.hidden)b.click();},350);});
   });
-  I18N.init().then(loadHomeSections); // espera el idioma antes de traducir el contenido dinamico
+  I18N.init().then(function(){aplicarPT();return loadHomeSections();}).then(aplicarPT); // espera el idioma antes de traducir el contenido dinamico
 })();
 </script>
 
