@@ -675,6 +675,14 @@ section[id]{scroll-margin-top:64px}
 .player-card .plink{font-size:12px;font-weight:600;color:var(--sky)}
 .player-card .plink:hover{color:var(--ink)}
 .players-more{display:flex;justify-content:center;margin-top:12px}
+.fr-box{max-width:460px;max-height:90vh;overflow:auto}
+.fr-field{display:grid;gap:4px;margin:10px 0;text-align:left;font-size:12.5px;color:var(--ink-dim)}
+.fr-field input[type=text],.fr-field input[type=tel]{background:rgba(255,255,255,.06);border:1px solid var(--line-strong);border-radius:8px;color:var(--ink);padding:11px 12px;font:inherit;font-size:14px;width:100%}
+.fr-consent{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink-dim);margin:8px 0 12px;text-align:left}
+.fr-msg{min-height:1.2em;font-size:13px;margin:8px 0 0}
+.fr-msg.err{color:#ff8a80}
+.fr-pay{background:rgba(198,241,53,.08);border:1px solid rgba(198,241,53,.3);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.5;color:var(--ink);text-align:left}
+.fr-note{font-size:12px;color:var(--ink-dim);margin:10px 0 0;line-height:1.45}
 .friendly-cta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:14px;padding:12px 14px;border:1px dashed rgba(198,241,53,.4);border-radius:var(--radius-sm);font-size:13.5px;color:var(--ink)}
 .friendly-cta p{margin:0;flex:1 1 280px;line-height:1.5}
 
@@ -871,7 +879,7 @@ section[id]{scroll-margin-top:64px}
           <div class="amt"><span id="svcAmtFriendly">$5.000</span><small data-pt="perMonth"></small></div>
           <p data-pt="friendlyTxt"></p>
           <div class="acts">
-            <a href="#" class="btn btn-primary" id="friendlyJoin" target="_blank" rel="noopener" data-pt="ctaFriendly"></a>
+            <button type="button" class="btn btn-primary" id="friendlyJoin" data-pt="ctaFriendly"></button>
           </div>
         </div>
         <div class="service-price club-price">
@@ -942,7 +950,7 @@ section[id]{scroll-margin-top:64px}
       <div class="players-more"><button type="button" class="btn btn-outline" id="plMore" hidden data-pt="plMore"></button></div>
       <div class="friendly-cta">
         <p data-pt="friendlyBanner"></p>
-        <a href="#" class="btn btn-primary" id="friendlyJoin2" target="_blank" rel="noopener" data-pt="ctaFriendly"></a>
+        <button type="button" class="btn btn-primary" id="friendlyJoin2" data-pt="ctaFriendly"></button>
       </div>
     </div>
   </section>
@@ -1119,6 +1127,31 @@ section[id]{scroll-margin-top:64px}
     <ol class="install-steps" id="installSteps"></ol>
     <p class="install-note" data-pt="instNote"></p>
     <button type="button" class="btn btn-primary btn-block" id="installNative" hidden data-pt="instNative" style="margin-top:12px"></button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="friendlyOverlay" data-open="false">
+  <div class="modal-box fr-box" role="dialog" aria-modal="true" aria-labelledby="frTitle" tabindex="-1">
+    <button type="button" class="modal-close" id="frClose" aria-label="Cerrar"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
+    <h3 class="modal-title" id="frTitle" data-pt="frTitle"></h3>
+    <div id="frLogin">
+      <p class="modal-body" data-pt="frLoginTxt"></p>
+      <button type="button" class="btn btn-primary btn-block" id="frGoogle" style="margin-top:14px" data-pt="frGoogle"></button>
+    </div>
+    <form id="frForm" hidden novalidate>
+      <p class="modal-body" data-pt="frFormTxt"></p>
+      <label class="fr-field"><span data-pt="frName"></span><input type="text" id="frNombre" maxlength="80" autocomplete="name"></label>
+      <label class="fr-field"><span data-pt="frPhone"></span><input type="tel" id="frTel" maxlength="30" autocomplete="tel" inputmode="tel"></label>
+      <label class="fr-field"><span data-pt="frComuna"></span><input type="text" id="frComuna" maxlength="60"></label>
+      <label class="fr-consent"><input type="checkbox" id="frConsent"><span data-pt="frConsent"></span></label>
+      <button type="submit" class="btn btn-primary btn-block" id="frSubmit" data-pt="frSubmit"></button>
+      <p class="fr-msg" id="frMsg" role="status" aria-live="polite"></p>
+    </form>
+    <div id="frDone" hidden>
+      <div class="fr-pay" id="frDoneTxt"></div>
+      <a href="#" class="btn btn-primary btn-block" id="frWhats" target="_blank" rel="noopener" style="margin-top:12px" data-pt="frWhats"></a>
+      <p class="fr-note" data-pt="frNote"></p>
+    </div>
   </div>
 </div>
 
@@ -1324,6 +1357,21 @@ var PT_DICT={
   priceTxt:'Membresía mensual para jugar la escalerilla ChileTenis PRO, abierta a jugadores de todo Chile. Partimos cuando alcancemos el mínimo de jugadores.',
   clubPriceTxt:'Digitalizamos la escalerilla de tu club: ranking, resultados y estadísticas para tus jugadores. Pagas solo por los jugadores que participan.',
   ctaClub:'Quiero digitalizar mi club',clubMsg:'Hola, quiero información para digitalizar la escalerilla de mi club en ChileTenis PRO.',
+  frTitle:'Perfil de amistosos',
+  frLoginTxt:'Entra con tu cuenta de Google para crear tu perfil. Es para jugadores sin club ni escalerilla que quieren coordinar partidos amistosos (sin ranking ni estadísticas).',
+  frGoogle:'Continuar con Google',
+  frFormTxt:'Completa tus datos para crear tu perfil. Tu teléfono no se muestra públicamente.',
+  frName:'Nombre completo',frPhone:'WhatsApp (con código de país, ej: 56912345678)',frComuna:'Comuna (opcional)',
+  frConsent:'Acepto que ChileTenis Pro use mis datos para crear mi perfil y contactarme sobre mi membresía.',
+  frSubmit:'Crear mi perfil',
+  frWhats:'Enviar comprobante por WhatsApp',
+  frNote:'Tu perfil queda visible en la lista de jugadores cuando confirmemos tu pago. Si ya tienes club o juegas la escalerilla de ChileTenis Pro, no necesitas esta membresía.',
+  frDonePay:'¡Listo, {n}! Tu perfil fue creado. Para activarlo paga la membresía de $5.000 al mes y envíanos el comprobante por WhatsApp: los datos de pago te los enviamos por ahí.',
+  frDoneExisting:'Ya tienes un perfil en ChileTenis PRO ({n}). Si te falta activarlo, escríbenos por WhatsApp.',
+  frDoneActive:'¡Tu perfil ya está activo, {n}! Ya apareces en la lista de jugadores.',
+  frErrNombre:'Escribe tu nombre.',frErrTel:'Escribe un WhatsApp válido.',frErrConsent:'Debes aceptar para continuar.',frErrGeneric:'No se pudo crear el perfil. Inténtalo de nuevo.',frSending:'Creando…',
+  frWhatsMsg:'Hola, creé mi perfil de amistosos en ChileTenis PRO y quiero activar mi membresía de $5.000. Mi nombre: ',
+  modAmistoso:'Amistosos · sin club',modPro:'Escalerilla ChileTenis Pro',
   forFriendly:'Jugadores sin club · amistosos',
   friendlyTxt:'Para quien no tiene club ni escalerilla y solo quiere jugar partidos amistosos con otros jugadores. Creas tu perfil, ves el nivel de los demás y coordinas tus partidos. Sin ranking ni estadísticas.',
   ctaFriendly:'Crear mi perfil de amistosos',
@@ -1350,6 +1398,21 @@ var PT_DICT={
   priceTxt:'Monthly membership to play the ChileTenis PRO ladder, open to players across Chile. We start once we reach the minimum number of players.',
   clubPriceTxt:'We digitize your club\'s ladder: rankings, results and stats for your players. You only pay for the players who take part.',
   ctaClub:'I want to digitize my club',clubMsg:'Hi, I would like information about digitizing my club\'s ladder with ChileTenis PRO.',
+  frTitle:'Friendlies profile',
+  frLoginTxt:'Sign in with Google to create your profile. It is for players with no club or ladder who want to arrange friendly matches (no ranking or stats).',
+  frGoogle:'Continue with Google',
+  frFormTxt:'Fill in your details to create your profile. Your phone number is not shown publicly.',
+  frName:'Full name',frPhone:'WhatsApp (with country code, e.g. 56912345678)',frComuna:'City or area (optional)',
+  frConsent:'I agree that ChileTenis Pro uses my details to create my profile and contact me about my membership.',
+  frSubmit:'Create my profile',
+  frWhats:'Send payment proof on WhatsApp',
+  frNote:'Your profile appears in the players list once we confirm your payment. If you already have a club or play the ChileTenis Pro ladder, you do not need this membership.',
+  frDonePay:'Done, {n}! Your profile was created. To activate it, pay the CLP 5,000 monthly membership and send us the proof on WhatsApp: we will send the payment details there.',
+  frDoneExisting:'You already have a ChileTenis PRO profile ({n}). If it still needs activating, message us on WhatsApp.',
+  frDoneActive:'Your profile is already active, {n}! You now appear in the players list.',
+  frErrNombre:'Enter your name.',frErrTel:'Enter a valid WhatsApp number.',frErrConsent:'You must accept to continue.',frErrGeneric:'Could not create the profile. Please try again.',frSending:'Creating…',
+  frWhatsMsg:'Hi, I created my friendlies profile on ChileTenis PRO and want to activate my CLP 5,000 membership. My name: ',
+  modAmistoso:'Friendlies · no club',modPro:'ChileTenis Pro ladder',
   forFriendly:'Players without a club · friendlies',
   friendlyTxt:'For anyone with no club or ladder who just wants friendly matches with other players. Create your profile, see other players\' level and arrange your matches. No ranking or stats.',
   ctaFriendly:'Create my friendlies profile',
@@ -1378,7 +1441,6 @@ function aplicarPT(){
   if(amt)amt.textContent='$'+precio.toLocaleString('es-CL');
   document.querySelectorAll('[data-pt-ph]').forEach(function(el){el.setAttribute('placeholder',PT(el.getAttribute('data-pt-ph')));});
   var af=document.getElementById('svcAmtFriendly');if(af)af.textContent='$'+PRECIO_AMISTOSO.toLocaleString('es-CL');
-  ['friendlyJoin','friendlyJoin2'].forEach(function(id){var a=document.getElementById(id);if(a)a.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('friendlyMsg'));});
   if(typeof pintarJugadores==='function')pintarJugadores(true);
   var ac=document.getElementById('svcAmtClub');if(ac)ac.textContent='$'+PRECIO_CLUB_POR_JUGADOR.toLocaleString('es-CL');
   var cq=document.getElementById('clubQuote');if(cq)cq.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('clubMsg'));
@@ -1426,6 +1488,55 @@ async function fetchClubes(){
     return res.error?[]:res.data;
   }catch(err){console.warn('[portal] clubes',err);return [];}
 }
+// ---------- Perfil de amistosos (login Google + RPC crear_perfil_amistoso) ----------
+(function(){
+  var ov=document.getElementById('friendlyOverlay');if(!ov)return;
+  var box=ov.querySelector('.modal-box');
+  var $=function(id){return document.getElementById(id);};
+  function mostrar(estado){$('frLogin').hidden=estado!=='login';$('frForm').hidden=estado!=='form';$('frDone').hidden=estado!=='done';}
+  function abrir(){ov.setAttribute('data-open','true');document.body.style.overflow='hidden';box.focus();iniciar();}
+  function cerrar(){ov.setAttribute('data-open','false');document.body.style.overflow='';}
+  function wa(n){var a=$('frWhats');a.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('frWhatsMsg')+(n||''));}
+  async function iniciar(){
+    if(!sbClient){mostrar('login');return;}
+    var ses=await sbClient.auth.getSession();
+    var user=ses&&ses.data&&ses.data.session&&ses.data.session.user;
+    if(!user){mostrar('login');return;}
+    var md=user.user_metadata||{};
+    if(!$('frNombre').value)$('frNombre').value=md.full_name||md.name||'';
+    mostrar('form');
+  }
+  document.querySelectorAll('#friendlyJoin,#friendlyJoin2').forEach(function(b){b.addEventListener('click',abrir);});
+  $('frClose').addEventListener('click',cerrar);
+  ov.addEventListener('click',function(e){if(e.target===ov)cerrar();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.getAttribute('data-open')==='true')cerrar();});
+  $('frGoogle').addEventListener('click',async function(){
+    if(!sbClient)return;
+    await sbClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'?amistoso=1'}});
+  });
+  $('frForm').addEventListener('submit',async function(ev){
+    ev.preventDefault();
+    var msg=$('frMsg');msg.className='fr-msg';msg.textContent='';
+    var nombre=$('frNombre').value.trim(),tel=$('frTel').value.trim(),comuna=$('frComuna').value.trim();
+    if(nombre.length<2){msg.className='fr-msg err';msg.textContent=PT('frErrNombre');return;}
+    if(tel.replace(/\D/g,'').length<8){msg.className='fr-msg err';msg.textContent=PT('frErrTel');return;}
+    if(!$('frConsent').checked){msg.className='fr-msg err';msg.textContent=PT('frErrConsent');return;}
+    var btn=$('frSubmit');btn.disabled=true;msg.textContent=PT('frSending');
+    try{
+      var r=await sbClient.rpc('crear_perfil_amistoso',{p_nombre:nombre,p_telefono:tel,p_comuna:comuna||null});
+      var d=r.data;
+      if(r.error||!d||!d.ok){msg.className='fr-msg err';msg.textContent=PT('frErrGeneric');return;}
+      var n=d.nombre||nombre;
+      var txt=d.ya_existia?(d.activo?PT('frDoneActive'):PT('frDoneExisting')):PT('frDonePay');
+      $('frDoneTxt').textContent=txt.replace('{n}',n);wa(n);mostrar('done');
+      if(d.activo)$('frWhats').hidden=true;else $('frWhats').hidden=false;
+    }catch(err){console.warn('[portal] perfil amistoso',err);msg.className='fr-msg err';msg.textContent=PT('frErrGeneric');}
+    finally{btn.disabled=false;}
+  });
+  // vuelve del login con Google: abre el formulario
+  try{if(new URLSearchParams(location.search).get('amistoso')==='1'){setTimeout(abrir,600);}}catch(e){}
+})();
+
 // ---------- Directorio de jugadores ----------
 var PLAYERS={all:[],shown:24,q:'',club:'',nivel:'',disp:false};
 async function fetchJugadores(){
@@ -1433,11 +1544,16 @@ async function fetchJugadores(){
   try{
     // Solo datos no sensibles (sin correo ni telefono). Los ocultos por el admin/jugador no se listan.
     var res=await sbClient.from('jugadores')
-      .select('id,nombre,serie,avatar_url,bandera_iso,club_id,clubes(nombre,slug,sitio_web_externo),fichas_tecnicas(nivel,mano,superficie,disponible)')
+      .select('id,nombre,serie,avatar_url,bandera_iso,club_id,modalidad,clubes(nombre,slug,sitio_web_externo),fichas_tecnicas(nivel,mano,superficie,disponible)')
       .eq('activo',true).eq('estado','Activo').eq('es_invitado',false).eq('oculto_en_portal',false)
       .order('nombre').limit(1000);
     return res.error?[]:res.data;
   }catch(err){console.warn('[portal] jugadores',err);return [];}
+}
+function etiquetaClub(j){
+  var c=j.clubes||{};
+  if(c.slug==='chiletenis-pro')return j.modalidad==='amistoso'?PT('modAmistoso'):PT('modPro');
+  return c.nombre||'';
 }
 function fichaDe(j){var f=j.fichas_tecnicas;return Array.isArray(f)?(f[0]||{}):(f||{});}
 function pintarJugadores(soloTextos){
@@ -1445,7 +1561,7 @@ function pintarJugadores(soloTextos){
   var selC=document.getElementById('plClub'),selN=document.getElementById('plNivel');
   // opciones de filtros (se conserva la seleccion)
   var clubs={},niveles={};
-  PLAYERS.all.forEach(function(j){if(j.clubes&&j.clubes.nombre)clubs[j.club_id]=j.clubes.nombre;var n=fichaDe(j).nivel;if(n)niveles[n]=1;});
+  PLAYERS.all.forEach(function(j){if(j.clubes&&j.clubes.nombre)clubs[j.club_id]=(j.clubes.slug==='chiletenis-pro')?PT('modPro')+' / '+PT('modAmistoso'):j.clubes.nombre;var n=fichaDe(j).nivel;if(n)niveles[n]=1;});
   selC.innerHTML='<option value="">'+esc(PT('plAllClubs'))+'</option>'+Object.keys(clubs).map(function(id){return '<option value="'+esc(id)+'"'+(PLAYERS.club===id?' selected':'')+'>'+esc(clubs[id])+'</option>';}).join('');
   selN.innerHTML='<option value="">'+esc(PT('plAllLevels'))+'</option>'+Object.keys(niveles).sort().map(function(n){return '<option value="'+esc(n)+'"'+(PLAYERS.nivel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('');
   var q=PLAYERS.q.trim().toLowerCase();
@@ -1468,8 +1584,8 @@ function pintarJugadores(soloTextos){
       +(f.superficie?'<span class="ptag">'+esc(f.superficie)+'</span>':'')
       +(f.disponible?'<span class="ptag ok">'+esc(PT('plAvailable'))+'</span>':'');
     return '<div class="player-card">'+av+'<div class="pmain"><div class="pname">'+esc(j.nombre)+banderaImgHtml(j.bandera_iso)+'</div>'
-      +'<div class="pclub">'+esc(c.nombre||'')+'</div><div class="ptags">'+tags+'</div>'
-      +(c.slug?'<a class="plink" href="'+esc(urlClub(c))+'">'+esc(PT('plView'))+'</a>':'')+'</div></div>';
+      +'<div class="pclub">'+esc(etiquetaClub(j))+'</div><div class="ptags">'+tags+'</div>'
+      +((c.slug&&j.modalidad!=='amistoso')?'<a class="plink" href="'+esc(urlClub(c))+'">'+esc(PT('plView'))+'</a>':'')+'</div></div>';
   }).join('');
   document.getElementById('plMore').hidden=lista.length<=PLAYERS.shown;
 }
