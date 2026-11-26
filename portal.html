@@ -1149,7 +1149,8 @@ section[id]{scroll-margin-top:64px}
     </form>
     <div id="frDone" hidden>
       <div class="fr-pay" id="frDoneTxt"></div>
-      <a href="#" class="btn btn-primary btn-block" id="frWhats" target="_blank" rel="noopener" style="margin-top:12px" data-pt="frWhats"></a>
+      <a href="https://app.soymach.com/rF2V/2nkk4kgl" class="btn btn-primary btn-block" id="frPay" target="_blank" rel="noopener" style="margin-top:12px" data-pt="frPay"></a>
+      <a href="#" class="btn btn-block" id="frWhats" target="_blank" rel="noopener" style="margin-top:12px" data-pt="frWhats"></a>
       <p class="fr-note" data-pt="frNote"></p>
     </div>
   </div>
@@ -1364,9 +1365,10 @@ var PT_DICT={
   frName:'Nombre completo',frPhone:'WhatsApp (con código de país, ej: 56912345678)',frComuna:'Comuna (opcional)',
   frConsent:'Acepto que ChileTenis Pro use mis datos para crear mi perfil y contactarme sobre mi membresía.',
   frSubmit:'Crear mi perfil',
+  frPay:'Pagar $5.000 con Mach',
   frWhats:'Enviar comprobante por WhatsApp',
   frNote:'Tu perfil queda visible en la lista de jugadores cuando confirmemos tu pago. Si ya tienes club o juegas la escalerilla de ChileTenis Pro, no necesitas esta membresía.',
-  frDonePay:'¡Listo, {n}! Tu perfil fue creado. Para activarlo paga la membresía de $5.000 al mes y envíanos el comprobante por WhatsApp: los datos de pago te los enviamos por ahí.',
+  frDonePay:'¡Listo, {n}! Tu perfil fue creado. Para activarlo paga la membresía de $5.000 al mes con el botón de Mach y luego envíanos el comprobante por WhatsApp para activarla.',
   frDoneExisting:'Ya tienes un perfil en ChileTenis PRO ({n}). Si te falta activarlo, escríbenos por WhatsApp.',
   frDoneActive:'¡Tu perfil ya está activo, {n}! Ya apareces en la lista de jugadores.',
   frErrNombre:'Escribe tu nombre.',frErrTel:'Escribe un WhatsApp válido.',frErrConsent:'Debes aceptar para continuar.',frErrGeneric:'No se pudo crear el perfil. Inténtalo de nuevo.',frSending:'Creando…',
@@ -1405,9 +1407,10 @@ var PT_DICT={
   frName:'Full name',frPhone:'WhatsApp (with country code, e.g. 56912345678)',frComuna:'City or area (optional)',
   frConsent:'I agree that ChileTenis Pro uses my details to create my profile and contact me about my membership.',
   frSubmit:'Create my profile',
+  frPay:'Pay CLP 5,000 with Mach',
   frWhats:'Send payment proof on WhatsApp',
   frNote:'Your profile appears in the players list once we confirm your payment. If you already have a club or play the ChileTenis Pro ladder, you do not need this membership.',
-  frDonePay:'Done, {n}! Your profile was created. To activate it, pay the CLP 5,000 monthly membership and send us the proof on WhatsApp: we will send the payment details there.',
+  frDonePay:'Done, {n}! Your profile was created. To activate it, pay the CLP 5,000 monthly membership with the Mach button, then send us the proof on WhatsApp to activate it.',
   frDoneExisting:'You already have a ChileTenis PRO profile ({n}). If it still needs activating, message us on WhatsApp.',
   frDoneActive:'Your profile is already active, {n}! You now appear in the players list.',
   frErrNombre:'Enter your name.',frErrTel:'Enter a valid WhatsApp number.',frErrConsent:'You must accept to continue.',frErrGeneric:'Could not create the profile. Please try again.',frSending:'Creating…',
@@ -1529,7 +1532,7 @@ async function fetchClubes(){
       var n=d.nombre||nombre;
       var txt=d.ya_existia?(d.activo?PT('frDoneActive'):PT('frDoneExisting')):PT('frDonePay');
       $('frDoneTxt').textContent=txt.replace('{n}',n);wa(n);mostrar('done');
-      if(d.activo)$('frWhats').hidden=true;else $('frWhats').hidden=false;
+      $('frWhats').hidden=!!d.activo;$('frPay').hidden=!!d.activo;
     }catch(err){console.warn('[portal] perfil amistoso',err);msg.className='fr-msg err';msg.textContent=PT('frErrGeneric');}
     finally{btn.disabled=false;}
   });
