@@ -653,6 +653,31 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
 .club-chip-txt small{font-size:11.5px;color:var(--ink-dim)}
 .clubs-card .list-card-head{padding-left:0}
 section[id]{scroll-margin-top:64px}
+.service-prices{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))!important}
+.friendly-price{background:rgba(198,241,53,.04);border-color:var(--line-strong)}
+/* ---- Directorio de jugadores ---- */
+.players-card{padding:14px 14px 16px}
+.players-lead{color:var(--ink-dim);font-size:14px;line-height:1.5;margin:0 0 12px;max-width:760px}
+.players-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.players-filters input[type=search],.players-filters select{background:var(--bg-2);border:1px solid var(--line-strong);border-radius:9px;color:var(--ink);padding:9px 11px;font:inherit;font-size:13.5px;min-width:0}
+.players-filters input[type=search]{flex:1 1 200px}
+.players-filters label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-dim)}
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.player-card{display:flex;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-2);min-width:0}
+.player-card .pav{width:46px;height:46px;border-radius:50%;object-fit:cover;background:var(--bg-1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;color:var(--lime);flex-shrink:0}
+.player-card .pmain{min-width:0;flex:1}
+.player-card .pname{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-card .pclub{font-size:12px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-card .ptags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 5px}
+.ptag{font-family:var(--mono);font-size:10px;letter-spacing:.03em;padding:2px 7px;border-radius:20px;background:rgba(63,169,245,.12);color:var(--sky)}
+.ptag.lvl{background:rgba(198,241,53,.12);color:var(--lime)}
+.ptag.ok{background:rgba(107,229,140,.14);color:#6BE58C}
+.player-card .plink{font-size:12px;font-weight:600;color:var(--sky)}
+.player-card .plink:hover{color:var(--ink)}
+.players-more{display:flex;justify-content:center;margin-top:12px}
+.friendly-cta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:14px;padding:12px 14px;border:1px dashed rgba(198,241,53,.4);border-radius:var(--radius-sm);font-size:13.5px;color:var(--ink)}
+.friendly-cta p{margin:0;flex:1 1 280px;line-height:1.5}
+
 /* ---- Que es ChileTenis PRO (servicio, no club) ---- */
 .service-band{background:linear-gradient(180deg,#0E1830,var(--bg));border-bottom:1px solid var(--line);padding:34px 0 30px}
 .service-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
@@ -841,6 +866,14 @@ section[id]{scroll-margin-top:64px}
             <button type="button" class="btn btn-outline" id="installOpen" data-pt="ctaInstall"></button>
           </div>
         </div>
+        <div class="service-price friendly-price">
+          <div class="price-tag" data-pt="forFriendly"></div>
+          <div class="amt"><span id="svcAmtFriendly">$5.000</span><small data-pt="perMonth"></small></div>
+          <p data-pt="friendlyTxt"></p>
+          <div class="acts">
+            <a href="#" class="btn btn-primary" id="friendlyJoin" target="_blank" rel="noopener" data-pt="ctaFriendly"></a>
+          </div>
+        </div>
         <div class="service-price club-price">
           <div class="price-tag" data-pt="forClubs"></div>
           <div class="amt"><span id="svcAmtClub">$3.000</span><small data-pt="perPlayerMonth"></small></div>
@@ -892,6 +925,28 @@ section[id]{scroll-margin-top:64px}
     </div>
   </section>
 
+  <section class="wrap" id="jugadores">
+    <div class="list-card players-card">
+      <div class="list-card-head">
+        <h2 class="list-card-title"><span class="list-card-ic ic-lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M2.8 19c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17.2 13.6c2.4.2 4 1.9 4 4.4"/></svg></span><span data-pt="playersTitle"></span></h2>
+        <span class="hint" id="playersCount" style="font-size:12px;color:var(--ink-dim)"></span>
+      </div>
+      <p class="players-lead" data-pt="playersLead"></p>
+      <div class="players-filters">
+        <input type="search" id="plQ" data-pt-ph="plSearch" autocomplete="off">
+        <select id="plClub"></select>
+        <select id="plNivel"></select>
+        <label><input type="checkbox" id="plDisp"> <span data-pt="plAvail"></span></label>
+      </div>
+      <div id="playersGrid" class="players-grid"><div class="empty-note" data-i18n="home.states.loading">Cargando…</div></div>
+      <div class="players-more"><button type="button" class="btn btn-outline" id="plMore" hidden data-pt="plMore"></button></div>
+      <div class="friendly-cta">
+        <p data-pt="friendlyBanner"></p>
+        <a href="#" class="btn btn-primary" id="friendlyJoin2" target="_blank" rel="noopener" data-pt="ctaFriendly"></a>
+      </div>
+    </div>
+  </section>
+
   <section class="wrap" id="desafios">
     <div class="challenge-banner">
       <div class="challenge-banner-bg" aria-hidden="true"></div>
@@ -901,7 +956,7 @@ section[id]{scroll-margin-top:64px}
         <h2 class="challenge-title" data-i18n="home.challengeBanner.title">Encuentra tu próximo rival</h2>
         <p class="challenge-desc" data-i18n="home.challengeBanner.description">Juega partidos, mejorá tu ranking y sumate a la comunidad de ChileTenis PRO.</p>
       </div>
-      <a href="#ranking" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
+      <a href="#jugadores" class="btn btn-primary challenge-cta" data-i18n="home.challengeBanner.cta">Ver jugadores</a>
     </div>
   </section>
 
@@ -1269,6 +1324,15 @@ var PT_DICT={
   priceTxt:'Membresía mensual para jugar la escalerilla ChileTenis PRO, abierta a jugadores de todo Chile. Partimos cuando alcancemos el mínimo de jugadores.',
   clubPriceTxt:'Digitalizamos la escalerilla de tu club: ranking, resultados y estadísticas para tus jugadores. Pagas solo por los jugadores que participan.',
   ctaClub:'Quiero digitalizar mi club',clubMsg:'Hola, quiero información para digitalizar la escalerilla de mi club en ChileTenis PRO.',
+  forFriendly:'Jugadores sin club · amistosos',
+  friendlyTxt:'Para quien no tiene club ni escalerilla y solo quiere jugar partidos amistosos con otros jugadores. Creas tu perfil, ves el nivel de los demás y coordinas tus partidos. Sin ranking ni estadísticas.',
+  ctaFriendly:'Crear mi perfil de amistosos',
+  friendlyMsg:'Hola, quiero crear mi perfil de jugador para partidos amistosos en ChileTenis PRO (membresía $5.000 al mes).',
+  friendlyBanner:'¿No tienes club? Crea tu perfil de amistosos ($5.000 al mes): encuentra rivales para entrenar y coordina tus partidos. Sin ranking ni estadísticas; más adelante puedes sumarte a la escalerilla de ChileTenis Pro.',
+  playersTitle:'Jugadores',
+  playersLead:'Encuentra rivales para entrenar: conoce su nivel de juego y coordina tu partido. Para desafiar necesitas tu perfil con membresía activa.',
+  plSearch:'Buscar jugador…',plAllClubs:'Todos los clubes',plAllLevels:'Todos los niveles',plAvail:'Disponible para jugar',plMore:'Ver más jugadores',
+  plSerie:'Serie',plAvailable:'Disponible',plView:'Ver en su club →',plNone:'No hay jugadores que coincidan.',plCount:'{n} jugadores',
   ctaMember:'Hazte socio',ctaInstall:'📲 Instalar la app',
   instTitle:'Instala ChileTenis PRO en tu celular',
   instNote:'Queda como un ícono en tu pantalla de inicio, sin ir a la tienda de apps.',
@@ -1286,6 +1350,15 @@ var PT_DICT={
   priceTxt:'Monthly membership to play the ChileTenis PRO ladder, open to players across Chile. We start once we reach the minimum number of players.',
   clubPriceTxt:'We digitize your club\'s ladder: rankings, results and stats for your players. You only pay for the players who take part.',
   ctaClub:'I want to digitize my club',clubMsg:'Hi, I would like information about digitizing my club\'s ladder with ChileTenis PRO.',
+  forFriendly:'Players without a club · friendlies',
+  friendlyTxt:'For anyone with no club or ladder who just wants friendly matches with other players. Create your profile, see other players\' level and arrange your matches. No ranking or stats.',
+  ctaFriendly:'Create my friendlies profile',
+  friendlyMsg:'Hi, I want to create my player profile for friendly matches on ChileTenis PRO (membership CLP 5,000 per month).',
+  friendlyBanner:'No club? Create your friendlies profile (CLP 5,000 a month): find rivals to practise with and arrange your matches. No ranking or stats; you can join the ChileTenis Pro ladder later.',
+  playersTitle:'Players',
+  playersLead:'Find practice partners: see their playing level and arrange your match. To challenge someone you need your profile with an active membership.',
+  plSearch:'Search player…',plAllClubs:'All clubs',plAllLevels:'All levels',plAvail:'Available to play',plMore:'Show more players',
+  plSerie:'Series',plAvailable:'Available',plView:'View at their club →',plNone:'No players match.',plCount:'{n} players',
   ctaMember:'Become a member',ctaInstall:'📲 Install the app',
   instTitle:'Install ChileTenis PRO on your phone',
   instNote:'It appears as an icon on your home screen, no app store needed.',
@@ -1293,6 +1366,7 @@ var PT_DICT={
   ios:['Open this page in <b>Safari</b> (not the WhatsApp or Instagram browser).','Tap the <b>Share</b> button (square with an up arrow).','Scroll and choose <b>Add to Home Screen</b>.','Confirm the name <b>ChileTenis PRO</b> and tap <b>Add</b>.'],
   android:['Open this page in <b>Chrome</b>.','Tap the <b>⋮</b> menu at the top right.','Choose <b>Install app</b> or <b>Add to Home screen</b>.','Confirm with <b>Install</b>.']}
 };
+var PRECIO_AMISTOSO=5000; // CLP al mes, jugador sin club ni escalerilla (solo amistosos)
 var PRECIO_CLUB_POR_JUGADOR=3000; // CLP al mes por jugador, cuando un club digitaliza su escalerilla
 function PT(k){var d=PT_DICT[I18N.current==='en'?'en':'es'];return d[k]!==undefined?d[k]:PT_DICT.es[k];}
 function aplicarPT(){
@@ -1302,6 +1376,10 @@ function aplicarPT(){
   var rec=HOME_DATA&&HOME_DATA.reclutamiento;
   var precio=(rec&&parseInt(rec.precio_mensual,10))||10000;
   if(amt)amt.textContent='$'+precio.toLocaleString('es-CL');
+  document.querySelectorAll('[data-pt-ph]').forEach(function(el){el.setAttribute('placeholder',PT(el.getAttribute('data-pt-ph')));});
+  var af=document.getElementById('svcAmtFriendly');if(af)af.textContent='$'+PRECIO_AMISTOSO.toLocaleString('es-CL');
+  ['friendlyJoin','friendlyJoin2'].forEach(function(id){var a=document.getElementById(id);if(a)a.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('friendlyMsg'));});
+  if(typeof pintarJugadores==='function')pintarJugadores(true);
   var ac=document.getElementById('svcAmtClub');if(ac)ac.textContent='$'+PRECIO_CLUB_POR_JUGADOR.toLocaleString('es-CL');
   var cq=document.getElementById('clubQuote');if(cq)cq.href='https://wa.me/56974723654?text='+encodeURIComponent(PT('clubMsg'));
   pintarPasosInstalar();
@@ -1348,6 +1426,61 @@ async function fetchClubes(){
     return res.error?[]:res.data;
   }catch(err){console.warn('[portal] clubes',err);return [];}
 }
+// ---------- Directorio de jugadores ----------
+var PLAYERS={all:[],shown:24,q:'',club:'',nivel:'',disp:false};
+async function fetchJugadores(){
+  if(!sbClient)return [];
+  try{
+    // Solo datos no sensibles (sin correo ni telefono). Los ocultos por el admin/jugador no se listan.
+    var res=await sbClient.from('jugadores')
+      .select('id,nombre,serie,avatar_url,bandera_iso,club_id,clubes(nombre,slug,sitio_web_externo),fichas_tecnicas(nivel,mano,superficie,disponible)')
+      .eq('activo',true).eq('estado','Activo').eq('es_invitado',false).eq('oculto_en_portal',false)
+      .order('nombre').limit(1000);
+    return res.error?[]:res.data;
+  }catch(err){console.warn('[portal] jugadores',err);return [];}
+}
+function fichaDe(j){var f=j.fichas_tecnicas;return Array.isArray(f)?(f[0]||{}):(f||{});}
+function pintarJugadores(soloTextos){
+  var grid=document.getElementById('playersGrid');if(!grid)return;
+  var selC=document.getElementById('plClub'),selN=document.getElementById('plNivel');
+  // opciones de filtros (se conserva la seleccion)
+  var clubs={},niveles={};
+  PLAYERS.all.forEach(function(j){if(j.clubes&&j.clubes.nombre)clubs[j.club_id]=j.clubes.nombre;var n=fichaDe(j).nivel;if(n)niveles[n]=1;});
+  selC.innerHTML='<option value="">'+esc(PT('plAllClubs'))+'</option>'+Object.keys(clubs).map(function(id){return '<option value="'+esc(id)+'"'+(PLAYERS.club===id?' selected':'')+'>'+esc(clubs[id])+'</option>';}).join('');
+  selN.innerHTML='<option value="">'+esc(PT('plAllLevels'))+'</option>'+Object.keys(niveles).sort().map(function(n){return '<option value="'+esc(n)+'"'+(PLAYERS.nivel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('');
+  var q=PLAYERS.q.trim().toLowerCase();
+  var lista=PLAYERS.all.filter(function(j){
+    var f=fichaDe(j);
+    if(q&&String(j.nombre||'').toLowerCase().indexOf(q)<0)return false;
+    if(PLAYERS.club&&j.club_id!==PLAYERS.club)return false;
+    if(PLAYERS.nivel&&f.nivel!==PLAYERS.nivel)return false;
+    if(PLAYERS.disp&&!f.disponible)return false;
+    return true;
+  });
+  document.getElementById('playersCount').textContent=PT('plCount').replace('{n}',lista.length);
+  if(!lista.length){grid.innerHTML='<div class="empty-note">'+esc(PLAYERS.all.length?PT('plNone'):I18N.t('home.states.loading'))+'</div>';document.getElementById('plMore').hidden=true;return;}
+  grid.innerHTML=lista.slice(0,PLAYERS.shown).map(function(j){
+    var f=fichaDe(j),c=j.clubes||{};
+    var av=j.avatar_url?'<img class="pav" src="'+esc(j.avatar_url)+'" alt="">':'<span class="pav">'+esc(inicialesDe(j.nombre))+'</span>';
+    var tags=(j.serie?'<span class="ptag">'+esc(PT('plSerie'))+' '+esc(j.serie)+'</span>':'')
+      +(f.nivel?'<span class="ptag lvl">'+esc(f.nivel)+'</span>':'')
+      +(f.mano?'<span class="ptag">'+esc(f.mano)+'</span>':'')
+      +(f.superficie?'<span class="ptag">'+esc(f.superficie)+'</span>':'')
+      +(f.disponible?'<span class="ptag ok">'+esc(PT('plAvailable'))+'</span>':'');
+    return '<div class="player-card">'+av+'<div class="pmain"><div class="pname">'+esc(j.nombre)+banderaImgHtml(j.bandera_iso)+'</div>'
+      +'<div class="pclub">'+esc(c.nombre||'')+'</div><div class="ptags">'+tags+'</div>'
+      +(c.slug?'<a class="plink" href="'+esc(urlClub(c))+'">'+esc(PT('plView'))+'</a>':'')+'</div></div>';
+  }).join('');
+  document.getElementById('plMore').hidden=lista.length<=PLAYERS.shown;
+}
+(function(){
+  function on(id,ev,fn){var e=document.getElementById(id);if(e)e.addEventListener(ev,fn);}
+  on('plQ','input',function(){PLAYERS.q=this.value;PLAYERS.shown=24;pintarJugadores();});
+  on('plClub','change',function(){PLAYERS.club=this.value;PLAYERS.shown=24;pintarJugadores();});
+  on('plNivel','change',function(){PLAYERS.nivel=this.value;PLAYERS.shown=24;pintarJugadores();});
+  on('plDisp','change',function(){PLAYERS.disp=this.checked;PLAYERS.shown=24;pintarJugadores();});
+  on('plMore','click',function(){PLAYERS.shown+=24;pintarJugadores();});
+})();
 function renderClubes(list){
   var el=document.getElementById('clubsGrid');
   if(!el)return;
@@ -1530,6 +1663,7 @@ function renderReclutamiento(){
     +'<div class="recruit-status">'+esc(I18N.t(lograda?'home.recruit.statusReached':'home.recruit.statusOpen'))+'</div>';
 }
 function renderHomeSections(){
+  pintarJugadores();
   renderClubes(HOME_DATA.clubes);
   renderReclutamiento();
   renderClubDestacado(HOME_DATA.club);
@@ -1538,8 +1672,8 @@ function renderHomeSections(){
   renderRankingChileTenisPro(HOME_DATA.ranking);
 }
 async function loadHomeSections(){
-  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro(),fetchReclutamiento(),fetchClubes()]);
-  HOME_DATA.clubes=r[5];HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];HOME_DATA.reclutamiento=r[4];
+  var r=await Promise.all([fetchClubDestacado(),fetchEscalerillasActivas(),fetchProximosTorneos(),fetchRankingChileTenisPro(),fetchReclutamiento(),fetchClubes(),fetchJugadores()]);
+  PLAYERS.all=r[6]||[];HOME_DATA.clubes=r[5];HOME_DATA.club=r[0];HOME_DATA.escalerillas=r[1];HOME_DATA.torneos=r[2];HOME_DATA.ranking=r[3];HOME_DATA.reclutamiento=r[4];
   renderHomeSections();
 }
 
