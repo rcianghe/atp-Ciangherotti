@@ -668,10 +668,25 @@ function aporteBadgeAdm(v,r){
   if(v&&String(v)>=mesActualAdm())return '<span class="badge badge-green">Al día · '+escAttr(etiquetaMesAdm(v))+'</span>';
   return '<span class="badge badge-warn">Pendiente</span>';
 }
+function modalidadBadgeAdm(v,r){
+  if(v==='amistoso'){
+    const pend = r && r.activo===false;
+    return '<span class="badge badge-warn">Amistoso</span>'+(pend?' <button class="btn btn-primary btn-sm" onclick="confirmarPagoAmistoso(\''+r.id+'\')">✔ Confirmar pago $5.000</button>':'');
+  }
+  if(v==='escalerilla_pro') return '<span class="badge badge-green">Escalerilla Pro</span>';
+  return '<span class="badge badge-gray">Club</span>';
+}
+async function confirmarPagoAmistoso(id){
+  if(!confirm('¿Confirmar el pago de $5.000? Se activa el perfil y la membresía por 1 mes.')) return;
+  const { error } = await sb.rpc('confirmar_pago_amistoso', { p_jugador_id: id });
+  if(error){ toast('No se pudo confirmar: '+error.message, true); return; }
+  toast('Pago confirmado. El perfil ya está activo y aparece en el portal.');
+  fetchAndRenderRows();
+}
 const ENTITIES = {
 
   jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
-    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,aporte_mes,aporte_exento,oculto_en_portal,clubes(nombre)',
+    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,aporte_mes,aporte_exento,oculto_en_portal,modalidad,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
       {key:'avatar_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:'<span class="hint">—</span>'},
@@ -682,6 +697,7 @@ const ENTITIES = {
       {key:'pais',label:'País',render:(v,r)=>v?`${r.bandera_iso?banderaEmoji(r.bandera_iso)+' ':''}${v}`:'<span class="hint">—</span>'},
       {key:'encargado',label:'Encargado'},
       {key:'aporte_mes',label:'Aporte',render:(v,r)=>aporteBadgeAdm(v,r)},
+      {key:'modalidad',label:'Modalidad',render:(v,r)=>modalidadBadgeAdm(v,r)},
       {key:'activo',label:'Activo',render:v=>v?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-gray">No</span>'},
     ],
     fields:[
@@ -702,6 +718,7 @@ const ENTITIES = {
       {key:'es_invitado',label:'Invitado (escuelita/externo, sin escalerilla propia)',type:'bool',default:false},
       {key:'aporte_mes',label:'Aporte voluntario del mes (apaga el recordatorio hasta el mes siguiente)',type:'select',get options(){return opcionesAporteAdm();}},
       {key:'aporte_exento',label:'No recordarle nunca el aporte (exento)',type:'bool',default:false},
+      {key:'modalidad',label:'Modalidad (club / escalerilla ChileTenis Pro / amistoso sin club)',type:'select',options:[{v:'club',l:'Club'},{v:'escalerilla_pro',l:'Escalerilla ChileTenis Pro'},{v:'amistoso',l:'Amistoso (sin club, $5.000/mes)'}],default:'club'},
       {key:'oculto_en_portal',label:'Ocultar de la lista de jugadores del portal ChileTenis PRO',type:'bool',default:false},
     ]},
 
