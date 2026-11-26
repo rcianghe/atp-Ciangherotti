@@ -671,7 +671,7 @@ function aporteBadgeAdm(v,r){
 const ENTITIES = {
 
   jugadores:{ label:'Jugadores', group:'Competición', table:'jugadores', pk:'id', clubFilter:'direct',
-    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,aporte_mes,aporte_exento,clubes(nombre)',
+    select:'id,nombre,email,telefono,serie,estado,activo,es_invitado,encargado,club_id,comuna_particular,comuna_laboral,link_cancha,pais,bandera_iso,avatar_url,aporte_mes,aporte_exento,oculto_en_portal,clubes(nombre)',
     order:{col:'nombre'}, searchCols:['nombre','email','encargado'],
     columns:[
       {key:'avatar_url',label:'Foto',render:v=>v?`<img src="${escAttr(v)}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;">`:'<span class="hint">—</span>'},
@@ -702,6 +702,7 @@ const ENTITIES = {
       {key:'es_invitado',label:'Invitado (escuelita/externo, sin escalerilla propia)',type:'bool',default:false},
       {key:'aporte_mes',label:'Aporte voluntario del mes (apaga el recordatorio hasta el mes siguiente)',type:'select',get options(){return opcionesAporteAdm();}},
       {key:'aporte_exento',label:'No recordarle nunca el aporte (exento)',type:'bool',default:false},
+      {key:'oculto_en_portal',label:'Ocultar de la lista de jugadores del portal ChileTenis PRO',type:'bool',default:false},
     ]},
 
   fichas_tecnicas:{ label:'Fichas técnicas', group:'Competición', table:'fichas_tecnicas', pk:'jugador_id', clubFilter:'direct',
