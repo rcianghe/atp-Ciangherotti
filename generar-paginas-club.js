@@ -32,12 +32,14 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || (TEMPLATE.match(/SUPABASE_
 
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const absoluta = u => !u ? '' : (/^https?:\/\//i.test(u) ? u : SITE_URL + String(u).replace(/^\.?\//, ''));
+// iOS y las vistas previas (WhatsApp, etc.) NO aceptan SVG como icono ni como imagen: si el logo es SVG se usa la pelota neutra.
+const raster = u => (!u || /\.svg(\?|#|$)/i.test(String(u))) ? '' : absoluta(u);
 
 async function cargarClubes() {
   const i = process.argv.indexOf('--json');
   if (i > -1) return JSON.parse(fs.readFileSync(process.argv[i + 1], 'utf8'));
   if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan SUPABASE_URL / SUPABASE_ANON_KEY.');
-  const q = 'select=slug,nombre,nombre_corto,logo_url,og_image_url,hero_tagline,color_tema,activo,sitio_web_externo&activo=eq.true';
+  const q = 'select=slug,nombre,nombre_corto,logo_url,og_image_url,hero_tagline,color_tema,activo,sitio_web_externo';
   const r = await fetch(SUPABASE_URL + '/rest/v1/clubes?' + q, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
   if (!r.ok) throw new Error('Supabase respondio ' + r.status + ': ' + (await r.text()).slice(0, 200));
   return r.json();
@@ -54,7 +56,7 @@ function paginaDeClub(club) {
   const url = SITE_URL + club.slug + '.html';
   const desc = `Ranking en vivo, resultados y estadisticas de ${nombre}. Jugadores, partidos y mas.`;
   // Sin logo propio el club usa la pelota de tenis neutra (nunca el escudo de otro club).
-  const imagen = absoluta(club.og_image_url) || absoluta(club.logo_url) || SITE_URL + 'pelota-512.png';
+  const imagen = raster(club.og_image_url) || raster(club.logo_url) || SITE_URL + 'pelota-512.png';
   const color = club.color_tema || '#0e0e0e';
   let h = TEMPLATE;
 
@@ -70,7 +72,7 @@ function paginaDeClub(club) {
   h = reemplazarMeta(h, /<meta name="twitter:image" content="[^"]*">/, `<meta name="twitter:image" content="${esc(imagen)}">`);
   h = reemplazarMeta(h, /<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${esc(url)}">`);
   h = reemplazarMeta(h, /<link rel="manifest" href="[^"]*">/, `<link rel="manifest" href="manifest-${esc(club.slug)}.json">`);
-  h = reemplazarMeta(h, /<link rel="apple-touch-icon" href="[^"]*">/, `<link rel="apple-touch-icon" href="${esc(absoluta(club.logo_url) || SITE_URL + 'pelota-192.png')}">`);
+  h = reemplazarMeta(h, /<link rel="apple-touch-icon" href="[^"]*">/, `<link rel="apple-touch-icon" href="${esc(raster(club.logo_url) || SITE_URL + 'pelota-192.png')}">`);
   h = reemplazarMeta(h, /<meta name="theme-color" content="[^"]*">/, `<meta name="theme-color" content="${esc(color)}">`);
   h = reemplazarMeta(h, /<meta name="apple-mobile-web-app-title" content="[^"]*">/, `<meta name="apple-mobile-web-app-title" content="${esc(corto)}">`);
   // Datos estructurados para buscadores
@@ -91,17 +93,17 @@ function manifestDeClub(club) {
   base.description = `Ranking en vivo, resultados y estadisticas de ${club.nombre}`;
   base.start_url = pagina + '?utm_source=pwa';
   base.scope = './';
-  if (!club.logo_url) {
+  if (!raster(club.logo_url)) {
     base.icons = [
       { src: 'pelota-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: 'pelota-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: 'pelota-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
     ];
   } else {
-    const L = absoluta(club.logo_url);
+    const L = raster(club.logo_url);
     base.icons = [{ src: L, sizes: '512x512', type: /\.png(\?|$)/i.test(L) ? 'image/png' : 'image/jpeg', purpose: 'any' }];
   }
-  (base.shortcuts || []).forEach(s => { s.icons = [{ src: club.logo_url ? absoluta(club.logo_url) : 'pelota-192.png', sizes: '192x192' }]; });
+  (base.shortcuts || []).forEach(s => { s.icons = [{ src: raster(club.logo_url) || 'pelota-192.png', sizes: '192x192' }]; });
   base.theme_color = club.color_tema || base.theme_color;
   (base.shortcuts || []).forEach(s => { s.url = s.url.replace(/^\.\/(#.*)$/, pagina + '$1'); });
   return base;
@@ -116,7 +118,8 @@ function manifestDeClub(club) {
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) { omitidos.push(`${slug || '(sin slug)'}: slug no valido`); continue; }
     if (slug === DEFAULT_SLUG) { omitidos.push(`${slug}: es el club base (usa index.html)`); continue; }
     if (RESERVADOS.has(slug)) { omitidos.push(`${slug}: nombre reservado, cambia el slug del club`); continue; }
-    if (c.activo === false) { omitidos.push(`${slug}: inactivo`); continue; }
+    // Los clubes inactivos tambien se generan: la plantilla ya muestra sola el aviso de servicio pausado / en formacion,
+    // y asi su pagina nunca queda con una copia vieja de la plantilla.
     if (c.sitio_web_externo) { omitidos.push(`${slug}: tiene sitio externo`); continue; }
     c.slug = slug;
     fs.writeFileSync(path.join(DIR, slug + '.html'), paginaDeClub(c));
