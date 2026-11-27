@@ -408,7 +408,7 @@ footer{border-top:1px solid var(--line);padding:5px 0 4px;margin-top:2px}
 .foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--line)}
 .foot-copy{font-size:11.5px;color:var(--ink-faint)}
 .foot-social{display:flex;gap:8px}
-.foot-social[hidden]{display:none!important}
+.foot-social[hidden],a[hidden]{display:none!important}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 
@@ -742,7 +742,7 @@ section[id]{scroll-margin-top:64px}
       <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
       <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
       <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
-      <a href="#" data-i18n="navigation.news">Noticias</a>
+      <a href="#" hidden data-i18n="navigation.news">Noticias</a>
     </nav>
 
     <div class="head-actions">
@@ -776,7 +776,7 @@ section[id]{scroll-margin-top:64px}
       <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
       <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
       <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
-      <a href="#" data-i18n="navigation.news">Noticias</a>
+      <a href="#" hidden data-i18n="navigation.news">Noticias</a>
     </nav>
     <div class="mobile-actions">
       <a href="chiletenis-pro.html" class="btn btn-outline btn-block" data-i18n="auth.signIn">Iniciar sesión</a>
@@ -1053,7 +1053,7 @@ section[id]{scroll-margin-top:64px}
       <a href="#torneos" data-i18n="navigation.tournaments">Torneos</a>
       <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
       <a href="#ranking" data-i18n="navigation.rankings">Rankings</a>
-      <a href="#" data-i18n="navigation.news">Noticias</a>
+      <a href="#" hidden data-i18n="navigation.news">Noticias</a>
       <a href="https://wa.me/56974723654" target="_blank" rel="noopener" data-i18n="footer.contact">Contacto</a>
     </nav>
     <!-- Redes sociales ocultas hasta crearlas: quitar el atributo hidden y poner los enlaces reales -->
@@ -1087,7 +1087,7 @@ section[id]{scroll-margin-top:64px}
           <h4 data-i18n="footer.communityHeading">Comunidad</h4>
           <a href="#desafios" data-i18n="navigation.challenges">Desafíos</a>
           <a href="#" data-i18n="footer.players">Jugadores</a>
-          <a href="#" data-i18n="navigation.news">Noticias</a>
+          <a href="#" hidden data-i18n="navigation.news">Noticias</a>
         </div>
         <div class="foot-col">
           <h4 data-i18n="footer.chiletenisHeading">ChileTenis PRO</h4>
