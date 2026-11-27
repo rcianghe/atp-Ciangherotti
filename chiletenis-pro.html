@@ -3479,7 +3479,7 @@ async function resolverClubDesdeURL(){
   CLUB_SLUG_ACTUAL=slug;
   try{
     var res=await window.supabaseClient.from('clubes')
-      .select('id,slug,activo,sitio_web_externo')
+      .select('id,activo,sitio_web_externo')
       .eq('slug',slug).maybeSingle();
     if(res.error||!res.data){
       if(slug!==CLUB_SLUG_DEFAULT&&!res.error){
@@ -3487,9 +3487,11 @@ async function resolverClubDesdeURL(){
         return false; // slug escrito a mano que no existe: no mostrar datos de otro club
       }
       console.warn('No se encontro el club con slug "'+slug+'", se usa el club por defecto.',res.error);
+      if(slug!==CLUB_SLUG_DEFAULT){mostrarClubCongelado({slug:slug,activo:false});return false;} // error de red: nunca mostrar la plantilla de otro club
       return true; // sigue con CLUB_ACTUAL_ID por defecto (Quilicura)
     }
     var c=res.data;
+    c.slug=slug;
     if(c.sitio_web_externo){
       window.location.replace(c.sitio_web_externo);
       return false; // no seguir cargando esta plantilla, ya estamos redirigiendo
@@ -3514,9 +3516,26 @@ function mostrarClubNoEncontrado(slug){
   document.documentElement.classList.add('club-listo');
   if(!sp)return;
   sp.classList.remove('hide');
+  sp.innerHTML='<div style="text-align:center;padding:0 1.8rem;max-width:360px">'
+    +'<div style="font-size:2.4rem;margin-bottom:.7rem">🎾</div>'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem">Club no encontrado</div>'
+    +'<div style="font-size:.85rem;color:#9a9a9a;line-height:1.5">No existe un club con el enlace &quot;'+String(slug).replace(/[^a-z0-9-]/g,'')+'&quot;. Revisa que la direccion este bien escrita.</div>'
+    +'</div>';
+}
+
+// Se muestra en vez de la plantilla cuando el club existe pero tiene el
+// servicio pausado (clubes.activo=false). Reusa la pantalla de splash
+// (ya es un overlay a pantalla completa) en vez de armar una nueva.
+// ChileTenis Pro no es un club sino el servicio de escalerillas: mientras esta
+// desactivado se muestra "en formación" con un acceso al registro de interesados.
+function mostrarClubCongelado(c){
+  document.documentElement.classList.add('club-listo');
+  var sp=document.getElementById('splash');
+  if(!sp)return;
+  sp.classList.remove('hide');
   var T1="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem";
   var T2="font-size:.85rem;color:#9a9a9a;line-height:1.5";
-  var enFormacion=!!(c&&c.slug==='chiletenis-pro'); // ChileTenis Pro es un servicio de escalerillas, no un club
+  var enFormacion=!!(c&&c.slug==='chiletenis-pro');
   var tit,txt,btn='';
   if(enFormacion){
     tit='Esta escalerilla está en formación';
