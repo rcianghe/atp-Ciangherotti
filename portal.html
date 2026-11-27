@@ -939,6 +939,7 @@ section[id]{scroll-margin-top:64px}
       <div class="list-card-head">
         <h2 class="list-card-title"><span class="list-card-ic ic-lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M2.8 19c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6"/><circle cx="17" cy="9.5" r="2.5"/><path d="M17.2 13.6c2.4.2 4 1.9 4 4.4"/></svg></span><span data-pt="playersTitle"></span></h2>
         <span class="hint" id="playersCount" style="font-size:12px;color:var(--ink-dim)"></span>
+        <a class="plink" href="jugadores.html" style="margin-left:auto;white-space:nowrap" data-pt="plAll"></a>
       </div>
       <p class="players-lead" data-pt="playersLead"></p>
       <div class="players-filters">
@@ -1385,7 +1386,7 @@ var PT_DICT={
   playersTitle:'Jugadores',
   playersLead:'Encuentra rivales para entrenar: conoce su nivel de juego y coordina tu partido. Para desafiar necesitas tu perfil con membresía activa.',
   plSearch:'Buscar jugador…',plAllClubs:'Todos los clubes',plAllLevels:'Todos los niveles',plAvail:'Disponible para jugar',plMore:'Ver más jugadores',
-  plSerie:'Serie',plAvailable:'Disponible',plView:'Ver en su club →',plNone:'No hay jugadores que coincidan.',plCount:'{n} jugadores',
+  plSerie:'Serie',plAvailable:'Disponible',plView:'Ver ficha →',plAll:'Abrir arena de jugadores →',plNone:'No hay jugadores que coincidan.',plCount:'{n} jugadores',
   ctaMember:'Hazte socio',ctaInstall:'📲 Instalar la app',
   instTitle:'Instala ChileTenis PRO en tu celular',
   instNote:'Queda como un ícono en tu pantalla de inicio, sin ir a la tienda de apps.',
@@ -1427,7 +1428,7 @@ var PT_DICT={
   playersTitle:'Players',
   playersLead:'Find practice partners: see their playing level and arrange your match. To challenge someone you need your profile with an active membership.',
   plSearch:'Search player…',plAllClubs:'All clubs',plAllLevels:'All levels',plAvail:'Available to play',plMore:'Show more players',
-  plSerie:'Series',plAvailable:'Available',plView:'View at their club →',plNone:'No players match.',plCount:'{n} players',
+  plSerie:'Series',plAvailable:'Available',plView:'View profile →',plAll:'Open players arena →',plNone:'No players match.',plCount:'{n} players',
   ctaMember:'Become a member',ctaInstall:'📲 Install the app',
   instTitle:'Install ChileTenis PRO on your phone',
   instNote:'It appears as an icon on your home screen, no app store needed.',
@@ -1591,7 +1592,7 @@ function pintarJugadores(soloTextos){
       +(f.disponible?'<span class="ptag ok">'+esc(PT('plAvailable'))+'</span>':'');
     return '<div class="player-card">'+av+'<div class="pmain"><div class="pname">'+esc(j.nombre)+banderaImgHtml(j.bandera_iso)+'</div>'
       +'<div class="pclub">'+esc(etiquetaClub(j))+'</div><div class="ptags">'+tags+'</div>'
-      +((c.slug&&j.modalidad!=='amistoso')?'<a class="plink" href="'+esc(urlClub(c))+'">'+esc(PT('plView'))+'</a>':'')+'</div></div>';
+      +'<a class="plink" href="jugadores.html?id='+encodeURIComponent(j.id)+'">'+esc(PT('plView'))+'</a></div></div>';
   }).join('');
   document.getElementById('plMore').hidden=lista.length<=PLAYERS.shown;
 }
