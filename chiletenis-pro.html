@@ -3479,7 +3479,7 @@ async function resolverClubDesdeURL(){
   CLUB_SLUG_ACTUAL=slug;
   try{
     var res=await window.supabaseClient.from('clubes')
-      .select('id,activo,sitio_web_externo')
+      .select('id,slug,activo,sitio_web_externo')
       .eq('slug',slug).maybeSingle();
     if(res.error||!res.data){
       if(slug!==CLUB_SLUG_DEFAULT&&!res.error){
@@ -3495,7 +3495,7 @@ async function resolverClubDesdeURL(){
       return false; // no seguir cargando esta plantilla, ya estamos redirigiendo
     }
     if(c.activo===false){
-      mostrarClubCongelado();
+      mostrarClubCongelado(c);
       return false; // no cargar datos de un club con el servicio pausado
     }
     CLUB_ACTUAL_ID=c.id;
@@ -3514,25 +3514,22 @@ function mostrarClubNoEncontrado(slug){
   document.documentElement.classList.add('club-listo');
   if(!sp)return;
   sp.classList.remove('hide');
+  var T1="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem";
+  var T2="font-size:.85rem;color:#9a9a9a;line-height:1.5";
+  var enFormacion=!!(c&&c.slug==='chiletenis-pro'); // ChileTenis Pro es un servicio de escalerillas, no un club
+  var tit,txt,btn='';
+  if(enFormacion){
+    tit='Esta escalerilla está en formación';
+    txt='Estamos reuniendo jugadores para comenzar. Cuando alcancemos la meta, la escalerilla se activa con partidos semanales, ranking, estadísticas y torneos. Déjanos tus datos en el portal de ChileTenis PRO y te avisamos.';
+    btn='<a href="portal.html#reclutamiento" style="display:inline-block;margin-top:1.1rem;padding:.7rem 1.3rem;border-radius:999px;background:#c6f432;color:#0d0d0d;font-weight:700;font-size:.85rem;text-decoration:none">Quiero participar</a>';
+  }else{
+    tit='Este club no está disponible';
+    txt='El servicio de este club está temporalmente pausado y sus datos siguen guardados. Si eres administrador, contacta a ChileTenis PRO para reactivarlo.';
+  }
   sp.innerHTML='<div style="text-align:center;padding:0 1.8rem;max-width:360px">'
     +'<div style="font-size:2.4rem;margin-bottom:.7rem">🎾</div>'
-    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem">Club no encontrado</div>'
-    +'<div style="font-size:.85rem;color:#9a9a9a;line-height:1.5">No existe un club con el enlace &quot;'+String(slug).replace(/[^a-z0-9-]/g,'')+'&quot;. Revisa que la direccion este bien escrita.</div>'
-    +'</div>';
-}
-
-// Se muestra en vez de la plantilla cuando el club existe pero tiene el
-// servicio pausado (clubes.activo=false). Reusa la pantalla de splash
-// (ya es un overlay a pantalla completa) en vez de armar una nueva.
-function mostrarClubCongelado(){
-  document.documentElement.classList.add('club-listo');
-  var sp=document.getElementById('splash');
-  if(!sp)return;
-  sp.classList.remove('hide');
-  sp.innerHTML='<div style="text-align:center;padding:0 1.8rem;max-width:360px">'
-    +'<div style="font-size:2.4rem;margin-bottom:.7rem">🎾</div>'
-    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#f5f5f0;margin-bottom:.5rem">Este club no esta disponible</div>'
-    +'<div style="font-size:.85rem;color:#9a9a9a;line-height:1.5">El servicio de este club esta temporalmente pausado. Sus datos siguen guardados. Si eres el administrador, contacta a ChileTenis PRO para reactivarlo.</div>'
+    +'<div style="'+T1+'">'+tit+'</div>'
+    +'<div style="'+T2+'">'+txt+'</div>'+btn
     +'</div>';
 }
 
