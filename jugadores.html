@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Jugadores — ChileTenis PRO</title>
+<meta name="description" content="Encuentra rivales para entrenar: conoce el nivel, la mano, la superficie y la disponibilidad de los jugadores de ChileTenis PRO.">
+<meta name="theme-color" content="#070C18">
+<link rel="icon" href="pelota-192.png">
+<link rel="apple-touch-icon" href="pelota-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="lib/supabase.min.js/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#070C18;--bg-1:#0D1527;--bg-2:#131E36;
+  --line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.16);
+  --lime:#C6F135;--lime-dim:#8FB324;--sky:#3FA9F5;
+  --ink:#F5F7FA;--ink-dim:#93A0B8;--ink-faint:#5C6B85;
+  --display:'Space Grotesk',sans-serif;--body:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --cut:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%;display:block}
+::selection{background:var(--lime);color:var(--bg)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+
+/* ---- fondo: lineas de cancha + brillo ---- */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 85% -10%,rgba(63,169,245,.18),transparent 60%),
+    radial-gradient(700px 500px at 5% 20%,rgba(198,241,53,.10),transparent 60%),
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/64px 64px,
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/64px 64px,
+    var(--bg)}
+.bg::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(transparent,rgba(198,241,53,.25),transparent)}
+.scan{position:fixed;left:0;right:0;top:0;height:140px;z-index:1;pointer-events:none;background:linear-gradient(transparent,rgba(198,241,53,.05),transparent);animation:scan 9s linear infinite}
+@keyframes scan{from{transform:translateY(-160px)}to{transform:translateY(110vh)}}
+@media(prefers-reduced-motion:reduce){.scan{display:none}*{animation:none!important;transition:none!important}}
+
+.wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 20px}
+
+/* ---- barra superior ---- */
+.top{position:sticky;top:0;z-index:20;background:rgba(7,12,24,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+.back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);padding:8px 12px;border:1px solid var(--line-strong);border-radius:999px;transition:.15s}
+.back:hover{color:var(--lime);border-color:var(--lime)}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.02em}
+.brand i{width:22px;height:22px;border-radius:50%;border:2px solid var(--lime);position:relative;display:inline-block}
+.brand i::after{content:"";position:absolute;inset:3px -8px;border-left:2px solid var(--lime);border-radius:50%;left:3px;right:auto;width:12px}
+.brand b{color:var(--lime)}
+.btn{background:transparent;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--display);font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;border:1px solid transparent;transition:.15s;white-space:nowrap}
+.btn-lime{background:var(--lime);color:#0B1220}
+.btn-lime:hover{box-shadow:0 0 0 4px rgba(198,241,53,.2),0 8px 28px rgba(198,241,53,.25);transform:translateY(-1px)}
+.btn-ghost{border-color:var(--line-strong);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.btn-sm{padding:8px 14px;font-size:13px}
+
+/* ---- hero ---- */
+.hero{padding:44px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--lime)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,6.2vw,64px);line-height:1.02;letter-spacing:-.02em;margin:14px 0 12px}
+h1 span{color:transparent;-webkit-text-stroke:1.5px var(--lime)}
+.lead{max-width:640px;color:var(--ink-dim);font-size:16px;line-height:1.55;margin:0 0 22px}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:620px}
+.hud div{padding:12px 14px;border:1px solid var(--line-strong);background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01));clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.hud b{display:block;font-family:var(--display);font-size:28px;font-weight:700;color:var(--lime);line-height:1}
+.hud small{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+
+/* ---- controles ---- */
+.controls{margin:26px 0 8px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:center}
+.field{height:46px;border:1px solid var(--line-strong);background:rgba(13,21,39,.85);color:var(--ink);border-radius:10px;padding:0 14px;font:500 14px var(--body);width:100%}
+.field::placeholder{color:var(--ink-faint)}
+select.field{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-dim) 50%),linear-gradient(135deg,var(--ink-dim) 50%,transparent 50%);background-position:calc(100% - 18px) 20px,calc(100% - 13px) 20px;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.chk{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border:1px solid var(--line-strong);border-radius:10px;background:rgba(13,21,39,.85);font-size:13px;color:var(--ink-dim);cursor:pointer;white-space:nowrap}
+.chk input{accent-color:var(--lime);width:16px;height:16px}
+.count{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 14px}
+.count b{color:var(--lime)}
+
+/* ---- tarjetas ---- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;padding-bottom:30px}
+.card{position:relative;text-align:left;color:inherit;padding:18px 16px 16px;border:1px solid var(--line-strong);background:linear-gradient(165deg,rgba(24,37,66,.9),rgba(11,18,34,.95));clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,var(--cut) 100%,0 calc(100% - var(--cut)));transition:transform .18s,box-shadow .18s;display:block;width:100%}
+.card::before{content:"";position:absolute;left:0;top:0;width:34px;height:2px;background:var(--lime)}
+.card::after{content:"";position:absolute;right:0;bottom:0;width:2px;height:34px;background:var(--sky)}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.45),0 0 0 1px rgba(198,241,53,.35)}
+.card.on .ring{box-shadow:0 0 0 2px var(--lime),0 0 22px rgba(198,241,53,.45)}
+.row{display:flex;gap:13px;align-items:center}
+.ring{width:62px;height:62px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--line-strong);background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:20px;color:var(--lime);overflow:hidden}
+.ring img{width:100%;height:100%;object-fit:cover}
+.nm{font-family:var(--display);font-weight:700;font-size:17px;line-height:1.15;display:flex;align-items:center;gap:6px;min-width:0}
+.nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm img{width:16px;height:12px;border-radius:2px;flex:none}
+.mod{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);margin-top:4px}
+.mod.pro{color:var(--sky)}.mod.am{color:var(--lime-dim)}
+.meter{margin:14px 0 6px;display:flex;align-items:center;gap:10px}
+.meter .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);width:78px;flex:none}
+.segs{display:flex;gap:4px;flex:1}
+.segs i{height:7px;flex:1;background:rgba(255,255,255,.09);transform:skewX(-20deg)}
+.segs i.f{background:linear-gradient(90deg,var(--lime-dim),var(--lime));box-shadow:0 0 10px rgba(198,241,53,.4)}
+.meter .val{font-family:var(--display);font-weight:600;font-size:12.5px;min-width:78px;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--line-strong);color:var(--ink-dim);background:rgba(255,255,255,.03)}
+.chip.ok{border-color:rgba(198,241,53,.5);color:var(--lime)}
+.chip.dim{color:var(--ink-faint);border-style:dashed}
+.more{display:flex;justify-content:center;padding:6px 0 40px}
+.empty{padding:50px 10px;text-align:center;color:var(--ink-dim);font-family:var(--mono);font-size:13px;letter-spacing:.08em;grid-column:1/-1}
+
+/* ---- ficha (modal) ---- */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(3,6,14,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
+.ov.open{display:flex}
+.dossier{position:relative;width:min(560px,100%);max-height:92vh;overflow:auto;border:1px solid var(--lime);background:linear-gradient(165deg,#16233f,#0a1224);padding:22px 22px 20px;clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px));box-shadow:0 0 60px rgba(198,241,53,.12)}
+.x{position:absolute;right:26px;top:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;color:var(--ink);font-size:18px}
+.x:hover{border-color:var(--lime);color:var(--lime)}
+.dtag{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);margin-bottom:14px}
+.dhead{display:flex;gap:16px;align-items:center;margin-bottom:6px}
+.dhead .ring{width:88px;height:88px;font-size:28px}
+.dhead .nm{font-size:24px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.dgrid div{padding:10px 12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.dgrid small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px}
+.dgrid b{font-family:var(--display);font-size:15px;font-weight:600}
+.sched{margin:6px 0 4px}
+.sched h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);font-weight:500}
+.sg{display:grid;grid-template-columns:34px repeat(7,1fr);gap:4px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--ink-faint);text-align:center}
+.sg .c{height:24px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.sg .c.f{background:rgba(198,241,53,.85);border-color:var(--lime);box-shadow:0 0 10px rgba(198,241,53,.35)}
+.dact{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.note{margin-top:12px;font-size:12px;color:var(--ink-faint);line-height:1.5}
+
+/* ---- banda final ---- */
+.cta{position:relative;z-index:2;margin:10px auto 50px;max-width:1160px;padding:26px 24px;border:1px solid var(--line-strong);background:linear-gradient(120deg,rgba(198,241,53,.10),rgba(63,169,245,.08));clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cta h3{margin:0 0 4px;font-family:var(--display);font-size:20px}
+.cta p{margin:0;color:var(--ink-dim);font-size:14px;max-width:560px;line-height:1.5}
+footer{position:relative;z-index:2;text-align:center;padding:0 0 40px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase}
+
+@media(max-width:860px){.controls{grid-template-columns:1fr 1fr}.controls#fMod,#fMod{grid-column:1/-1}.controls .q{grid-column:1/-1}.controls .chk{grid-column:1/-1}}
+@media(max-width:520px){.hud b{font-size:22px}.sg{font-size:9px}.dgrid{grid-template-columns:1fr}.top .btn-lime{display:none}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scan"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="portal.html">← Portal</a>
+    <a class="brand" href="portal.html"><i></i>ChileTenis <b>PRO</b></a>
+    <a class="btn btn-lime btn-sm" href="portal.html?amistoso=1">Crear mi perfil</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Arena de jugadores</div>
+    <h1>Encuentra a tu próximo <span>rival</span></h1>
+    <p class="lead">Conoce el nivel, el estilo de juego y la disponibilidad de cada jugador. Elige con quién medirte y coordina tu partido.</p>
+    <div class="hud">
+      <div><b id="hTotal">–</b><small>Jugadores</small></div>
+      <div><b id="hDisp">–</b><small>Disponibles</small></div>
+      <div><b id="hFicha">–</b><small>Con ficha técnica</small></div>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="Filtros">
+    <input class="field q" id="fQ" type="search" placeholder="Buscar por nombre…" autocomplete="off" aria-label="Buscar jugador">
+    <select class="field" id="fNivel" aria-label="Nivel"><option value="">Todos los niveles</option></select>
+    <select class="field" id="fSerie" aria-label="Serie"><option value="">Todas las series</option></select>
+    <select class="field" id="fMod" aria-label="Modalidad">
+      <option value="">Toda modalidad</option>
+      <option value="club">Escalerilla de club</option>
+      <option value="pro">Escalerilla ChileTenis Pro</option>
+      <option value="amistoso">Amistosos · sin club</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="fDisp"> Solo disponibles</label>
+  </section>
+
+  <div class="count" id="count">Cargando…</div>
+  <div class="grid" id="grid"></div>
+  <div class="more"><button class="btn btn-ghost" id="more" hidden>Ver más jugadores</button></div>
+</main>
+
+<section class="cta">
+  <div>
+    <h3>¿No tienes club ni escalerilla?</h3>
+    <p>Crea tu perfil de amistosos y aparece en esta lista para que otros jugadores te encuentren. Membresía de $5.000 al mes, solo partidos amistosos.</p>
+  </div>
+  <a class="btn btn-lime" href="portal.html?amistoso=1">Crear mi perfil de amistosos</a>
+</section>
+<footer>ChileTenis PRO · Escalerillas y torneos de tenis</footer>
+
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="dName">
+  <div class="dossier" id="dossier"></div>
+</div>
+
+<script>
+var SUPABASE_URL='https://hjqzpxsqdbjcidmlvgkv.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqcXpweHNxZGJqY2lkbWx2Z2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjU0NzIsImV4cCI6MjEwMTcwMTQ3Mn0.MNPwvAMtxFTWr-7ONIevrFDe7hC2Bd7z-dsm9H8zWIo';
+var WA='56974723654';
+var sb=(typeof supabase!=='undefined')?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+var ALL=[],shown=24,F={q:'',nivel:'',serie:'',mod:'',disp:false};
+var NIVELES={'principiante':1,'intermedio':2,'avanzado':3,'competitivo':4,'pro':4,'profesional':4};
+var DIAS=[['lun','L'],['mar','M'],['mie','X'],['jue','J'],['vie','V'],['sab','S'],['dom','D']];
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function ini(n){var p=String(n||'?').trim().split(/\s+/);return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
+function ficha(j){var f=j.fichas_tecnicas;return Array.isArray(f)?(f[0]||{}):(f||{});}
+function nivelN(f){return f.nivel?(NIVELES[String(f.nivel).toLowerCase()]||2):0;}
+function modOf(j){var c=j.clubes||{};if(c.slug==='chiletenis-pro')return j.modalidad==='amistoso'?'amistoso':'pro';return 'club';}
+function modTxt(j){var m=modOf(j);return m==='amistoso'?'Amistosos · sin club':(m==='pro'?'Escalerilla ChileTenis Pro':((j.clubes&&j.clubes.nombre)||'Escalerilla'));}
+function bandera(iso){return iso?'<img src="https://flagcdn.com/20x15/'+esc(String(iso).toLowerCase())+'.png" alt="">':'';}
+function avatar(j){return j.avatar_url?'<img src="'+esc(j.avatar_url)+'" alt="" loading="lazy">':esc(ini(j.nombre));}
+function segs(n){var h='';for(var i=1;i<=4;i++)h+='<i class="'+(i<=n?'f':'')+'"></i>';return h;}
+
+async function cargar(){
+  if(!sb){document.getElementById('count').textContent='No se pudo conectar.';return;}
+  try{
+    var r=await sb.from('jugadores')
+      .select('id,nombre,serie,avatar_url,bandera_iso,club_id,modalidad,clubes(nombre,slug),fichas_tecnicas(nivel,mano,golpe,superficie,disponible,disponibilidad_desafios)')
+      .eq('activo',true).eq('estado','Activo').eq('es_invitado',false).eq('oculto_en_portal',false)
+      .order('nombre').limit(1000);
+    ALL=r.error?[]:(r.data||[]);
+  }catch(e){console.warn(e);ALL=[];}
+  var disp=ALL.filter(function(j){return ficha(j).disponible;}).length;
+  var conF=ALL.filter(function(j){return ficha(j).nivel;}).length;
+  document.getElementById('hTotal').textContent=ALL.length;
+  document.getElementById('hDisp').textContent=disp;
+  document.getElementById('hFicha').textContent=conF;
+  var niv={},ser={};
+  ALL.forEach(function(j){var f=ficha(j);if(f.nivel)niv[f.nivel]=1;if(j.serie)ser[j.serie]=1;});
+  document.getElementById('fNivel').innerHTML='<option value="">Todos los niveles</option>'+Object.keys(niv).sort().map(function(n){return '<option>'+esc(n)+'</option>';}).join('');
+  document.getElementById('fSerie').innerHTML='<option value="">Todas las series</option>'+Object.keys(ser).sort().map(function(n){return '<option>'+esc(n)+'</option>';}).join('');
+  pintar();
+  var id=new URLSearchParams(location.search).get('id')||location.hash.replace('#j-','');
+  if(id)abrir(id);
+}
+
+function pintar(){
+  var q=F.q.trim().toLowerCase();
+  var lista=ALL.filter(function(j){
+    var f=ficha(j);
+    if(q&&String(j.nombre||'').toLowerCase().indexOf(q)<0)return false;
+    if(F.nivel&&f.nivel!==F.nivel)return false;
+    if(F.serie&&j.serie!==F.serie)return false;
+    if(F.mod&&modOf(j)!==F.mod)return false;
+    if(F.disp&&!f.disponible)return false;
+    return true;
+  });
+  document.getElementById('count').innerHTML='<b>'+lista.length+'</b> '+(lista.length===1?'jugador':'jugadores');
+  var g=document.getElementById('grid');
+  if(!lista.length){g.innerHTML='<div class="empty">'+(ALL.length?'NINGÚN JUGADOR COINCIDE CON TU BÚSQUEDA':'CARGANDO…')+'</div>';document.getElementById('more').hidden=true;return;}
+  g.innerHTML=lista.slice(0,shown).map(function(j){
+    var f=ficha(j),n=nivelN(f),m=modOf(j);
+    var chips=(j.serie?'<span class="chip">Serie '+esc(j.serie)+'</span>':'')
+      +(f.mano?'<span class="chip">'+esc(f.mano)+'</span>':'')
+      +(f.golpe?'<span class="chip">'+esc(f.golpe)+'</span>':'')
+      +(f.superficie?'<span class="chip">'+esc(f.superficie)+'</span>':'')
+      +(f.disponible?'<span class="chip ok">● Disponible</span>':'')
+      +(!f.nivel?'<span class="chip dim">Ficha pendiente</span>':'');
+    return '<button type="button" class="card'+(f.disponible?' on':'')+'" data-id="'+esc(j.id)+'">'
+      +'<div class="row"><span class="ring">'+avatar(j)+'</span><div style="min-width:0"><div class="nm"><span>'+esc(j.nombre)+'</span>'+bandera(j.bandera_iso)+'</div>'
+      +'<div class="mod '+(m==='pro'?'pro':(m==='amistoso'?'am':''))+'">'+esc(modTxt(j))+'</div></div></div>'
+      +'<div class="meter"><span class="lbl">Nivel</span><span class="segs">'+segs(n)+'</span><span class="val">'+esc(f.nivel||'—')+'</span></div>'
+      +'<div class="chips">'+chips+'</div></button>';
+  }).join('');
+  document.getElementById('more').hidden=lista.length<=shown;
+}
+
+function abrir(id){
+  var j=ALL.filter(function(x){return String(x.id)===String(id);})[0];
+  if(!j)return;
+  var f=ficha(j),n=nivelN(f);
+  var disp=Array.isArray(f.disponibilidad_desafios)?f.disponibilidad_desafios:[];
+  var sg='<span></span>'+DIAS.map(function(d){return '<span>'+d[1]+'</span>';}).join('');
+  ['AM','PM'].forEach(function(t){
+    sg+='<span>'+t+'</span>'+DIAS.map(function(d){return '<span class="c'+(disp.indexOf(d[0]+t)>=0?' f':'')+'"></span>';}).join('');
+  });
+  var msg='Hola, vi el perfil de '+j.nombre+' en ChileTenis PRO y quiero coordinar un partido.';
+  document.getElementById('dossier').innerHTML=
+    '<button class="x" type="button" id="xClose" aria-label="Cerrar">✕</button>'
+    +'<div class="dtag">// Ficha de jugador</div>'
+    +'<div class="dhead"><span class="ring">'+avatar(j)+'</span><div style="min-width:0"><div class="nm" id="dName"><span style="white-space:normal">'+esc(j.nombre)+'</span>'+bandera(j.bandera_iso)+'</div><div class="mod '+(modOf(j)==='pro'?'pro':(modOf(j)==='amistoso'?'am':''))+'">'+esc(modTxt(j))+'</div></div></div>'
+    +'<div class="meter"><span class="lbl">Nivel</span><span class="segs">'+segs(n)+'</span><span class="val">'+esc(f.nivel||'Sin ficha')+'</span></div>'
+    +'<div class="dgrid">'
+      +'<div><small>Serie</small><b>'+esc(j.serie||'—')+'</b></div>'
+      +'<div><small>Mano</small><b>'+esc(f.mano||'—')+'</b></div>'
+      +'<div><small>Golpe</small><b>'+esc(f.golpe||'—')+'</b></div>'
+      +'<div><small>Superficie</small><b>'+esc(f.superficie||'—')+'</b></div>'
+    +'</div>'
+    +'<div class="sched"><h4>Disponibilidad semanal</h4><div class="sg">'+sg+'</div></div>'
+    +'<div class="dact">'
+      +'<a class="btn btn-lime" target="_blank" rel="noopener" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'">Coordinar partido</a>'
+      +'<button class="btn btn-ghost" type="button" id="xClose2">Volver a la lista</button>'
+    +'</div>'
+    +'<p class="note">Por privacidad no mostramos teléfonos ni correos. ChileTenis PRO te pone en contacto con el jugador para coordinar el partido.</p>';
+  document.getElementById('ov').classList.add('open');
+  document.body.style.overflow='hidden';
+  try{history.replaceState(null,'','#j-'+j.id);}catch(e){}
+  document.getElementById('xClose').onclick=cerrar;document.getElementById('xClose2').onclick=cerrar;
+}
+function cerrar(){
+  document.getElementById('ov').classList.remove('open');document.body.style.overflow='';
+  try{history.replaceState(null,'',location.pathname);}catch(e){}
+}
+document.getElementById('ov').addEventListener('click',function(e){if(e.target===this)cerrar();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cerrar();});
+document.getElementById('grid').addEventListener('click',function(e){var c=e.target.closest('.card');if(c)abrir(c.getAttribute('data-id'));});
+function on(id,ev,fn){document.getElementById(id).addEventListener(ev,fn);}
+on('fQ','input',function(){F.q=this.value;shown=24;pintar();});
+on('fNivel','change',function(){F.nivel=this.value;shown=24;pintar();});
+on('fSerie','change',function(){F.serie=this.value;shown=24;pintar();});
+on('fMod','change',function(){F.mod=this.value;shown=24;pintar();});
+on('fDisp','change',function(){F.disp=this.checked;shown=24;pintar();});
+on('more','click',function(){shown+=24;pintar();});
+cargar();
+</script>
+</body>
+</html>
