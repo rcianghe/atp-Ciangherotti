@@ -1389,7 +1389,7 @@ var PT_DICT={
   ctaMember:'Hazte socio',ctaInstall:'📲 Instalar la app',
   instTitle:'Instala ChileTenis PRO en tu celular',
   instNote:'Queda como un ícono en tu pantalla de inicio, sin ir a la tienda de apps.',
-  instNative:'Instalar ahora',openLadder:'Escalerilla abierta a todos',
+  instNative:'Instalar ahora',openLadder:'Escalerilla abierta a todos',forming:'En formación',
   ios:['Abre esta página en <b>Safari</b> (no en el navegador de WhatsApp ni de Instagram).','Toca el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).','Baja y elige <b>Agregar a pantalla de inicio</b>.','Confirma el nombre <b>ChileTenis PRO</b> y toca <b>Agregar</b>.'],
   android:['Abre esta página en <b>Chrome</b>.','Toca el menú <b>⋮</b> arriba a la derecha.','Elige <b>Instalar aplicación</b> o <b>Agregar a pantalla de inicio</b>.','Confirma con <b>Instalar</b>.']},
  en:{svcEyebrow:'What is ChileTenis PRO',
@@ -1431,7 +1431,7 @@ var PT_DICT={
   ctaMember:'Become a member',ctaInstall:'📲 Install the app',
   instTitle:'Install ChileTenis PRO on your phone',
   instNote:'It appears as an icon on your home screen, no app store needed.',
-  instNative:'Install now',openLadder:'Ladder open to everyone',
+  instNative:'Install now',openLadder:'Ladder open to everyone',forming:'Forming',
   ios:['Open this page in <b>Safari</b> (not the WhatsApp or Instagram browser).','Tap the <b>Share</b> button (square with an up arrow).','Scroll and choose <b>Add to Home Screen</b>.','Confirm the name <b>ChileTenis PRO</b> and tap <b>Add</b>.'],
   android:['Open this page in <b>Chrome</b>.','Tap the <b>⋮</b> menu at the top right.','Choose <b>Install app</b> or <b>Add to Home screen</b>.','Confirm with <b>Install</b>.']}
 };
@@ -1489,8 +1489,8 @@ async function fetchClubes(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('clubes')
-      .select('id,nombre,nombre_corto,slug,comuna,logo_url,sitio_web_externo')
-      .eq('activo',true).not('slug','is',null).order('nombre');
+      .select('id,nombre,nombre_corto,slug,comuna,logo_url,sitio_web_externo,activo')
+      .or('activo.eq.true,slug.eq.chiletenis-pro').not('slug','is',null).order('nombre');
     return res.error?[]:res.data;
   }catch(err){console.warn('[portal] clubes',err);return [];}
 }
@@ -1610,14 +1610,14 @@ function renderClubes(list){
   el.innerHTML=list.map(function(c){
     var av=c.logo_url?'<img class="list-row-avatar" src="'+esc(c.logo_url)+'" alt="">':'<span class="list-row-avatar">'+esc(inicialesDe(c.nombre_corto||c.nombre))+'</span>';
     return '<a class="club-chip" href="'+esc(urlClub(c))+'">'+av
-      +'<span class="club-chip-txt"><b>'+esc(c.nombre)+'</b>'+((c.slug==='chiletenis-pro')?'<small>'+esc(PT('openLadder'))+'</small>':(c.comuna?'<small>'+esc(c.comuna)+'</small>':''))+'</span></a>';
+      +'<span class="club-chip-txt"><b>'+esc(c.nombre)+'</b>'+((c.slug==='chiletenis-pro')?'<small>'+esc(PT(c.activo===false?'forming':'openLadder'))+'</small>':(c.comuna?'<small>'+esc(c.comuna)+'</small>':''))+'</span></a>';
   }).join('');
 }
 async function fetchEscalerillasActivas(){
   if(!sbClient)return [];
   try{
     var res=await sbClient.from('temporadas')
-      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug,logo_url,sitio_web_externo)')
+      .select('id,nombre,fecha_inicio,fecha_fin,clubes(nombre,slug,logo_url,sitio_web_externo,activo)')
       .eq('activa',true).eq('tipo','escalerilla')
       .order('fecha_inicio',{ascending:false}).limit(3);
     return res.error?[]:res.data;
@@ -1700,7 +1700,7 @@ function renderEscalerillasActivas(list){
     return '<a class="list-row" href="'+esc(urlClub(club))+'" style="text-decoration:none;cursor:pointer">'
       +avatarHtml
       +'<div class="list-row-main"><div class="list-row-title">'+esc(club.nombre||'—')+'</div><div class="list-row-sub">'+esc(t.nombre||'')+'</div></div>'
-      +'<span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span>'
+      +(club.activo===false?'<span class="pill pill-soon">'+esc(PT('forming'))+'</span>':'<span class="pill pill-live">'+esc(I18N.t('home.club.ladderActive'))+'</span>')
       +'</a>';
   }).join('');
 }
