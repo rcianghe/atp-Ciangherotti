@@ -142,6 +142,26 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
 .runform input{height:42px;width:140px;border:1px solid var(--line-strong);background:rgba(13,21,39,.85);color:var(--ink);border-radius:10px;padding:0 12px;font:600 15px var(--body)}
 .runmsg{font-size:12px;color:var(--ink-dim);margin-top:6px;min-height:16px}
 .runmsg.err{color:#ff8a8a}.runmsg.ok{color:var(--lime)}
+.pchal{display:flex;align-items:stretch;gap:14px;margin:16px 0 4px;flex-wrap:wrap}
+.disp{display:flex;align-items:center;gap:10px;padding:0 4px;min-height:58px}
+.disp .dot{width:12px;height:12px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime);flex:none}
+.disp .dot.off{background:#667089;box-shadow:none}
+.disp b{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.disp b.off{color:var(--ink-faint)}
+.chal{flex:1;min-width:210px;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 14px;border:1px solid var(--lime);border-radius:14px;background:rgba(198,241,53,.07);color:var(--ink);transition:.15s}
+.chal:hover{background:rgba(198,241,53,.16);box-shadow:0 0 24px rgba(198,241,53,.18)}
+.chal .ic{width:34px;height:34px;flex:none;color:var(--lime)}
+.chal .tt{display:block;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase}
+.chal .ss{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+.chal .ar{margin-left:auto;font-size:22px;color:var(--lime)}
+.chal.lock{border-color:var(--line-strong);background:rgba(255,255,255,.03);cursor:default}
+.chal.lock:hover{box-shadow:none;background:rgba(255,255,255,.03)}
+.dfform{margin-top:10px;padding:14px;border:1px solid var(--line-strong);background:rgba(255,255,255,.04);border-radius:12px;font-size:13.5px;line-height:1.5}
+.dfform b{color:var(--lime)}
+.dfform input[type=text]{margin:10px 0 8px;height:44px;width:100%;border:1px solid var(--line-strong);background:rgba(13,21,39,.85);color:var(--ink);border-radius:10px;padding:0 12px;font:500 14px var(--body)}
+.dfform .nt{font-size:12px;color:var(--ink-dim);margin-bottom:10px}
+.dfform .acts{display:flex;gap:8px;flex-wrap:wrap}
+.dfmsg{margin-top:8px;font-size:12.5px}.dfmsg.ok{color:var(--lime)}.dfmsg.err{color:#ff8a8a}
 .dact{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .note{margin-top:12px;font-size:12px;color:var(--ink-faint);line-height:1.5}
 
@@ -212,7 +232,7 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var WA='56974723654';
 var sb=(typeof supabase!=='undefined')?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 var ALL=[],TIT={},POS={},shown=24,F={q:'',nivel:'',serie:'',mod:'',disp:false};
-var MYID=null,MYUSER=null,OPEN=null;
+var MYID=null,MYNAME=null,MYUSER=null,OPEN=null,HAB={},HABOK=false,FORM=null,SENDING=false,MSG='';
 var NIVELES={'principiante':1,'intermedio':2,'avanzado':3,'competitivo':4,'pro':4,'profesional':4};
 var DIAS=[['lun','L','M'],['mar','M','T'],['mie','X','W'],['jue','J','T'],['vie','V','F'],['sab','S','S'],['dom','D','S']];
 
@@ -240,9 +260,13 @@ es:{
  runMine:'Tu RUN (puedes cambiarlo cuando quieras)',runPh:'Ej: 120',runSave:'Guardar',runClear:'Quitar',
  runSaved:'RUN guardado.',runCleared:'RUN eliminado.',runBad:'Ingresa un número entre 1 y 99999.',runErr:'No se pudo guardar. Intenta de nuevo.',
  isMe:'¿Eres este jugador? Inicia sesión para completar tu RUN',login:'Soy yo: iniciar sesión',
- coord:'Coordinar partido',backList:'Volver a la lista',
- privacy:'Por privacidad no mostramos teléfonos ni correos. ChileTenis PRO te pone en contacto con el jugador para coordinar el partido.',
- wa:'Hola, vi el perfil de {n} en ChileTenis PRO y quiero coordinar un partido.',
+ backList:'Volver a la lista',dispOn:'Disponible',dispOff:'No disponible',chalT:'Desafiar',chalS:'Partido amistoso',
+ chalLogin:'Inicia sesión y vincula tu perfil para poder desafiar',chalNoProfile:'Necesitas un perfil de jugador para desafiar',chalLoginBtn:'Iniciar sesión',chalCreate:'Crear mi perfil de amistosos',
+ payT:'Desafiar es parte de la membresía',payP:'Para retar a otros jugadores y jugar partidos amistosos necesitas una membresía activa. Con tu perfil gratuito puedes ver a los demás jugadores.',
+ dfWho:'Vas a desafiar como <b>{a}</b> a <b>{b}</b> para un partido amistoso',dfMsg:'Mensaje (opcional)',dfNote:'Si acepta, se abre un chat privado para acordar día, hora y lugar del encuentro.',dfSend:'Enviar desafío',dfSending:'Enviando…',dfCancel:'Cancelar',
+ dfOk:'Desafío enviado. Te avisaremos cuando responda.',dfDup:'Ya existe un desafío pendiente con este jugador.',dfErr:'No se pudo enviar el desafío. Intenta de nuevo.',dfSelf:'Este es tu perfil.',
+
+ privacy:'Por privacidad no mostramos teléfonos ni correos: los jugadores se coordinan por el chat privado que se abre al aceptar un desafío.',
  ap:'Apertura',cl:'Clausura',season:'Temporada'
 },
 en:{
@@ -266,9 +290,13 @@ en:{
  runMine:'Your RUN (you can change it any time)',runPh:'E.g. 120',runSave:'Save',runClear:'Remove',
  runSaved:'RUN saved.',runCleared:'RUN removed.',runBad:'Enter a number between 1 and 99999.',runErr:'Could not save. Please try again.',
  isMe:'Is this you? Sign in to fill in your RUN',login:'It’s me: sign in',
- coord:'Arrange a match',backList:'Back to the list',
- privacy:'For privacy we don’t show phone numbers or emails. ChileTenis PRO connects you with the player to arrange the match.',
- wa:'Hi, I saw {n}’s profile on ChileTenis PRO and I’d like to arrange a match.',
+ backList:'Back to the list',dispOn:'Available',dispOff:'Unavailable',chalT:'Challenge',chalS:'Friendly match',
+ chalLogin:'Sign in and link your profile to challenge players',chalNoProfile:'You need a player profile to challenge others',chalLoginBtn:'Sign in',chalCreate:'Create my friendlies profile',
+ payT:'Challenging is part of the membership',payP:'To challenge other players and play friendly matches you need an active membership. With a free profile you can browse other players.',
+ dfWho:'You are about to challenge <b>{b}</b> as <b>{a}</b> to a friendly match',dfMsg:'Message (optional)',dfNote:'If they accept, a private chat opens to agree on day, time and place.',dfSend:'Send challenge',dfSending:'Sending…',dfCancel:'Cancel',
+ dfOk:'Challenge sent. We’ll let you know when they reply.',dfDup:'There is already a pending challenge with this player.',dfErr:'Could not send the challenge. Please try again.',dfSelf:'This is your profile.',
+
+ privacy:'For privacy we don’t show phone numbers or emails: players coordinate in the private chat that opens when a challenge is accepted.',
  ap:'Opening',cl:'Closing',season:'Season'
 }};
 /* valores guardados en espanol -> ingles */
@@ -306,6 +334,7 @@ function modTxt(j){var m=modOf(j);return m==='amistoso'?t('mAm'):(m==='pro'?t('m
 function bandera(iso){return iso?'<img src="https://flagcdn.com/20x15/'+esc(String(iso).toLowerCase())+'.png" alt="">':'';}
 function avatar(j){return j.avatar_url?'<img src="'+esc(j.avatar_url)+'" alt="" loading="lazy">':esc(ini(j.nombre));}
 function segs(n){var h='';for(var i=1;i<=4;i++)h+='<i class="'+(i<=n?'f':'')+'"></i>';return h;}
+function isDisp(j){var f=ficha(j);return f.disponible!==false&&(!HABOK||!!HAB[j.id]);}
 function mejorPos(id){var l=POS[id]||[];return l.length?Math.min.apply(null,l.map(function(p){return p.posicion;})):null;}
 
 /* ---------------- datos ---------------- */
@@ -327,8 +356,13 @@ async function cargar(){
   var ids={};ALL.forEach(function(j){ids[j.id]=1;});
   var totTit=0;Object.keys(TIT).forEach(function(id){if(ids[id])totTit+=TIT[id].length;});
   document.getElementById('hTotal').textContent=ALL.length;
-  document.getElementById('hDisp').textContent=ALL.filter(function(j){return ficha(j).disponible;}).length;
+  
   document.getElementById('hTit').textContent=totTit;
+  try{
+    var h=await sb.rpc('fn_jugadores_habilitados_desafios');
+    if(!h.error){(h.data||[]).forEach(function(x){HAB[(x&&typeof x==='object')?Object.values(x)[0]:x]=true;});HABOK=true;}
+  }catch(e){console.warn(e);}
+  document.getElementById('hDisp').textContent=ALL.filter(isDisp).length;
   armarFiltros();
   pintar();
   await sesion();
@@ -341,8 +375,8 @@ async function sesion(){
     var s=await sb.auth.getSession();
     MYUSER=(s&&s.data&&s.data.session&&s.data.session.user)||null;
     if(MYUSER){
-      var r=await sb.from('jugadores').select('id').eq('user_id',MYUSER.id).limit(1);
-      MYID=(r.data&&r.data[0]&&r.data[0].id)||null;
+      var r=await sb.from('jugadores').select('id,nombre').eq('user_id',MYUSER.id).limit(1);
+      MYID=(r.data&&r.data[0]&&r.data[0].id)||null;MYNAME=(r.data&&r.data[0]&&r.data[0].nombre)||null;
     }
   }catch(e){console.warn(e);}
 }
@@ -365,7 +399,7 @@ function pintar(){
     if(F.nivel&&f.nivel!==F.nivel)return false;
     if(F.serie&&j.serie!==F.serie)return false;
     if(F.mod&&modOf(j)!==F.mod)return false;
-    if(F.disp&&!f.disponible)return false;
+    if(F.disp&&!isDisp(j))return false;
     return true;
   });
   document.getElementById('count').innerHTML='<b>'+lista.length+'</b> '+t(lista.length===1?'one':'many');
@@ -379,9 +413,9 @@ function pintar(){
       +(j.run_ranking?'<span class="chip">'+esc(t('runChip',{n:j.run_ranking}))+'</span>':'')
       +(f.mano?'<span class="chip">'+esc(val(f.mano))+'</span>':'')
       +(f.superficie?'<span class="chip">'+esc(val(f.superficie))+'</span>':'')
-      +(f.disponible?'<span class="chip ok">'+esc(t('avail'))+'</span>':'')
+      +(isDisp(j)?'<span class="chip ok">'+esc(t('avail'))+'</span>':'')
       +(!f.nivel?'<span class="chip dim">'+esc(t('pending'))+'</span>':'');
-    return '<button type="button" class="card'+(f.disponible?' on':'')+'" data-id="'+esc(j.id)+'">'
+    return '<button type="button" class="card'+(isDisp(j)?' on':'')+'" data-id="'+esc(j.id)+'">'
       +'<div class="row"><span class="ring">'+avatar(j)+'</span><div style="min-width:0"><div class="nm"><span>'+esc(j.nombre)+'</span>'+bandera(j.bandera_iso)+'</div>'
       +'<div class="mod '+(m==='pro'?'pro':(m==='amistoso'?'am':''))+'">'+esc(modTxt(j))+'</div></div></div>'
       +'<div class="meter"><span class="lbl">'+esc(t('level'))+'</span><span class="segs">'+segs(n)+'</span><span class="val">'+esc(f.nivel?val(f.nivel):'—')+'</span></div>'
@@ -418,7 +452,26 @@ function abrir(id){
   }else if(!MYUSER){
     runForm='<div class="runmsg">'+esc(t('isMe'))+' <a href="#" id="runLogin" style="color:var(--lime);text-decoration:underline">'+esc(t('login'))+'</a></div>';
   }
-  var msg=t('wa',{n:j.nombre});
+  var disp_=isDisp(j),esMio2=esMio;
+  var chal='';
+  if(!esMio2&&disp_){
+    if(!MYUSER)chal='<button type="button" class="chal lock" id="chalLogin"><span class="mid"><span class="tt" style="font-size:14px;letter-spacing:.02em;text-transform:none">'+esc(t('chalLogin'))+'</span></span></button>';
+    else if(!MYID)chal='<a class="chal lock" href="portal.html?amistoso=1"><span class="mid"><span class="tt" style="font-size:14px;letter-spacing:.02em;text-transform:none">'+esc(t('chalNoProfile'))+' →</span></span></a>';
+    else chal='<button type="button" class="chal" id="chalBtn">'+'<svg class="ic" viewBox="0 0 48 32" fill="none"><path d="M2 8h12M0 16h14M4 24h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="32" cy="16" r="13" fill="currentColor"/><path d="M32 3C25 8 25 24 32 29M32 3c7 5 7 21 0 26" stroke="#0a1224" stroke-width="1.6" opacity=".6"/></svg>'+'<span class="mid"><span class="tt">'+esc(t('chalT'))+'</span><span class="ss">'+esc(t('chalS'))+'</span></span><span class="ar">&#8250;</span></button>';
+  }
+  var dispH='<div class="pchal"><div class="disp"><span class="dot'+(disp_?'':' off')+'"></span><b class="'+(disp_?'':'off')+'">'+esc(t(disp_?'dispOn':'dispOff'))+'</b></div>'+chal+'</div>';
+  var formH='';
+  if(FORM===j.id&&MYID&&!esMio2&&disp_){
+    if(HABOK&&!HAB[MYID]){
+      formH='<div class="dfform"><b>'+esc(t('payT'))+'</b><div style="margin-top:6px">'+esc(t('payP'))+'</div><div class="acts" style="margin-top:10px"><a class="btn btn-lime btn-sm" href="portal.html?amistoso=1">'+esc(t('chalCreate'))+'</a><button type="button" class="btn btn-ghost btn-sm" id="dfCancel">'+esc(t('dfCancel'))+'</button></div></div>';
+    }else{
+      formH='<div class="dfform"><div>'+t('dfWho',{a:esc(MYNAME||''),b:esc(j.nombre)})+'</div>'
+        +'<input type="text" id="dfMensaje" maxlength="280" placeholder="'+esc(t('dfMsg'))+'" value="'+esc(MSG)+'"'+(SENDING?' disabled':'')+'>'
+        +'<div class="nt">'+esc(t('dfNote'))+'</div>'
+        +'<div class="acts"><button type="button" class="btn btn-lime btn-sm" id="dfSend"'+(SENDING?' disabled':'')+'>'+esc(t(SENDING?'dfSending':'dfSend'))+'</button><button type="button" class="btn btn-ghost btn-sm" id="dfCancel"'+(SENDING?' disabled':'')+'>'+esc(t('dfCancel'))+'</button></div>'
+        +'<div class="dfmsg" id="dfMsgOut"></div></div>';
+    }
+  }
   document.getElementById('dossier').innerHTML=
     '<button class="x" type="button" id="xClose" aria-label="Cerrar">✕</button>'
     +'<div class="dtag">'+esc(t('dossier'))+'</div>'
@@ -430,12 +483,12 @@ function abrir(id){
       +'<div><small>'+esc(t('stroke'))+'</small><b>'+esc(f.golpe?val(f.golpe):'—')+'</b></div>'
       +'<div><small>'+esc(t('surface'))+'</small><b>'+esc(f.superficie?val(f.superficie):'—')+'</b></div>'
     +'</div>'
+    +dispH+formH
     +'<div class="sec"><h4>'+esc(t('titlesH'))+'</h4><div class="rec">'+tit+'</div></div>'
     +'<div class="sec"><h4>'+esc(t('posH'))+'</h4><div class="rec">'+pos+'</div></div>'
     +'<div class="sec"><h4>'+esc(t('runH'))+'</h4><div class="run"><div><small>RUN</small>'+runVal+'</div><div style="margin-left:auto;font-size:11.5px;color:var(--ink-faint);max-width:210px;text-align:right">'+esc(t('runDecl'))+'</div></div>'+runForm+'</div>'
     +'<div class="sec"><h4>'+esc(t('schedule'))+'</h4><div class="sg">'+sg+'</div></div>'
     +'<div class="dact">'
-      +'<a class="btn btn-lime" target="_blank" rel="noopener" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'">'+esc(t('coord'))+'</a>'
       +'<button class="btn btn-ghost" type="button" id="xClose2">'+esc(t('backList'))+'</button>'
     +'</div>'
     +'<p class="note">'+esc(t('privacy'))+'</p>';
@@ -443,12 +496,17 @@ function abrir(id){
   document.body.style.overflow='hidden';
   try{history.replaceState(null,'','#j-'+j.id);}catch(e){}
   document.getElementById('xClose').onclick=cerrar;document.getElementById('xClose2').onclick=cerrar;
+  var cb=document.getElementById('chalBtn');if(cb)cb.onclick=function(){FORM=(FORM===j.id?null:j.id);abrir(j.id);};
+  var cl2=document.getElementById('chalLogin');if(cl2)cl2.onclick=function(){loginGoogle(j.id);};
+  var dc=document.getElementById('dfCancel');if(dc)dc.onclick=function(){FORM=null;abrir(j.id);};
+  var dm=document.getElementById('dfMensaje');if(dm)dm.oninput=function(){MSG=this.value;};
+  var ds=document.getElementById('dfSend');if(ds)ds.onclick=function(){enviarDesafio(j);};
   var sv=document.getElementById('runSave');if(sv)sv.onclick=function(){guardarRun(j.id,false);};
   var cl=document.getElementById('runClr');if(cl)cl.onclick=function(){guardarRun(j.id,true);};
   var lg=document.getElementById('runLogin');if(lg)lg.onclick=function(e){e.preventDefault();loginGoogle(j.id);};
 }
 function cerrar(){
-  OPEN=null;
+  OPEN=null;FORM=null;
   document.getElementById('ov').classList.remove('open');document.body.style.overflow='';
   try{history.replaceState(null,'',location.pathname+(LANG?'?lang='+LANG:''));}catch(e){}
 }
@@ -468,6 +526,25 @@ async function guardarRun(id,borrar){
     pintar();abrir(id);
     var m2=document.getElementById('runMsg');if(m2){m2.className='runmsg ok';m2.textContent=t(borrar?'runCleared':'runSaved');}
   }catch(e){console.warn(e);msg.className='runmsg err';msg.textContent=t('runErr');}
+}
+async function enviarDesafio(j){
+  if(SENDING||!MYID)return;
+  var m=(MSG||'').trim();
+  SENDING=true;abrir(j.id);
+  var out=null,ok=false,txt='',cls='err';
+  try{
+    var r=await sb.from('desafios').insert({de_id:MYID,para_id:j.id,mensaje:m,estado:'Pendiente'}).select().maybeSingle();
+    if(!r.error){ok=true;txt=t('dfOk');cls='ok';}
+    else if(r.error.code==='23505'){txt=t('dfDup');}
+    else if(r.error.code==='P0001'){txt=r.error.message||t('dfErr');}
+    else{console.warn(r.error);txt=t('dfErr');}
+  }catch(e){console.warn(e);txt=t('dfErr');}
+  SENDING=false;
+  if(ok){MSG='';FORM=null;}
+  abrir(j.id);
+  out=document.getElementById('dfMsgOut');
+  if(ok){var c=document.getElementById('chalBtn');if(c&&c.parentNode){var d=document.createElement('div');d.className='dfmsg ok';d.style.margin='6px 0 0';d.textContent=txt;c.parentNode.parentNode.insertBefore(d,c.parentNode.nextSibling);}}
+  else if(out){out.className='dfmsg '+cls;out.textContent=txt;}
 }
 async function loginGoogle(id){
   if(!sb)return;
